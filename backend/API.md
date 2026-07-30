@@ -116,8 +116,8 @@ Body must contain: greeting with name(s), what was registered/ordered, the amoun
 IBAN/HOLDER come from Script Properties `PAY_IBAN`, `PAY_HOLDER` (dev stub: env or
 defaults `BE00 0000 0000 0000` / `Champetoeters`). If `PAY_IBAN` unset, the email says
 "Het rekeningnummer volgt nog — betalen kan ook ter plaatse."
-Reply-To: Script property `REPLY_TO` when set; unset = replies go to the sending
-account (dev stub: env `REPLY_TO`). Include contact line + venue/date footer.
+No Reply-To header: replies go to the sending account (the event's own address).
+Include contact line + venue/date footer.
 
 ## EPC QR (client-side, `site/js/payinfo.js`)
 

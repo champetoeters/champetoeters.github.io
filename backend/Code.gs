@@ -9,8 +9,6 @@
  *        ADMIN_PASSWORD  the password the organisers type in /admin/
  *        PAY_IBAN        e.g. BE68 5390 0754 7034  (leave empty until known)
  *        PAY_HOLDER      e.g. Champetoeters
- *     Optional: REPLY_TO — where replies to the confirmation mails land. Leave
- *     it unset to receive replies on the deploying account itself.
  *     Optional: SHEET_ID to use an existing Google Sheet. Without it the script
  *     creates a Sheet named "CHAMPETOETERS backend" in your Drive on first use
  *     and remembers its id here; if you paste this into a Sheet-bound script
@@ -454,9 +452,10 @@ function escHtml_(s) {
    already written and the failure is logged. */
 function sendMail_(mail) {
   try {
+    /* No replyTo: replies go to the account this script runs under — the
+       event's own address. */
     MailApp.sendEmail({
       to: mail.to,
-      replyTo: CONTACT_EMAIL,
       name: EVENT_NAME,
       subject: mail.subject,
       body: mail.lines.join('\n'),
