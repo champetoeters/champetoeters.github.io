@@ -116,7 +116,8 @@ Body must contain: greeting with name(s), what was registered/ordered, the amoun
 IBAN/HOLDER come from Script Properties `PAY_IBAN`, `PAY_HOLDER` (dev stub: env or
 defaults `BE00 0000 0000 0000` / `Champetoeters`). If `PAY_IBAN` unset, the email says
 "Het rekeningnummer volgt nog — betalen kan ook ter plaatse."
-Reply-To: `padel@tcleiemeers.be`. Include contact line + venue/date footer.
+Reply-To: Script property `REPLY_TO` when set; unset = replies go to the sending
+account (dev stub: env `REPLY_TO`). Include contact line + venue/date footer.
 
 ## EPC QR (client-side, `site/js/payinfo.js`)
 
@@ -124,7 +125,7 @@ Payment pages render an EPC069-12 "SEPA credit transfer" QR (scannable by Belgia
 banking apps) when `CHAMP_CONFIG.payment.iban` is set:
 
 ```
-BCD\n002\n1\nSCT\n{BIC or empty}\n{holder}\n{IBAN no spaces}\nEUR{amount, dot decimals}\n\n\n{reference}\nBetaling {reference}
+BCD\n002\n1\nSCT\n{BIC or empty}\n{holder}\n{IBAN no spaces}\nEUR{amount, always two dot decimals: EUR50.00}\n\n\n{reference}\nBetaling {reference}
 ```
 
 Encoder: `site/vendor/qrcode.js` (qrcode-generator, MIT — already vendored).
