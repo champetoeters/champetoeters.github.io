@@ -1,0 +1,475 @@
+/* ============================================================================
+   timetable.css — CHAMPETOETERS & FRIENDS
+   One job: who plays when and where. Padel only, 14:00 → 20:30.
+
+   Rules this file must keep (BRIEF §0):
+     · no glass panes; one hairline per row; a row is time · baan · names
+     · one accent (--tt-ball), spent only on FINALE and on "Nu bezig"
+     · desktop has no controls; mobile has exactly one (the court switcher)
+     · nothing blurred ever moves (§4.2); no background-clip: text
+   ========================================================================= */
+
+.tt-section {
+  --tt-paper:  244 247 251;
+  --tt-haze:   124 153 182;
+  --tt-ball:   198 220 99;
+  --tt-ink:    13 22 55;
+
+  /* Letterspaced caps lose a lot to antialiasing: small text needs a lifted
+     tint AND ≥12px AND weight. */
+  --tt-micro:  212 228 246;
+  --tt-dim:    rgb(var(--tt-paper) / .78);
+  --tt-rule:   rgb(var(--tt-haze) / .22);
+
+  --tt-serif: var(--font-display, "Playfair Display", "Didot", "Bodoni 72", "Times New Roman", serif);
+  --tt-sans:  var(--font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif);
+
+  /* The tail is both the section's bottom padding and the height of .tt-dusk,
+     so the ramp into the DJ bill lives entirely in empty space: the sticky
+     venue panel is contained by .tt-body and therefore stops exactly where
+     the ramp starts. Keep the two in step — it is a real coupling. */
+  --tt-tail: clamp(132px, 14vw, 210px);
+
+  /* How far BEFORE the end of the schedule the sticky venue panel lets go.
+     A sticky box is constrained by its containing block minus its own
+     margins, so a bottom margin on the panel — cancelled again on the
+     schedule so the layout does not move (see the mobile block) — buys an
+     early release without adding a pixel of empty page. That is what keeps
+     the 3D from still being frozen at the top of the phone while the DJ bill
+     is already on screen. */
+  --tt-release: clamp(150px, 20vh, 240px);
+
+  position: relative;
+  isolation: isolate;
+  padding: clamp(56px, 9vw, 128px) 0 var(--tt-tail);
+  color: rgb(var(--tt-paper));
+  font-family: var(--tt-sans);
+  -webkit-font-smoothing: antialiased;
+  background-color: #0D1637;
+  overflow: clip;
+}
+
+/* Top: the hero now sits directly above, and it ends a few values LIGHTER than
+   this section's flat navy — measured (19,29,58) against (13,22,55). So this is
+   a lift that carries the hero's last light a little way into the sheet and
+   dies out before the first match, not the near-black band it had to be when
+   the DJ bill's dark tail was above it. */
+.tt-plate {
+  position: absolute; inset: 0 0 auto; z-index: 0;
+  height: clamp(150px, 22vw, 260px);
+  pointer-events: none;
+  background-image: linear-gradient(180deg, rgb(124 153 182 / .06), rgb(124 153 182 / 0));
+}
+
+/* Bottom: the afternoon sheet hands over to the night. The ramp ends on the
+   composited colour of the bill's own first rows — rgb(44 60 114), measured off
+   rendered pixels at both viewports, which is .ln__sky's base plus its two
+   horizon washes — so the two sections meet without a seam and without a
+   second horizon. The bill then descends into the night on its own, untouched. */
+.tt-dusk {
+  position: absolute; inset: auto 0 0; z-index: 0;
+  height: var(--tt-tail);
+  pointer-events: none;
+  background-image:
+    linear-gradient(180deg, rgb(44 60 114 / 0) 0%, rgb(44 60 114 / .5) 58%, rgb(44 60 114) 100%);
+}
+
+/* Above the opaque sticky surfaces, or they read as untextured panels. */
+.tt-grain { z-index: 3; opacity: .2; }
+.tt-section > .u-container { position: relative; z-index: 2; }
+
+/* ---------------------------------------------------------------- header */
+
+.tt-head { margin-bottom: clamp(30px, 4.6vw, 60px); }
+.tt-eyebrow {
+  margin: 0 0 clamp(12px, 1.8vw, 18px);
+  font-size: clamp(12px, 3.1vw, 13px);
+  font-weight: 700;
+  letter-spacing: .22em;
+  color: rgb(var(--tt-micro));
+}
+.tt-title {
+  /* u-display's wide haze glow was tuned for a busy photographic ground; on
+     this section's flat navy it renders as a smudge around the glyphs. */
+  text-shadow: 0 2px 14px rgb(3 7 22 / .5);
+  margin: 0;
+  font-size: clamp(2.5rem, 8.4vw, 5rem);
+  letter-spacing: .028em;
+  line-height: .92;
+}
+.tt-title__a { display: block; }
+.tt-title__b {
+  display: block; margin-left: .08em;
+  font-size: clamp(1.3rem, 4.4vw, 2.6rem); letter-spacing: .07em;
+}
+
+/* ------------------------------------------------------------ body grid */
+
+/* Column ceiling is measured: the longest tie ("Vanden Berghe & De Smet" vs
+   "Depuydt & De Ridder") must not wrap. Wider venue column and the schedule
+   starts breaking over two lines. */
+.tt-body {
+  display: grid;
+  gap: 20px clamp(24px, 2.6vw, 40px);
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 28vw, 405px);
+  grid-template-areas: "grid venue";
+  align-items: start;
+}
+.tt-body > * { min-width: 0; }
+/* The margin costs no layout here: the grid row is sized by the schedule
+   column, which is far taller than the panel. It only shortens the sticky
+   travel, so the panel is already on its way out before the bill arrives. */
+.tt-venue    { grid-area: venue; position: sticky; top: var(--tt-stick, 24px);
+               margin-bottom: var(--tt-release); }
+.tt-gridwrap { grid-area: grid; min-width: 0; }
+.tt-switch   { display: none; }        /* desktop shows all three courts */
+
+/* --------------------------------------------------------------- the grid */
+
+.tt-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tt-col--time { width: 68px; }
+
+/* Sticky court names — the sheet is tall. Never blurred, so a scroll-linked
+   position is free (BRIEF §4.2/§4.4). */
+.tt-hcell {
+  position: sticky; top: 0; z-index: 3;
+  padding: 14px 10px 12px;
+  text-align: left;
+  font-family: var(--tt-serif);
+  font-size: clamp(1rem, 1.3vw, 1.22rem);
+  font-weight: 400;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgb(var(--tt-paper) / .95);
+  background-color: #0D1637;               /* the page colour: only the rule shows */
+  box-shadow: inset 0 -1px 0 var(--tt-rule);
+  transition: color .18s ease;
+}
+.tt-hcell--time { padding-left: 0; }
+.tt-hcell.is-hot { color: rgb(var(--tt-ball)); }
+/* A row scrolling under the header was cut off at the hairline mid-glyph. The
+   same short ramp the mobile panel uses, so a name leaves rather than stops. */
+.tt-hcell::after {
+  content: "";
+  position: absolute; inset: 100% 0 auto; height: 16px;
+  pointer-events: none;
+  background-image: linear-gradient(180deg, #0D1637, rgb(13 22 55 / 0));
+}
+
+/* One hairline per time and nothing else — it is how the eye tracks from the
+   time across to the right court. */
+.tt-time,
+.tt-cell { border-bottom: 1px solid rgb(var(--tt-haze) / .14); vertical-align: top; }
+
+.tt-time {
+  padding: 16px 14px 16px 0;
+  text-align: left;
+  font-size: 1rem; font-weight: 600; letter-spacing: .02em;
+  color: rgb(var(--tt-paper) / .95);
+  white-space: nowrap;
+}
+.tt-cell { padding: 10px 0 12px; }
+
+/* ------------------------------------------------------------- a match
+   Not a card. The button exists only so the 3D lights up on hover/tap; it must
+   never look like something you are required to press. */
+
+.tt-m {
+  display: block; width: 100%;
+  min-height: 44px;
+  padding: 6px 8px 7px;
+  margin: 0;
+  border: 0; border-radius: 10px;
+  background: transparent;
+  color: inherit; font-family: inherit; text-align: left;
+  cursor: pointer;
+  transition: background-color .16s ease;
+}
+.tt-m:hover,
+.tt-m.is-hot { background: rgb(var(--tt-paper) / .07); }
+.tt-m:focus-visible { outline: 2px solid rgb(var(--tt-ball)); outline-offset: 1px; }
+
+.tt-m__court { display: none; }        /* desktop: the column header says it */
+
+.tt-m__tie { display: block; }
+.tt-m__n {
+  display: block;
+  font-size: .875rem; font-weight: 600; letter-spacing: .005em;
+  line-height: 1.35;
+  color: rgb(var(--tt-paper));
+  overflow-wrap: anywhere;
+}
+/* "Vrije plaats" and an unresolved knockout slot. Client: not italic. Same
+   face and size as a real name, lighter weight, dimmer — a quiet entry, never
+   a decorative one. Alpha stays high enough that .is-done still clears 4.5:1. */
+.tt-m__n.is-open,
+.tt-m__n.is-tbd {
+  font-weight: 400;
+  color: rgb(var(--tt-paper) / .78);
+}
+.tt-m__b { display: flex; align-items: baseline; gap: 6px; }
+/* Client: "the vs in the courts is just a weird font v". It was a lone italic
+   Didone letter between two lines of sans. Now: same face as the names, one
+   step smaller, and a word instead of a glyph. */
+/* .76 is the floor: under .is-done's .68 it still measures 4.8:1 on pixels. */
+.tt-m__v {
+  flex: none;
+  font-family: inherit; font-style: normal;
+  font-size: .78rem; font-weight: 500; letter-spacing: .01em;
+  color: rgb(var(--tt-paper) / .76);
+}
+.tt-m__b .tt-m__n { flex: 1 1 auto; min-width: 0; }
+
+/* the day itself — the only other place the accent is spent.
+   One device, shared with the DJ bill's "Speelt nu" (.ln__live): a flat
+   bordered pill with a dot, in the accent, never blurred and never animated.
+   Bare letterspaced text broke over two lines at 390px and squeezed the names
+   beside it; a pill on its own line under the tie cannot. */
+.tt-m__live {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 7px;
+  padding: 4px 11px;
+  border: 1px solid rgb(var(--tt-ball) / .5);
+  border-radius: 999px;
+  font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: rgb(var(--tt-ball));
+  white-space: nowrap;
+}
+.tt-m__live-dot {
+  flex: none;
+  width: 6px; height: 6px; border-radius: 999px;
+  background: rgb(var(--tt-ball));
+  box-shadow: 0 0 9px rgb(var(--tt-ball) / .55);
+}
+/* Played and not yet scored: dim the row, it is behind us. .68 keeps it over
+   4.5:1 on the section ground. */
+.tt-m.is-done { opacity: .68; }
+
+/* ---------------------------------------------------------------- the score
+   A result is content, not a badge (BRIEF: content before style). One extra
+   line under the tie — same column as the names at both viewports — set in
+   tabular figures so the games line up down the sheet. No box, no tint, no
+   rule, no accent: the accent is reserved for FINALE and "Nu bezig".
+
+   A scored row is NOT dimmed as a whole: the winner stays lit and the loser
+   steps back, which says more than fading both. Measured on rendered pixels
+   against #0D1637: the loser at .62 is 6.9:1, the score at .70 is 8:1. */
+.tt-m.is-done.has-score { opacity: 1; }
+
+.tt-m__score {
+  display: block;
+  margin-top: 4px;
+  font-size: .8rem; font-weight: 500; letter-spacing: .06em;
+  color: rgb(var(--tt-paper) / .7);
+  white-space: nowrap;
+}
+
+.tt-m__n.is-win  { font-weight: 700; color: rgb(var(--tt-paper)); }
+.tt-m__n.is-lost { font-weight: 400; color: rgb(var(--tt-paper) / .62); }
+/* An unresolved or open slot never carries emphasis it has not earned. */
+.tt-m__n.is-open.is-win,
+.tt-m__n.is-tbd.is-win { font-weight: 400; color: rgb(var(--tt-paper) / .78); }
+
+/* ----------------------------------------------------------- headings
+   One label per phase, four in total, never stamped on a row. */
+
+.tt-heading {
+  padding: clamp(34px, 4vw, 52px) 0 clamp(9px, 1.2vw, 13px);
+  font-family: var(--tt-serif);
+  font-size: 13px; font-weight: 400;
+  letter-spacing: .26em; text-transform: uppercase;
+  color: rgb(var(--tt-micro));
+}
+.tt-headrow:first-child .tt-heading { padding-top: 0; }
+
+.tt-heading--final {
+  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+  letter-spacing: .3em;
+  color: rgb(var(--tt-ball));
+  padding-bottom: clamp(12px, 1.6vw, 18px);
+}
+
+/* --------------------------------------------------------- 3D / plan */
+
+/* Portrait (w/h < 1) keeps courts3d on its wide 50° lens, which keeps the
+   court plates inside the frame; at 1/1 it switches to 38° and clips them.
+   Desktop is sized in viewport height so no dead column is left beside the
+   schedule, capped so a very tall window is not all sky and tarmac. */
+.tt-venue__stage {
+  position: relative; width: 100%;
+  /* Capped well under the viewport: at a full 100vh the scene sat in the top
+     half of the plate and the bottom third was empty tarmac, which is what
+     made the block read as running on past the end of the schedule and into
+     the bill below. */
+  height: min(calc(100vh - 2 * var(--tt-stick, 24px)), 560px);
+  min-height: 420px;
+  border-radius: var(--r-xl, 26px); overflow: hidden;
+  background: linear-gradient(180deg, #16265A, #0C142F);
+  border: 1px solid rgb(var(--tt-haze) / .18);
+}
+.tt-venue__plan,
+.tt-venue__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tt-venue__canvas { z-index: 1; }
+/* visibility, not only opacity: the flat plan carries court numbers, and an
+   opacity:0 <svg> still hands its text to the accessibility tree. */
+.tt-venue[data-mode="3d"] .tt-venue__plan { opacity: 0; visibility: hidden; }
+.tt-venue[data-mode="plan"] .tt-venue__canvas { opacity: 0; }
+
+.pl { width: 100%; height: 100%; }
+.pl-face {
+  fill: rgb(58 90 151 / .4);
+  stroke: rgb(var(--tt-haze) / .55); stroke-width: .34; vector-effect: non-scaling-stroke;
+  transition: fill .18s ease, stroke .18s ease;
+}
+.pl-net { stroke: rgb(var(--tt-paper) / .4); stroke-width: .3; vector-effect: non-scaling-stroke; }
+.pl-num {
+  font-family: var(--tt-serif); font-size: 4.4px; letter-spacing: .06em;
+  fill: rgb(var(--tt-paper) / .55); text-anchor: middle; dominant-baseline: central;
+  transition: fill .18s ease;
+}
+.pl-court.is-active .pl-face { fill: rgb(var(--tt-ball) / .3); stroke: rgb(var(--tt-ball)); }
+.pl-court.is-active .pl-num { fill: rgb(var(--tt-ball)); }
+
+/* ======================================================================
+   MOBILE — 390px. The sheet becomes a time-first agenda: a time, then the
+   courts that have a match at that time. The ARIA roles in the markup keep
+   the table semantics through display:block.
+   ==================================================================== */
+
+@media (max-width: 900px) {
+  /* Map/list: the 3D pins to the top of the section and the schedule scrolls
+     under it, so it is neither a toll gate above the 14:00 row nor buried at
+     the bottom where the hover highlight lit a court nobody could see.
+
+     Flex, not grid: a sticky grid item is trapped in its own grid area and has
+     nothing to travel through. A flex item's containing block is the flex
+     container, so the panel pins for the length of .tt-body and releases at
+     the end of the section on its own. */
+  .tt-body {
+    --tt-3d-h: clamp(240px, 34vh, 320px);
+    /* Enough lead that the panel is already moving before the DJ bill can
+       appear at the bottom of the screen: panel height + lead + tail must
+       clear the viewport. Measured at 390x844. */
+    --tt-release: clamp(300px, 40vh, 380px);
+    display: flex;
+    flex-direction: column;
+    /* Must be re-stated. align-items:start from the desktop grid rule is the
+       CROSS axis in a column flexbox: it shrink-wraps every item horizontally
+       and the panel, whose only width comes from width:100%, collapses to its
+       two borders. */
+    align-items: stretch;
+    gap: 14px;
+  }
+  .tt-switch   { order: 1; }
+  .tt-venue    { order: 2; }
+  .tt-gridwrap { order: 3; }
+
+  .tt-venue {
+    position: sticky;
+    top: 0;
+    z-index: 2;                 /* the schedule passes behind it, never through */
+    /* Opaque and exactly as wide as the rows, so nothing can show beside it.
+       The padding is the clear margin above and below: without it a sliver of
+       a row rides along the panel's edge as it scrolls under. */
+    padding: 10px 0 12px;
+    background: #0D1637;
+    margin-top: 0;
+    /* The early release (see --tt-release). The margin is taken straight back
+       off the schedule below it, so .tt-body is exactly as tall as before and
+       nothing on the page moves — only the sticky constraint rectangle gets
+       shorter. Both halves must always change together. */
+    margin-bottom: var(--tt-release);
+  }
+  .tt-gridwrap { margin-top: calc(-1 * var(--tt-release)); }
+  /* A row leaving under the panel would otherwise be sliced mid-glyph. 18px
+     was shorter than one time heading, so a "16:00" was cut in half instead of
+     fading; 40px is longer than the tallest line in the sheet. Weighted so the
+     first half still hides the row and only the tail is see-through. */
+  .tt-venue::after {
+    content: "";
+    position: absolute; inset: 100% 0 auto; height: 40px;
+    pointer-events: none;
+    background: linear-gradient(180deg,
+      #0D1637 0%, rgb(13 22 55 / .92) 30%, rgb(13 22 55 / .55) 62%, rgb(13 22 55 / 0) 100%);
+  }
+  /* ~287px at 390x844, so ~500px of schedule stays in view under it. */
+  .tt-venue__stage { height: var(--tt-3d-h); min-height: 0; aspect-ratio: auto; }
+
+  /* Nothing here scrolls programmatically, but keyboard focus does: anything
+     focusable keeps the panel's full height clear of itself. */
+  .tt-m,
+  .tt-row { scroll-margin-top: calc(var(--tt-3d-h) + 34px); }
+
+  /* the one control */
+  .tt-switch {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--tt-rule);
+    border-radius: 999px;
+  }
+  .tt-seg {
+    min-height: 44px; padding: 6px 4px;
+    border: 0; border-radius: 999px; background: transparent;
+    color: rgb(var(--tt-paper) / .8); cursor: pointer;
+    font: 600 .8rem/1.2 var(--tt-sans); letter-spacing: .04em;
+    transition: color .16s ease, background-color .16s ease;
+  }
+  .tt-seg[aria-pressed="true"] { background: rgb(var(--tt-paper)); color: rgb(var(--tt-ink)); }
+  .tt-seg:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+  .tt-grid, .tt-grid thead, .tt-grid tbody, .tt-grid tr, .tt-grid th, .tt-grid td { display: block; }
+  .tt-grid { table-layout: auto; }
+  .tt-grid thead { display: none; }
+
+  .tt-row { margin: 0 0 20px; }
+  .tt-row.is-empty { display: none; }
+
+  .tt-time {
+    padding: 0 0 8px;
+    margin: 0 0 4px;
+    border-bottom: 1px solid var(--tt-rule);
+    font-size: 1.28rem; font-weight: 600;
+  }
+
+  .tt-cell { padding: 0; border-bottom: 0; }
+  .tt-grid .tt-cell:empty,
+  .tt-grid .tt-cell.is-off { display: none; }
+
+  /* time · baan · names — one tap target per match, 56px tall */
+  .tt-m {
+    display: flex; align-items: baseline; gap: 12px;
+    min-height: 56px;
+    padding: 9px 10px 10px;
+    margin-inline: -10px;
+    width: calc(100% + 20px);
+  }
+  .tt-m.is-off { display: none; }
+  .tt-m__court {
+    display: block; flex: 0 0 4.6rem;
+    font-family: var(--tt-serif);
+    font-size: 13px; font-weight: 400; letter-spacing: .14em; text-transform: uppercase;
+    color: rgb(var(--tt-micro));
+    line-height: 1.5;
+  }
+  /* one court chosen: repeating its name thirteen times is noise */
+  .tt-gridwrap.is-single .tt-m__court { display: none; }
+  .tt-m__tie { flex: 1 1 auto; min-width: 0; }
+  .tt-m__n { font-size: .95rem; }
+
+  .tt-heading { padding: clamp(26px, 6vw, 34px) 0 12px; }
+  .tt-heading--final { padding-bottom: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-m, .tt-hcell, .pl-face, .pl-num { transition: none; }
+}
+
+/* Safety net only: if tokens.css/glass.css ever fail to load these keep the
+   section legible. :where() = zero specificity, so the real foundation wins. */
+:where(.tt-section) { background-color: #0D1637; color: #F4F7FB; }
+:where(.u-container) { width: 100%; max-width: 1292px; margin-inline: auto; padding-inline: 20px; }
+:where(.u-tabular) { font-variant-numeric: tabular-nums; }
+:where(.u-sr-only) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}

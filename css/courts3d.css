@@ -1,0 +1,59 @@
+/* =============================================================================
+   courts3d — the 3D padel courts of TC Leiemeers
+   Owned by the courts3d builder. No backdrop-filter here: the glass in this
+   piece is real geometry, rendered in WebGL (BRIEF §10).
+   ============================================================================= */
+
+.c3d {
+  /* Local brand values — the poster palette. Tokens stay owned by glass.css. */
+  --c3d-deep: #0D1637;
+  --c3d-cobalt: #223B7A;
+  --c3d-cobalt-lit: #3A5A97;
+  --c3d-pale: #7C99B6;
+  --c3d-ball: #C6DC63;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  /* The placeholder ground lives on the container, not the canvas, so the
+     canvas can fade in over it once it has a complete frame to show. */
+  background:
+    radial-gradient(120% 85% at 62% 4%, #2f4f8c 0%, #172a5c 38%, #070c1e 100%),
+    var(--c3d-deep);
+  isolation: isolate;
+}
+
+/* --------------------------------------------------------------- canvas -- */
+
+.c3d-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Hidden until the first correctly framed frame exists — otherwise the scene
+     is caught flying into position, which on the sticky mobile panel is the
+     first thing a visitor sees. Opacity only (BRIEF §4 rule 3). */
+  opacity: 0;
+  transition: opacity 260ms ease-out;
+  /* Nothing to operate: the scene is looked at, not driven. Page scroll and
+     pinch-zoom stay entirely with the browser. */
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.c3d-canvas.is-ready { opacity: 1; }
+.c3d-canvas.is-hidden { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .c3d-canvas { transition: none; }
+}
+
+/* ------------------------------------------------------------- fallback -- */
+/* No WebGL: a plan of the same three courts, same geometry, same markings,
+   same palette. Never a blank box. */
+
+
+/* Only after WebGL failed every retry — a dead canvas paints nothing. */
+.c3d-canvas.is-unavailable { display: none; }

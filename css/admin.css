@@ -1,0 +1,458 @@
+/* ============================================================================
+   admin.css — the organisers' tool at /admin/
+   Owned by: admin builder. Depends on tokens.css + base.css + glass.css.
+
+   This is a TOOL, not a page of the site: same material and tokens so it reads
+   as family, but no display type, no decoration, one panel per view, one
+   radius per surface (BRIEF §0, §10). Every target is ≥44px because it is
+   used one-handed, standing next to a court.
+   ========================================================================= */
+
+:root {
+  --ad-top-h: 54px;
+  --ad-w: 720px;
+  --ad-pad: var(--sp-4);
+  --ad-line: rgb(var(--haze-rgb) / .16);
+  --ad-chrome: #091028;   /* the sticky chrome is opaque: nothing scrolls through it */
+}
+
+/* Calm version of the site ground, so the glass still has an edge to bend.
+   Static, never blurred, never animated (BRIEF §4). */
+.ad-ground {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 88% -10%, rgb(108 152 220 / .26), transparent 62%),
+    radial-gradient(130% 100% at 24% 46%, rgb(45 72 133 / .40), transparent 72%),
+    radial-gradient(100% 80% at 4% 108%, rgb(4 8 24 / .82), transparent 60%),
+    linear-gradient(168deg, #10193C 0%, #0D1637 48%, #080F28 100%);
+}
+
+body.ad { min-height: 100vh; padding-bottom: var(--sp-8); }
+
+
+/* ---- top bar ------------------------------------------------------------
+   Sticky, so it carries no backdrop-filter: a blurred surface must not move. */
+
+.ad-top {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-bar);
+  background: var(--ad-chrome);
+  box-shadow: inset 0 -1px 0 var(--ad-line);
+}
+.ad-top__in {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--ad-top-h);
+  width: 100%;
+  max-width: var(--ad-w);
+  margin-inline: auto;
+  padding-inline: var(--ad-pad);
+}
+.ad-brand {
+  font-family: var(--font-display);
+  font-size: .72rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* The tabs say what this is; on a phone the label is the first thing to go. */
+.ad-brand__sub { display: none; }
+.ad-top__act { display: flex; align-items: center; gap: var(--sp-2); margin-left: auto; }
+.ad-top__act[hidden] { display: none; }
+
+.ad-link {
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-med);
+  color: var(--paper-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ad-link:hover { color: var(--paper); }
+
+
+/* ---- shell -------------------------------------------------------------- */
+
+.ad-main {
+  width: 100%;
+  max-width: var(--ad-w);
+  margin-inline: auto;
+  padding: 0 var(--ad-pad);
+}
+.ad-view { display: flex; flex-direction: column; gap: var(--sp-3); }
+.ad-view[hidden] { display: none; }
+
+.ad-h1 {
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .01em;
+  text-transform: none;
+}
+
+
+/* ---- login -------------------------------------------------------------- */
+
+/* One short panel and nothing else: centre it in the space left under the
+   header, so on a phone it sits under the thumb instead of at the top of a
+   mostly empty screen. Grows past the centre if it ever gets taller. */
+.ad-view[data-view="login"] {
+  justify-content: center;
+  min-height: calc(100vh - var(--ad-top-h));
+  min-height: calc(100svh - var(--ad-top-h));
+  /* body's bottom padding is for the scrolling app view; here it would push
+     the panel off centre, and this view never scrolls */
+  margin-bottom: calc(var(--sp-8) * -1);
+  padding-block: var(--sp-5);
+}
+.ad-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.ad-note {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--paper-dim);
+}
+.ad-note[hidden] { display: none; }
+
+
+/* ---- tabs --------------------------------------------------------------- */
+
+/* The tab bar stays in reach on a long list, so it rides in an opaque band —
+   a rounded pill on its own lets rows slide past its shoulders. */
+.ad-sticky {
+  position: sticky;
+  top: var(--ad-top-h);
+  z-index: var(--z-sticky);
+  /* full-bleed band, content still aligned with the column: nothing scrolls
+     past its shoulders, and it sits flush against the header */
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding: var(--sp-3) max(var(--ad-pad), calc((100vw - var(--ad-w)) / 2 + var(--ad-pad))) var(--sp-2);
+  background: var(--ad-chrome);
+}
+
+.ad-tabs {
+  --g-core-fill: rgb(16 26 58);
+  gap: 4px;
+  padding: 5px;
+}
+.ad-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  font-size: .82rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .01em;
+  color: var(--paper-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color var(--dur-1) var(--ease-glass), color var(--dur-1) var(--ease-glass);
+}
+.ad-tab:hover { color: var(--paper); background-color: rgb(var(--haze-rgb) / .12); }
+.ad-tab[aria-selected="true"] {
+  color: var(--navy-900);
+  background-color: var(--ball);
+  text-shadow: none;
+}
+
+
+/* ---- panels ------------------------------------------------------------- */
+
+.ad-panel { padding: var(--sp-4); }
+.ad-panel[hidden] { display: none; }
+.ad-panel:focus-visible { outline-offset: -3px; }
+
+.ad-tot {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .01em;
+}
+.ad-tot__x { color: var(--ball); }
+.ad-hint {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--fs-xs);
+  color: var(--paper-mute);
+}
+.ad-head { padding-bottom: var(--sp-3); }
+
+.ad-list { display: block; }
+.ad-item { display: block; border-top: 1px solid var(--ad-line); }
+.ad-item:first-child,
+.ad-item.has-sub { border-top: 0; }
+
+.ad-sub {
+  display: block;
+  padding: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ball);
+}
+.ad-item:first-child .ad-sub { padding-top: var(--sp-1); }
+
+.ad-empty { padding: var(--sp-5) 0; font-size: var(--fs-sm); color: var(--paper-dim); }
+
+
+/* ---- a match row -------------------------------------------------------- */
+
+.ad-m {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px var(--sp-3);
+  width: 100%;
+  min-height: 62px;
+  padding: 10px 2px;
+  text-align: left;
+  border-radius: var(--r-well);
+  transition: background-color var(--dur-1) var(--ease-glass);
+}
+.ad-m:hover { background-color: rgb(var(--haze-rgb) / .08); }
+.ad-m:active { background-color: rgb(2 5 16 / .34); }
+.ad-m__meta {
+  grid-column: 1;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--paper-mute);
+}
+.ad-m__tie { grid-column: 1; min-width: 0; }
+.ad-m__n { display: block; font-size: .96rem; line-height: 1.34; }
+.ad-m__n.is-win { color: var(--ball); font-weight: var(--fw-semi); }
+.ad-m__n.is-lose { color: var(--paper-mute); }
+.ad-m__n.is-tbd { color: var(--paper-mute); }
+.ad-m__sc {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
+  font-size: .92rem;
+  font-weight: var(--fw-semi);
+  white-space: nowrap;
+  color: var(--paper);
+}
+.ad-m__sc.is-none { color: var(--paper-mute); font-weight: var(--fw-reg); }
+.ad-item.is-open .ad-m { background-color: rgb(var(--haze-rgb) / .10); }
+
+
+/* ---- score editor ------------------------------------------------------- */
+
+.ad-ed { margin: var(--sp-2) 0 var(--sp-4); }
+.ad-ed__grid {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+}
+.ad-ed__hn {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  line-height: 1.25;
+  text-align: center;
+  color: var(--paper-dim);
+  overflow-wrap: anywhere;
+}
+.ad-ed__rl {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  letter-spacing: .04em;
+  color: var(--paper-dim);
+}
+.ad-ed input.glass-input {
+  min-height: 52px;
+  padding: 8px 6px;
+  font-size: 1.08rem;
+  font-weight: var(--fw-semi);
+  text-align: center;
+}
+.ad-ed input.glass-input::-webkit-outer-spin-button,
+.ad-ed input.glass-input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+
+.ad-win { margin-top: var(--sp-4); }
+.ad-win__l {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+}
+/* Stacked on a phone: the winning pair's full name must be readable, never
+   truncated — this is the one choice in the tool that must be unambiguous. */
+.ad-win__o { display: flex; flex-direction: column; gap: var(--sp-2); }
+.ad-win__o .glass-btn { flex: 1 1 0; min-width: 0; padding: 0 12px; font-size: .85rem; }
+.ad-win__o .glass-btn > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.ad-win__o .glass-btn[aria-pressed="true"] {
+  color: var(--navy-900);
+  text-shadow: none;
+  background-color: var(--ball);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .24), var(--sh-pill);
+}
+
+.ad-act { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
+.ad-act .glass-btn { flex: 1 1 auto; }
+.ad-act .glass-btn--ghost { flex: 0 0 auto; }
+
+.ad-err { margin-top: var(--sp-3); }
+
+
+/* ---- teams (€50) -------------------------------------------------------- */
+
+.ad-t {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 60px;
+  padding: 8px 2px;
+  cursor: pointer;
+  border-radius: var(--r-well);
+  transition: background-color var(--dur-1) var(--ease-glass);
+}
+.ad-t:hover { background-color: rgb(var(--haze-rgb) / .08); }
+.ad-t__b { flex: 1 1 auto; min-width: 0; }
+.ad-t__n { display: block; font-size: .96rem; line-height: 1.34; }
+.ad-t__n.is-open { color: var(--paper-mute); }
+.ad-t__m {
+  display: block;
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  color: var(--paper-mute);
+}
+
+/* The whole row is the target (60px tall, full width); the box is only the
+   mark. The real checkbox stays in the tab order and drives the box. */
+.ad-check {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-xs);
+  background-color: var(--g-fill-inset);
+  box-shadow: inset 0 0 0 2px rgb(var(--haze-rgb) / .42);
+  transition: background-color var(--dur-1) var(--ease-glass),
+              box-shadow var(--dur-1) var(--ease-glass);
+}
+.ad-t__i:checked + .ad-check {
+  background-color: var(--ball);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='11'><path d='M1.4 5.6 5.4 9.6 13.6 1.4' fill='none' stroke='%230D1637' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px var(--ball-deep);
+}
+.ad-t__i:focus-visible + .ad-check { outline: 2px solid var(--ball); outline-offset: 3px; }
+/* an empty slot has nothing to pay for */
+.ad-t__i:disabled + .ad-check { opacity: .34; }
+
+
+/* ---- orders (€12) ------------------------------------------------------- */
+
+.ad-o { display: flex; align-items: center; gap: var(--sp-3); min-height: 64px; padding: 8px 2px; }
+.ad-o__b { flex: 1 1 auto; min-width: 0; }
+.ad-o__n { display: block; font-size: .96rem; line-height: 1.34; }
+.ad-o__m {
+  display: block;
+  font-size: var(--fs-xs);
+  letter-spacing: .05em;
+  color: var(--paper-mute);
+}
+
+.ad-step { flex: 0 0 auto; display: flex; align-items: center; gap: 2px; }
+.ad-step__b {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  font-size: 1.2rem;
+  font-weight: var(--fw-semi);
+  line-height: 1;
+  color: var(--paper);
+  background-color: rgb(var(--blue-300-rgb) / .34);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .24);
+  transition: background-color var(--dur-1) var(--ease-glass);
+}
+.ad-step__b:hover { background-color: rgb(var(--blue-100-rgb) / .48); }
+.ad-step__b[disabled] { opacity: .34; cursor: not-allowed; }
+.ad-step__v {
+  min-width: 52px;
+  text-align: center;
+  font-size: .95rem;
+  font-weight: var(--fw-semi);
+}
+.ad-step__v.is-full { color: var(--ball); }
+
+
+/* ---- toast -------------------------------------------------------------- */
+
+.ad-toast {
+  position: fixed;
+  left: var(--sp-4);
+  right: var(--sp-4);
+  bottom: calc(var(--sp-4) + env(safe-area-inset-bottom));
+  z-index: var(--z-toast);
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 11px 18px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  text-align: center;
+  color: var(--paper);
+  background: var(--ad-chrome);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .30), var(--sh-card);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur-2) var(--ease-out), visibility var(--dur-2);
+}
+.ad-toast.is-on { opacity: 1; visibility: visible; }
+.ad-toast.is-ok { box-shadow: inset 0 0 0 1px rgb(var(--ball-rgb) / .55), var(--sh-card); }
+.ad-toast.is-bad { box-shadow: inset 0 0 0 1px rgb(var(--ball-deep-rgb) / .85), var(--sh-card); }
+
+
+/* ---- wider screens -----------------------------------------------------
+   Nothing changes shape: a tool that behaves the same on both is one less
+   thing to learn. The column just gets a little air. */
+
+@media (min-width: 720px) {
+  :root { --ad-pad: var(--sp-5); }
+  .ad-panel { padding: var(--sp-5); }
+  .ad-tab { font-size: .88rem; }
+  .ad-brand { font-size: .8rem; letter-spacing: .16em; }
+  .ad-brand__sub {
+    display: inline;
+    margin-left: .7em;
+    font-family: var(--font-ui);
+    font-size: .68rem;
+    font-weight: var(--fw-semi);
+    letter-spacing: .18em;
+    color: var(--ball);
+  }
+  /* a games score does not need a 350px well */
+  .ad-ed__grid { grid-template-columns: 70px 150px 150px; justify-content: start; }
+  .ad-win__o { flex-direction: row; }
+  .ad-win__o .glass-btn { flex: 0 1 auto; max-width: 280px; }
+  .ad-act .glass-btn { flex: 0 0 auto; min-width: 180px; }
+}

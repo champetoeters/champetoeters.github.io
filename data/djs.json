@@ -1,0 +1,37 @@
+[
+  {
+    "name": "CHAMPETTER",
+    "tier": "headliner",
+    "genre": "Feest & Foute Hits",
+    "start": "23:30",
+    "end": "02:00"
+  },
+  {
+    "name": "AURELIA",
+    "tier": "headliner",
+    "genre": "Melodic Techno",
+    "start": "22:00",
+    "end": "23:30"
+  },
+  {
+    "name": "NOVA SCHELDT",
+    "tier": "main",
+    "genre": "Afro House",
+    "start": "20:30",
+    "end": "22:00"
+  },
+  {
+    "name": "FLOR & STEIN",
+    "tier": "main",
+    "genre": "Nu-Disco",
+    "start": "19:00",
+    "end": "20:30"
+  },
+  {
+    "name": "OSTEND SOUND",
+    "tier": "opener",
+    "genre": "Coastal House",
+    "start": "17:30",
+    "end": "19:00"
+  }
+]

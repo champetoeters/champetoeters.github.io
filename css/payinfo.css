@@ -1,0 +1,193 @@
+/* payinfo.css — the payment panel (js/payinfo.js). Shared by register.html and
+   tickets.html. Depends on tokens.css + base.css + glass.css.
+
+   ONE surface, ONE radius: the panel is a .glass--panel and the only other
+   corner in it is the QR tile, which is an object lying on the pane (--r-well),
+   not a nested frame. No backdrop-filter of its own, no image, no animation.
+
+   Every view on both pages has to fit 390×844 on its own, so this panel is
+   sized by what fits: rows above the code on a phone, side by side from 430px
+   of panel width (container query — it follows the panel, not the viewport). */
+
+.pay {
+  position: relative;
+  width: 100%;
+  container-type: inline-size;
+}
+
+/* Zero-specificity stand-in so the panel is still legible without glass.css. */
+:where(.pay) {
+  background: var(--g-fill-panel, rgb(13 22 55 / .16));
+  border-radius: var(--r-2xl);
+  padding: clamp(22px, 3vw, 40px);
+}
+
+.pay > * { margin: 0; }
+
+.pay__eyebrow { color: var(--paper-dim); }
+
+.pay__title {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4.4vw, 2.1rem);
+  font-weight: var(--fw-bold);
+  letter-spacing: .02em;
+  line-height: 1.1;
+  color: var(--paper);
+}
+/* A focus TARGET, not a tab stop: focused when the view opens so a screen
+   reader lands on the heading. A ring here would read as a stray box. */
+.pay__title:focus, .pay__title:focus-visible { outline: none; }
+.pay__amt { color: var(--ball); white-space: nowrap; }
+
+.pay__body {
+  display: grid;
+  gap: clamp(16px, 2.4vw, 22px);
+  margin-top: clamp(16px, 2.4vw, 24px);
+}
+@container (min-width: 430px) {
+  .pay__body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--sp-5);
+  }
+}
+
+/* ---- what to type into your bank app ------------------------------------- */
+
+.pay__rows { display: grid; gap: clamp(12px, 1.8vw, 18px); align-content: start; }
+.pay__row { min-width: 0; }
+
+.pay__k {
+  font-family: var(--font-ui);
+  font-size: .7rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgb(var(--paper-rgb) / .8);
+}
+
+.pay__v {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 3.6vw, 1.3rem);
+  letter-spacing: .05em;
+  color: var(--paper);
+}
+
+.pay__vline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.pay__iban { cursor: text; overflow-wrap: anywhere; }
+.pay__ref { color: var(--ball); }
+
+.pay__sub {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--paper-mute);
+  overflow-wrap: anywhere;
+}
+
+/* Stands where the number will be, once the club has one. */
+.pay__note {
+  margin-top: 5px;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--paper-dim);
+}
+
+/* The copy button is secondary next to the panel's one primary action, so it is
+   a pill hairline and nothing more. 44px target on a phone (§9). */
+.pay__copy {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-ui);
+  font-size: .72rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: rgb(2 5 16 / .34);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .38);
+  cursor: pointer;
+  transition: background-color var(--dur-1) linear, color var(--dur-1) linear;
+}
+.pay__copy:hover { background: rgb(var(--haze-rgb) / .18); }
+.pay__copy:focus-visible { outline: 2px solid var(--ball); outline-offset: 2px; }
+.pay__copy.is-copied {
+  color: var(--navy-900);
+  background: var(--ball);
+  box-shadow: none;
+}
+@media (pointer: coarse) { .pay__copy { min-height: 44px; } }
+
+/* ---- the code ------------------------------------------------------------ */
+
+.pay__qr {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  align-content: start;
+}
+
+/* A printed code lying on the pane: paper, a quiet zone drawn by the SVG
+   itself, and one soft contact shadow. Never a second frosted frame. */
+.pay__tile {
+  width: 132px;
+  height: 132px;
+  border-radius: var(--r-well);
+  background: var(--paper);
+  box-shadow: 0 10px 24px -14px rgb(0 0 0 / .9),
+              inset 0 0 0 1px rgb(13 22 55 / .12);
+}
+.pay__tile svg { display: block; width: 100%; height: 100%; border-radius: inherit; }
+
+/* No IBAN yet: a calm empty tile, never a code that cannot be scanned. */
+.pay__tile--soon {
+  display: grid;
+  place-items: center;
+  background: rgb(2 5 16 / .34);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .28);
+}
+.pay__tile--soon span {
+  font-family: var(--font-ui);
+  font-size: .66rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--paper-mute);
+}
+
+.pay__hint {
+  max-width: 22ch;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  text-align: center;
+  color: var(--paper-mute);
+}
+
+/* ---- and you can just pay at the door ------------------------------------ */
+
+.pay__alt {
+  margin-top: clamp(16px, 2.4vw, 24px);
+  padding-top: clamp(12px, 1.8vw, 18px);
+  border-top: 1px solid rgb(var(--haze-rgb) / .18);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: rgb(var(--paper-rgb) / .82);
+}
+
+.pay__sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

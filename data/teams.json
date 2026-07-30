@@ -1,0 +1,158 @@
+[
+  {
+    "id": "t01",
+    "group": "A",
+    "confirmed": true,
+    "players": [
+      "Milan Verhoeven",
+      "Jonas Coppens"
+    ],
+    "club": "TC Leiemeers"
+  },
+  {
+    "id": "t02",
+    "group": "B",
+    "confirmed": true,
+    "players": [
+      "Margot Peeters",
+      "Wout Cools"
+    ],
+    "club": "Waregem Padel"
+  },
+  {
+    "id": "t03",
+    "group": "C",
+    "confirmed": true,
+    "players": [
+      "Vic Hermans",
+      "Jonas Janssens"
+    ],
+    "club": "Roeselare Padel"
+  },
+  {
+    "id": "t04",
+    "group": "D",
+    "confirmed": true,
+    "players": [
+      "Amber Lambert",
+      "Finn Vandewalle"
+    ],
+    "club": "Roeselare Padel"
+  },
+  {
+    "id": "t05",
+    "group": "A",
+    "confirmed": true,
+    "players": [
+      "Noah Simon",
+      "Lise Van Damme"
+    ],
+    "club": "TC Leiemeers"
+  },
+  {
+    "id": "t06",
+    "group": "B",
+    "confirmed": true,
+    "players": [
+      "Finn Vermeulen",
+      "Fien Segers"
+    ],
+    "club": "Roeselare Padel"
+  },
+  {
+    "id": "t07",
+    "group": "C",
+    "confirmed": true,
+    "players": [
+      "Lotte Verhelst",
+      "Emma Declercq"
+    ],
+    "club": "Izegem Racket"
+  },
+  {
+    "id": "t08",
+    "group": "D",
+    "confirmed": true,
+    "players": [
+      "Kobe Vanden Berghe",
+      "Nina De Smet"
+    ],
+    "club": "Menen Padel"
+  },
+  {
+    "id": "t09",
+    "group": "A",
+    "confirmed": true,
+    "players": [
+      "Seppe Boonen",
+      "Elise Maes"
+    ],
+    "club": "Padel Kortrijk"
+  },
+  {
+    "id": "t10",
+    "group": "B",
+    "confirmed": true,
+    "players": [
+      "Camille Willems",
+      "Hanne Wouters"
+    ],
+    "club": "TC Leiemeers"
+  },
+  {
+    "id": "t11",
+    "group": "C",
+    "confirmed": true,
+    "players": [
+      "Noor Deprez",
+      "Noor Vanhoutte"
+    ],
+    "club": "Izegem Racket"
+  },
+  {
+    "id": "t12",
+    "group": "D",
+    "confirmed": true,
+    "players": [
+      "Julie Depuydt",
+      "Mathis De Ridder"
+    ],
+    "club": "Padel Kortrijk"
+  },
+  {
+    "id": "t13",
+    "group": "A",
+    "confirmed": true,
+    "players": [
+      "Kobe Dubois",
+      "Arne Van Acker"
+    ],
+    "club": "Waregem Padel"
+  },
+  {
+    "id": "t14",
+    "group": "B",
+    "confirmed": true,
+    "players": [
+      "Noor Michiels",
+      "Thibault De Clercq"
+    ],
+    "club": "Harelbeke Padel"
+  },
+  {
+    "id": "t15",
+    "group": "C",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t16",
+    "group": "D",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  }
+]

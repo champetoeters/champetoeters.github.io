@@ -1,0 +1,151 @@
+<!--
+  register — team entry, in three views: the form, then how to pay, then the
+  confirmation. Each view fits one phone screen on its own (390×844); only the
+  form view keeps the page header, so the flow never grows a scrollbar.
+
+  Nothing here can print a confirmation: the done view is revealed by
+  js/register.js only after the backend answered ok (backend/API.md).
+-->
+<section id="register" class="section u-section" data-section="register" data-state="idle">
+  <div class="u-container u-container--narrow reg">
+
+    <!-- Every number here is written by register.js from data/event.json →
+         teamEntry. A count typed into markup goes stale. -->
+    <header class="reg__head">
+      <p class="u-eyebrow reg__eyebrow" data-reg="eyebrow"></p>
+      <h2 class="u-display reg__title" id="reg-title">Schrijf je team in</h2>
+      <!-- What the €50 buys, in one line — written by register.js from
+           data/event.json → teamEntry (price + includes). -->
+      <p class="reg__gets" data-reg="gets"></p>
+      <p class="reg__slots">
+        <span class="reg__slots-w" data-reg="slots-pre"></span>
+        <span class="reg__slots-n u-tabular" data-reg="slots-n"></span>
+        <span class="reg__slots-w" data-reg="slots-label"></span>
+      </p>
+    </header>
+
+    <div class="reg__main">
+
+      <!-- Speech only, and outside every view so a message still announces once
+           the view it came from is hidden. The visible summary is rebuilt on
+           every pass, so it cannot double as the live region. -->
+      <p class="reg-sr" role="alert" data-reg="sr-alert"></p>
+      <p class="reg-sr" role="status" aria-live="polite" aria-atomic="true" data-reg="sr-status"></p>
+
+      <!-- ---------- 1. the form ---------- -->
+      <div class="reg-view" data-view="form">
+        <form class="reg-form glass glass--panel glass--edge" novalidate autocomplete="on"
+              aria-labelledby="reg-title" data-reg="form">
+          <i class="u-grain" aria-hidden="true"></i>
+
+          <p class="reg-live" data-reg="live"></p>
+
+          <!-- maxlength mirrors the scrub rules in js/register.js and the server:
+               60 / 60 / 160 / 40. -->
+          <div class="reg-fields">
+            <div class="reg-row">
+              <div class="reg-field glass-field">
+                <label class="glass-label" for="p1-name">Speler 1</label>
+                <input class="glass-input reg-input" id="p1-name" name="player1" type="text"
+                       maxlength="60" autocomplete="name" autocapitalize="words"
+                       aria-describedby="p1-name-err">
+                <p class="glass-error reg-error" id="p1-name-err" hidden></p>
+              </div>
+
+              <div class="reg-field glass-field">
+                <label class="glass-label" for="p2-name">Speler 2</label>
+                <input class="glass-input reg-input" id="p2-name" name="player2" type="text"
+                       maxlength="60" autocomplete="off" autocapitalize="words"
+                       aria-describedby="p2-name-err">
+                <p class="glass-error reg-error" id="p2-name-err" hidden></p>
+              </div>
+            </div>
+
+            <div class="reg-row">
+              <div class="reg-field glass-field">
+                <label class="glass-label" for="reg-email">E-mail</label>
+                <input class="glass-input reg-input" id="reg-email" name="email" type="email"
+                       maxlength="160" inputmode="email" autocomplete="email" spellcheck="false"
+                       aria-describedby="reg-email-err">
+                <p class="glass-error reg-error" id="reg-email-err" hidden></p>
+              </div>
+
+              <div class="reg-field glass-field">
+                <label class="glass-label" for="reg-tel">Gsm</label>
+                <input class="glass-input reg-input u-tabular" id="reg-tel" name="phone" type="tel"
+                       maxlength="40" inputmode="tel" autocomplete="tel"
+                       aria-describedby="reg-tel-err">
+                <p class="glass-error reg-error" id="reg-tel-err" hidden></p>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="glass-btn glass-btn--primary reg-btn"
+                  data-reg="submit">Inschrijvingen nog niet open</button>
+
+          <div class="reg-processing" data-reg="processing" hidden>
+            <span class="reg-spinner" aria-hidden="true"></span>
+            <p class="reg-processing__t">Versturen…</p>
+          </div>
+        </form>
+      </div>
+
+      <!-- ---------- 1b. volzet ----------
+           Shown INSTEAD of the form when the live draw has no places left, so
+           nobody types four fields to be told afterwards. register.js writes the
+           count and reveals this view; it never appears on a build that has no
+           API to ask (that state is "nog niet open", a different sentence). -->
+      <div class="reg-view reg-view--flow" data-view="full" hidden>
+        <div class="reg-full glass glass--panel glass--edge">
+          <i class="u-grain" aria-hidden="true"></i>
+
+          <p class="u-eyebrow reg-full__eyebrow" data-reg="full-eyebrow"></p>
+          <h2 class="reg-full__title" tabindex="-1" data-reg="full-title">Volzet</h2>
+          <p class="reg-full__lead" data-reg="full-lead"></p>
+        </div>
+
+        <a class="glass-btn glass-btn--primary reg-btn" href="tickets.html"
+           data-reg="full-tickets">Kom supporteren — open air ticket €12</a>
+        <a class="reg-full__home" href="index.html">Terug naar de startpagina</a>
+      </div>
+
+      <!-- ---------- 2. how to pay — js/payinfo.js fills the panel ---------- -->
+      <div class="reg-view reg-view--flow" data-view="pay" hidden>
+        <!-- js/payinfo.js adds .pay .glass .glass--panel here; --edge stays. -->
+        <div class="glass--edge" data-reg="pay"></div>
+        <button type="button" class="glass-btn glass-btn--primary reg-btn"
+                data-reg="pay-ok">Oké, begrepen</button>
+      </div>
+
+      <!-- ---------- 3. confirmed ----------
+           Only ever revealed after the backend answered ok — there is no other
+           code path into this view, and there must never be. -->
+      <div class="reg-view reg-view--flow" data-view="done" hidden>
+        <div class="reg-done glass glass--panel glass--edge">
+          <i class="u-grain" aria-hidden="true"></i>
+
+          <p class="u-eyebrow reg-done__eyebrow">
+            <span class="reg-done__tick" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" focusable="false">
+                <path d="M5 12.5 10 17.5 19 7" fill="none" stroke="currentColor"
+                      stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Bevestigd
+          </p>
+          <h2 class="reg-done__title" tabindex="-1" data-reg="done-title">Jullie zijn ingeschreven</h2>
+          <p class="reg-done__lead" data-reg="done-lead"></p>
+          <p class="reg-done__lead">We hebben je een bevestiging gemaild — daarin staat alles nog eens.</p>
+          <!-- The payment details survive the payment view: bedrag · rekening ·
+               mededeling, written by register.js via PayInfo.recap(). -->
+          <p class="reg-done__pay" data-reg="done-pay"></p>
+          <p class="reg-done__foot" data-reg="done-contact"></p>
+        </div>
+
+        <a class="glass-btn glass-btn--primary reg-btn" href="index.html">Terug naar de startpagina</a>
+      </div>
+
+    </div>
+
+  </div>
+</section>

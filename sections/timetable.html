@@ -1,0 +1,52 @@
+<section id="timetable" class="section tt-section" data-section="timetable">
+  <!-- Two static plates, both behind the content, neither blurred and neither
+       animated (BRIEF §4). .tt-plate seats the sheet under the hero's frame;
+       .tt-dusk lifts the last band of the section into the first colour of the
+       DJ bill below, so the two sections read as one evening rather than two
+       stacked panels. -->
+  <div class="tt-plate" aria-hidden="true"></div>
+  <div class="tt-dusk" aria-hidden="true"></div>
+  <i class="u-grain tt-grain" aria-hidden="true"></i>
+
+  <div class="u-container tt">
+
+    <header class="tt-head">
+      <p class="u-eyebrow u-eyebrow--dim tt-eyebrow">Zaterdag 5 september 2026</p>
+      <h2 class="u-display tt-title">
+        <span class="tt-title__a">Wie speelt</span>
+        <span class="u-display--sub tt-title__b">waar</span>
+      </h2>
+    </header>
+
+    <div class="tt-body">
+
+      <div class="tt-switch" data-tt-switch role="group" aria-label="Kies een baan"></div>
+
+      <div class="tt-gridwrap">
+        <!-- The explicit roles are load-bearing: below 900px timetable.css sets
+             display:block on the table and its parts, which drops the native
+             table semantics. Do not remove them as "redundant ARIA". -->
+        <table class="tt-grid" role="table" data-tt-grid
+               aria-label="Wedstrijdschema — drie banen, 14:00 tot 20:30">
+          <colgroup>
+            <col class="tt-col--time">
+            <col class="tt-col--court">
+            <col class="tt-col--court">
+            <col class="tt-col--court">
+          </colgroup>
+          <thead role="rowgroup" data-tt-thead></thead>
+          <tbody role="rowgroup" data-tt-tbody></tbody>
+        </table>
+      </div>
+
+      <aside class="tt-venue" data-tt-venue data-mode="plan">
+        <div class="tt-venue__stage">
+          <div class="tt-venue__plan" data-tt-plan aria-hidden="true"></div>
+          <canvas class="tt-venue__canvas" data-tt-canvas width="740" height="600"
+                  role="img" aria-label="3D-beeld van de drie padelbanen op TC Leiemeers"></canvas>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>

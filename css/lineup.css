@@ -1,0 +1,438 @@
+/* ============================================================================
+   lineup — "& FRIENDS". The bill of performers. Owned by the lineup builder.
+
+   ONE JOB (BRIEF §0.1): who is playing music, and when. Time, name and genre
+   are printed like a programme — nothing to operate.
+
+   Brand (BRIEF §1/§5): cobalt monochrome with exactly ONE accent, tennis-ball
+   green.
+
+   ALL FIVE ACTS ARE IDENTICAL (client, r10): one size, one background, one
+   colour of line. There is no headliner and no per-entry plate — the value
+   gradient down the night belongs to .ln__sky, once, for the whole section.
+
+   Below 1024px the entry is CENTRED and the vertical spine is gone: time, name
+   and genre stack on the centre line and the horizontal hairline between
+   entries is the only rule. The spine returns at ≥1024px, where the time
+   gutter gives it a column to sit in.
+
+   Perf (§4): nothing blurred ever animates; transform/opacity only; reveals
+   come from IntersectionObserver. Glass fallbacks live inside :where() so they
+   carry zero specificity and the real glass.css always wins.
+   ========================================================================= */
+
+#lineup {
+  /* rgb triplets, so alpha can vary per use: rgb(var(--x) / a).
+     Sampled from refs/brand-poster.png, per BRIEF §5. */
+  --ln-paper:  244 247 251;
+  --ln-haze:   124 153 182;
+  --ln-ball:   198 220 99;      /* THE accent. Used sparingly. */
+
+  --ln-display: var(--font-display, "Playfair Display", "Didot", "Bodoni 72",
+                 "Bodoni MT", "Times New Roman", serif);
+  --ln-ui: var(--font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+           Inter, system-ui, sans-serif);
+
+  --ln-rail: 22px;
+  --ln-body-pad: clamp(10px, 2.2vw, 16px);
+  /* --ln-margin, the desktop time gutter, is declared in the ≥1024px block. */
+
+  /* Two lifted tints, both still the one cobalt hue. Measured off rendered
+     pixels, hairline letterspaced caps never reach their nominal colour, so
+     small text needs a brighter value AND ≥12px AND more weight to hit 4.5:1. */
+  --ln-haze-lift: 186 206 230;   /* the display italic ampersand */
+  --ln-micro:     212 228 246;   /* letterspaced caps: the genre */
+  --ln-faint: rgb(var(--ln-paper) / .62);
+
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  color: rgb(var(--ln-paper));
+  font-family: var(--ln-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(#lineup) { padding-block: clamp(72px, 11vw, 148px) clamp(40px, 6vw, 80px); }
+
+/* ---------- the night, in one hue -----------------------------------------
+   The descent into the night happens ABOVE the bill: the linear ramp spends
+   its value between 0% and ~28%, behind the "& FRIENDS" headline, and then
+   holds. Below that the five acts all sit on the same ground.
+
+   This matters more than it looks. When the ramp ran the full height, the last
+   act landed on the darkest end of it and read as its own band — the client
+   flagged exactly that. Any stop added past ~30% will bring it straight back,
+   so keep the tail flat and let the horizon glow carry the depth. */
+#lineup .ln__sky {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 30% at 78% -8%, rgb(124 153 182 / .22), rgb(124 153 182 / 0) 62%),
+    radial-gradient(100% 24% at 6% 6%,   rgb(58 90 151 / .30),  rgb(58 90 151 / 0) 66%),
+    /* one very broad wash, wider than the whole bill, so it cannot fall off
+       between two acts and single one of them out */
+    radial-gradient(150% 120% at 88% 62%, rgb(34 59 122 / .26), rgb(34 59 122 / 0) 88%),
+    linear-gradient(180deg, #182A64 0%, #142352 12%, #101C46 22%, #0F1A3F 30%, #0F193C 100%);
+}
+
+/* Film grain — the poster is photographic, not vector-flat. */
+#lineup .ln__grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .34;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* ---------- container ----------------------------------------------------- */
+:where(#lineup) :where(.u-container) {
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: clamp(12px, 4vw, 64px);
+}
+#lineup .ln__inner { position: relative; }
+
+/* ---------- glass fallbacks (zero specificity — glass.css wins) ----------- */
+:where(#lineup) :where(.glass--pill) {
+  background: rgb(20 39 96 / .55);
+  border: 1px solid rgb(var(--ln-paper) / .18);
+  border-radius: 999px;
+}
+:where(#lineup) :where(.u-tabular) { font-variant-numeric: tabular-nums; }
+
+/* ============================ HEADER ====================================== */
+#lineup .ln__head {
+  max-width: 46rem;
+  margin-bottom: clamp(40px, 6vw, 78px);
+}
+
+#lineup .ln__title {
+  margin: 0;
+  container-type: inline-size;
+  font-family: var(--ln-display);
+  font-weight: 700;
+  line-height: .88;
+  text-transform: uppercase;
+}
+#lineup .ln__title-amp {
+  display: block;
+  font-size: clamp(30px, 8vw, 62px);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  margin-bottom: .06em;
+  color: rgb(var(--ln-haze-lift) / .9);
+}
+#lineup .ln__title-big {
+  display: block;
+  /* "FRIENDS" is 7 characters — fit it to the column, cap it at 168px */
+  font-size: min(calc(1.28 * 100cqi / 7), 12.5rem);
+  letter-spacing: .045em;
+  margin-right: -.045em;
+  /* SOLID PAINT. background-clip:text is banned site-wide (BRIEF §0, remark 8):
+     it fails silently and has shipped an invisible headline twice. */
+  background-image: none;
+  color: rgb(var(--ln-paper));
+  -webkit-text-fill-color: rgb(var(--ln-paper));
+  text-shadow: 0 4px 40px rgb(6 12 34 / .55);
+}
+
+/* ============================ THE BILL ==================================== */
+#lineup .ln__list { margin: 0; padding: 0; list-style: none; }
+#lineup .ln__loading {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--ln-faint);
+  font-size: 14px;
+}
+
+/* ---------- the entry, centred (base = every width below 1024px) ----------
+   One column. No rail column at all, so nothing can be drawn beside — or
+   through — the name. The desktop band re-adds the columns at ≥1024px. */
+#lineup .ln__set {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "when" "body" "genre";
+  justify-items: center;
+  text-align: center;
+  padding-block: clamp(26px, 5vw, 44px);
+}
+#lineup .ln__rail  { grid-area: rail; display: none; }
+#lineup .ln__when  { grid-area: when; }
+#lineup .ln__body  { grid-area: body; }
+#lineup .ln__genre { grid-area: genre; }
+
+/* engraved table rule above every entry — the ONLY line in the mobile layout,
+   so it is symmetric about the centre the type is set on. */
+#lineup .ln__set::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgb(var(--ln-paper) / 0), rgb(var(--ln-paper) / .22) 18%,
+    rgb(var(--ln-paper) / .22) 82%, rgb(var(--ln-paper) / 0));
+}
+#lineup .ln__set:first-child::before {
+  background: linear-gradient(90deg,
+    rgb(var(--ln-paper) / 0), rgb(var(--ln-paper) / .34) 18%,
+    rgb(var(--ln-paper) / .34) 82%, rgb(var(--ln-paper) / 0));
+}
+
+/* No .ln__bloom. Every act sat on its own tinted, grained plate and the last
+   one resolved to a visibly lighter silver band (client, r10). Made uniform,
+   the plates added nothing but five repeated seams over a sky that is already
+   graded — so they are gone, markup and all. */
+
+/* ---------- the spine: one hairline, one colour, desktop only ------------- */
+#lineup .ln__rail { position: relative; z-index: 1; }
+#lineup .ln__rail::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--ln-rail) / 2);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -.5px;
+  background: rgb(var(--ln-haze) / .38);
+}
+#lineup .ln__set:first-child .ln__rail::before { top: 14px; }
+#lineup .ln__set:last-child  .ln__rail::before { bottom: auto; height: 100%; }
+
+
+/* ---------- time column ----------------------------------------------------
+   ONE FAMILY FOR THE WHOLE TIME LINE (BRIEF §0, remark 7). The display face is
+   declared once, here on .ln__when, so the start, the dash and the end time can
+   never drift into different faces. Only .ln__live opts out — it is a label,
+   not a time. */
+#lineup .ln__when {
+  position: relative;
+  z-index: 1;
+  font-family: var(--ln-display);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: center;   /* centred layout; desktop resets to the gutter */
+  gap: 6px 12px;
+  margin: 0 0 clamp(10px, 1.8vw, 14px);
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1);
+}
+#lineup .ln__start {
+  font-size: clamp(20px, 5.2vw, 27px);
+  letter-spacing: .04em;
+  color: rgb(var(--ln-paper) / .96);
+}
+/* Kept at ~2/3 of the start time, not footnote-sized: how long a set runs is a
+   fact visitors want, so it has to read as part of the same line. */
+#lineup .ln__till {
+  font-size: clamp(15px, 3.9vw, 20px);
+  letter-spacing: .04em;
+  color: rgb(var(--ln-paper) / .88);
+  margin-left: -2px;
+}
+
+/* The sets are never named — no label may be reintroduced in this gutter. */
+
+#lineup .ln__live {
+  font-family: var(--ln-ui);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  font-size: 12px;   /* the section's floor for micro-caps */
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgb(var(--ln-ball));
+  border-color: rgb(var(--ln-ball) / .5);
+}
+#lineup .ln__live[hidden] { display: none; }
+#lineup .ln__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(var(--ln-ball));
+  box-shadow: 0 0 9px rgb(var(--ln-ball) / .9);
+  animation: ln-pulse 2s ease-in-out infinite;
+}
+@keyframes ln-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .3; transform: scale(.68); }
+}
+
+/* ---------- body ---------------------------------------------------------- */
+#lineup .ln__body {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+/* the name is its own query container: 100cqi is the width the name is fitted
+   to, so it must be the full measure the entry is allowed to use */
+#lineup .ln__head3 { container-type: inline-size; }
+#lineup .ln__head3,
+#lineup .ln__genre {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition: opacity .66s cubic-bezier(.22,.61,.36,1), transform .66s cubic-bezier(.22,.61,.36,1);
+}
+#lineup .ln__set.is-in .ln__when  { opacity: 1; transform: none; }
+#lineup .ln__set.is-in .ln__head3 { opacity: 1; transform: none; transition-delay: .07s; }
+#lineup .ln__set.is-in .ln__genre { opacity: 1; transform: none; transition-delay: .15s; }
+
+/* ---------- the name: Didone caps, painted solid -------------------------- */
+#lineup .ln__head3 { margin: 0; }
+
+#lineup .ln__name {
+  display: block;
+  padding: 4px 0 6px;
+  font-family: var(--ln-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ls, .035em);
+  margin-right: calc(-1 * var(--ls, .035em));
+  line-height: .94;
+  /* ONE LINE, EVERY WIDTH, ONE SIZE. --cl is set once on .ln__list by
+     js/lineup.js: the LONGEST name measured on a single line. Fitting against
+     the full line (not the longest word) is what keeps "NOVA SCHELDT" from
+     stacking; fitting every act against the same --cl is what makes all five
+     identical at every width instead of only where --cap happens to bind. */
+  font-size: min(calc(var(--k, 1.3) * 100cqi / var(--cl, 10)), var(--cap, 3rem));
+  /* SOLID PAINT — no background-clip:text (BRIEF §0, remark 8; banned site-wide,
+     it fails with no error and has shipped invisible twice). The value step down
+     the letterforms is carried by --nv on a plain fill instead. */
+  background-image: none;
+  color: rgb(var(--ln-paper) / var(--nv, .95));
+  -webkit-text-fill-color: rgb(var(--ln-paper) / var(--nv, .95));
+  text-shadow: 0 3px 26px rgb(5 10 30 / .6);
+}
+/* inline at EVERY width — the words of a name stay on one line together */
+#lineup .ln__w { display: inline; }
+#lineup .ln__hy { display: none; }
+#lineup .ln__w--kick {
+  font-size: .3em;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: .3em;
+  line-height: 1.2;
+  margin-right: .4em;
+  text-transform: uppercase;
+  color: rgb(var(--ln-haze) / .9);
+  background: none;
+  -webkit-text-fill-color: rgb(var(--ln-haze) / .9);
+  text-shadow: none;
+}
+
+/* --k is the fit coefficient: 1 / (widest Didone cap advance + letterspacing).
+   One size for every act (client: there is no headliner) — the cap sits below
+   every act's --cl fit at every width, so all five render identically. */
+#lineup .ln__set { --k: 1.22; --cap: clamp(2rem, 9vw, 3.6rem); --nv: .95; }
+
+/* The list used to end on the closer's extra air; with uniform acts the last
+   row keeps only a small tail so the section closes right under the genre. */
+#lineup .ln__set:last-child { padding-block-end: clamp(10px, 2vw, 18px); }
+
+/* The name used to be dragged left over the rail with a negative margin so a
+   stacked, word-fitted name could reach the page edge. Both are gone: the name
+   is one line, fitted to the centred measure, and never crosses a rule. */
+
+/* ---------- genre --------------------------------------------------------- */
+#lineup .ln__genre {
+  margin: clamp(10px, 1.8vw, 16px) 0 0;
+  font-size: clamp(12px, 3.1vw, 13px);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgb(var(--ln-micro));
+}
+
+/* ---------- on stage now --------------------------------------------------
+   The live act is marked by the "Speelt nu" pill alone. It used to also get a
+   brighter plate, but a per-entry background is exactly what the client struck
+   — so the state is carried by the pill, which sits on the centre line with
+   the time on mobile and beside it in the gutter on desktop. */
+
+/* ============================ DESKTOP =====================================
+   ≥1024px every act is ONE horizontal band — when | name | genre on a single
+   line — so the header and three acts fit the first screen and all five inside
+   1.6 of them. Stacking them in a narrow column put exactly one act on a
+   1440×900 screen. */
+@media (min-width: 1024px) {
+  #lineup {
+    --ln-rail: 36px;
+    /* Must hold "17:30 – 19:00" on ONE line at every desktop width, or the band
+       grows a second time-line and the row bloats. Measured ink is 150px at
+       1440 and ~125px at 1024, plus the 24px rail padding. */
+    --ln-margin: clamp(180px, 13.6vw, 192px);
+    /* Both side columns stop growing before the measure does, so the name never
+       shrinks as the window widens. */
+    --ln-genre: clamp(124px, 13vw, 178px);
+    padding-block: 56px clamp(40px, 4.5vw, 72px);
+  }
+
+  #lineup .ln__head {
+    max-width: none;
+    margin-bottom: 32px;
+  }
+  #lineup .ln__title-amp { font-size: 52px; }
+
+  /* ---- the band ----------------------------------------------------------- */
+  #lineup .ln__set {
+    grid-template-columns:
+      var(--ln-margin) var(--ln-rail) minmax(0, 1fr) var(--ln-genre);
+    grid-template-areas: "when rail body genre";
+    align-items: center;
+    justify-items: stretch;
+    text-align: left;
+    padding-block: 40px;
+  }
+
+  /* the rule runs the full band again, weighted to the left where the row starts */
+  #lineup .ln__set::before {
+    background: linear-gradient(90deg,
+      rgb(var(--ln-paper) / .30), rgb(var(--ln-paper) / .12) 46%, rgb(var(--ln-paper) / 0) 94%);
+  }
+  #lineup .ln__set:first-child::before {
+    background: linear-gradient(90deg,
+      rgb(var(--ln-paper) / .5), rgb(var(--ln-paper) / .16) 46%, rgb(var(--ln-paper) / 0) 94%);
+  }
+
+  /* the spine comes back: here it has a column of its own between the time
+     gutter and the name, so it can never touch a letterform */
+  #lineup .ln__rail { display: block; align-self: stretch; }
+  #lineup .ln__set:first-child .ln__rail::before { top: 50%; }
+
+  /* the time sits in its gutter, reading toward the spine */
+  #lineup .ln__when {
+    justify-content: flex-start;
+    margin-bottom: 0;
+    padding-left: clamp(10px, 2.2vw, 16px);
+  }
+
+  #lineup .ln__body  { padding-left: var(--ln-body-pad); }
+  #lineup .ln__genre { margin-top: 0; padding-left: var(--ln-body-pad); }
+}
+
+/* ============================ REDUCED MOTION ============================== */
+@media (prefers-reduced-motion: reduce) {
+  #lineup *,
+  #lineup *::before,
+  #lineup *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  #lineup .ln__when,
+  #lineup .ln__head3,
+  #lineup .ln__genre { opacity: 1; transform: none; }
+}

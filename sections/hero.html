@@ -1,0 +1,110 @@
+<!-- Copy is Dutch (BRIEF §0). CHAMPETOETERS, & FRIENDS and À KUURNE-BELGIQUE
+     stay as they are — they are the logotype, not copy. lang="nl" is set here
+     because index.html is lang="en"; the French crest line carries its own. -->
+<section id="hero" class="section hero" data-section="hero" lang="nl">
+
+  <!-- Ground is drawn, never photographed (BRIEF §0). Order matters: the
+       drifting glows sit BELOW .hero__vignette, whose shaped pools sit under
+       the text — that is what stops a glow out-shining the name.
+
+       Each glow is two elements: the span drifts (slow, minutes-long) and its
+       ::before pulses (seconds-long, on the beat). Two clocks cannot share one
+       `transform`, which is the whole reason for the pseudo-element. -->
+  <div class="hero__bg" aria-hidden="true">
+    <div class="hero__light"></div>
+    <div class="hero__lights">
+      <span class="hero__glow hero__glow--a"></span>
+      <span class="hero__glow hero__glow--b"></span>
+      <span class="hero__glow hero__glow--c"></span>
+    </div>
+    <!-- Bouncing padel balls were prototyped here and cut. See the note in
+         hero.css §1. -->
+    <div class="hero__vignette"></div>
+    <div class="hero__frame"></div>
+  </div>
+
+  <div class="u-container u-container--wide hero__wrap">
+    <div class="hero__inner">
+
+      <!-- Crest: a grande-marque label, played straight. The name is
+           deliberately absent — the wordmark below carries it, and printing it
+           twice in one viewport is what BRIEF §0 exists to stop. -->
+      <div class="hero__crest">
+        <svg class="hero__crown" viewBox="0 0 48 34" width="34" height="24" fill="currentColor" aria-hidden="true" focusable="false">
+          <circle cx="5.5" cy="7" r="2.9"/>
+          <circle cx="24" cy="3.4" r="3.4"/>
+          <circle cx="42.5" cy="7" r="2.9"/>
+          <path d="M4.2 11.2 L12.4 22.6 L24 8.6 L35.6 22.6 L43.8 11.2 L43.8 25.4 Q24 21.4 4.2 25.4 Z"/>
+          <rect x="3" y="27.4" width="42" height="4.6" rx="2.3"/>
+        </svg>
+        <span class="hero__crest-rule" aria-hidden="true"></span>
+        <span class="hero__crest-sub" lang="fr">&Agrave; Kuurne&ndash;Belgique</span>
+      </div>
+
+      <!-- Wanneer en waar. Venue is just "Leiemeers": the crest one line above
+           already carries "Kuurne". -->
+      <p class="hero__stamp">
+        <span class="hero__stamp-i">5 sept 2026</span>
+        <span class="hero__stamp-i">Leiemeers</span>
+        <span class="hero__stamp-b u-tabular">14:00 <span class="hero__arrow" aria-hidden="true">&#8594;</span> 02:00</span>
+      </p>
+
+      <div class="hero__lockup">
+        <h1 class="hero__title">
+          <span class="hero__wordmark" data-hero="fit">Champetoeters</span>
+          <span class="hero__amp"><i aria-hidden="true">&amp;</i> Friends</span>
+        </h1>
+      </div>
+
+      <!-- One line, then one primary action (BRIEF §0 rule 2). Both hrefs are
+           real pages, not anchors. -->
+      <div class="hero__body">
+        <p class="hero__pitch">Openlucht en padel.</p>
+
+        <a class="glass-btn glass-btn--primary hero__cta" href="register.html">
+          Schrijf je team in
+        </a>
+
+        <p class="hero__slots">
+          <span class="hero__dot" aria-hidden="true"></span>
+          <span data-hero="slots-line">Nog
+            <b class="u-tabular" data-hero="slots">2</b> van de
+            <span class="u-tabular" data-hero="teams-total">16</span> plaatsen</span>
+        </p>
+
+        <p class="hero__alt">
+          <a class="hero__link" href="tickets.html">
+            Geen speler? Open air ticket &euro;12
+          </a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- The specular sheen. A narrow dark-grey band swept across a slab aimed at
+       the wordmark, in `mix-blend-mode: color-dodge`.
+
+       Dodge against a DARK source is a proportional multiply (×1.2 here), so
+       the lift it produces is proportional to what is already there: the white
+       glyphs clip to pure white, the navy ground moves by ~2/255. That is what
+       makes it read on the letters without being clipped to them — no
+       `background-clip: text` anywhere near it (base.css §7).
+
+       It has to be a child of #hero, not of the lockup: `.hero__inner` carries
+       `container-type`, which is layout containment, which is a stacking
+       context — inside it there is no navy in the backdrop to dodge against
+       and the band would composite as a dark smear instead.
+
+       Two plies. The gleam is always there and swells on the beat, in step
+       with the nearest light — that is the name continuously answering the
+       lights. The band is the event: one pass every twenty-four beats. -->
+  <div class="hero__sheen" aria-hidden="true">
+    <i class="hero__sheen-gleam"></i>
+    <i class="hero__sheen-band"></i>
+  </div>
+
+  <!-- Grain sits ABOVE the type on purpose: that is what puts grain inside the
+       letterforms, the way it falls on a photograph. -->
+  <div class="hero__film" aria-hidden="true"></div>
+</section>

@@ -1,0 +1,765 @@
+/* ============================================================================
+   hero.css — CHAMPETOETERS & FRIENDS, landing
+   Owned by: hero builder. Consumes tokens.css / base.css / glass.css.
+
+   Layers, back to front: ground light → drifting, pulsing accent glows →
+   three shaped scrims (one per text block) → frame → content → specular
+   sheen → film grain.
+
+   Perf (§4): no bitmap, no backdrop-filter, no fixed attachment. Every
+   animation on this page moves `transform` and `opacity` and nothing else —
+   no animated `filter`, nothing that can reach layout — and every one of them
+   lives inside `prefers-reduced-motion: no-preference`, together with the
+   `will-change` hints. A reduced-motion machine gets a still poster and no
+   compositor layers at all.
+
+   ---- The clock ------------------------------------------------------------
+   The lights, the sheen and the wordmark's breathe all count the same beat:
+   110 BPM, --hb-beat = 545.45ms. Nothing runs at one beat — that would be a
+   strobe. Periods are whole numbers of beats picked to be mutually awkward
+   (4 : 6 : 7), so the three glows swell against each other and only agree
+   again every 84 beats. That is what makes it read as music rather than as a
+   metronome.
+   ========================================================================= */
+
+#hero {
+  /* Consume the brand tokens; the fallbacks are the poster samples. */
+  --hb-navy-900: var(--navy-900, #0D1637);
+  --hb-ball:     var(--ball,     #C6DC63);
+  --hb-paper:    var(--paper,    #F4F7FB);
+  --hb-serif:    var(--font-display, "Playfair Display", "Didot", "Bodoni 72",
+                 "Bodoni MT", "Times New Roman", Times, serif);
+  --hb-ui:       var(--font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Inter, system-ui, sans-serif);
+
+  /* Frame geometry (BRIEF §0 item 2). The client runs macOS Tahoe, whose
+     window corners are large; a frame inset from that corner only reads
+     concentric when inner radius = outer radius − inset. The window radius is
+     the one unknown, so it is a token an integrator can correct in one place.
+     Corollary: the further in the frame sits, the tighter its corner has to
+     be, which is why the inset grows only modestly with the viewport. */
+  --macos-window-radius: 26px;
+  --hb-frame: 10px;
+  --hb-frame-radius: calc(var(--macos-window-radius, 26px) - var(--hb-frame));
+
+  /* 110 BPM. Every duration below is a whole number of these. */
+  --hb-beat: 545.45ms;
+
+  /* Optical centring. A geometrically centred block reads slightly low. This
+     is carried as extra padding under the column, so it lifts the composition
+     by half its value and cannot change the hero's height. */
+  --hb-lift: clamp(14px, 2.4vh, 30px);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  color: var(--hb-paper);
+  font-family: var(--hb-ui);
+  background-color: var(--hb-navy-900);
+}
+
+/* ======================================================= 1. The ground ==== */
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--hb-navy-900);
+}
+.hero__bg > div { position: absolute; inset: 0; }
+
+/* A cool bloom where the afternoon light rakes across the surface, and the
+   poster's falloff into shadow at the bottom corners. Shaped, not flat. */
+.hero__light {
+  background-image:
+    radial-gradient(58% 30% at 76% 2%,  rgb(228 240 255 / .20), transparent 72%),
+    radial-gradient(70% 40% at 12% 96%, rgb(6 11 32 / .42),     transparent 74%);
+}
+
+/* ---- Dancing lights (BRIEF §0 item 9) -----------------------------------
+   Three very soft glows in the accent green (--ball) plus one cool haze.
+   Each one carries TWO clocks:
+
+     drift  — half a minute long, wanders the glow around the ground. Ambient.
+     pulse  — a few seconds long, a swell with a hard attack and a long decay.
+              This is the beat.
+
+   They cannot share an element, because they both want `transform`, and the
+   second declaration would simply replace the first. So the span drifts and
+   its ::before — which is where the paint actually lives — pulses. Composing
+   them by nesting is also what keeps the swell proportional to the drift's
+   own scale instead of fighting it.
+
+   Softness is baked into the gradient stops — never an animated `filter`.
+   They are painted UNDER .hero__vignette, which is what guarantees nothing
+   brighter than the scrims can absorb ever passes beneath the wordmark.
+
+   The default state is static: motion is added only inside
+   `prefers-reduced-motion: no-preference`, and `will-change` with it, so a
+   reduced-motion machine gets no compositor layers and no ticking clock. */
+
+/* Placed by CENTRE (--g-cx / --g-cy) rather than by edge: --g-w is a share of
+   the hero's width and a percentage margin resolves against that same width on
+   both axes, so a glow lands in the same relative spot at 390 and at 1440.
+   Positioning by `left`/`top` alone does not — `top: %` is a share of the
+   height, and the two viewports have very different aspect ratios. */
+.hero__glow {
+  position: absolute;
+  left: var(--g-cx);
+  top: var(--g-cy);
+  width: var(--g-w);
+  aspect-ratio: 1;
+  margin-left: calc(var(--g-w) / -2);
+  margin-top: calc(var(--g-w) / -2);
+}
+
+/* --g-a is the alpha at the PEAK of the pulse. The still state holds
+   --hb-glow-rest below that, which is what makes the swell a swell rather
+   than a dimming; it is also the alpha a reduced-motion machine sees, and it
+   is tuned so that still frame matches the pre-pulse poster exactly. */
+.hero__glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: var(--hb-glow-rest, .87);
+  background-image: radial-gradient(closest-side,
+    rgb(var(--g-rgb) / var(--g-a)),
+    rgb(var(--g-rgb) / calc(var(--g-a) * .42)) 38%,
+    rgb(var(--g-rgb) / calc(var(--g-a) * .12)) 64%,
+    transparent 86%);
+}
+
+/* --ball #C6DC63 and --haze #7C99B6 as channel triplets, so the alpha can be
+   solved per glow. The two green cores idle in opposite corners and the haze
+   sits low, under the last line of copy — none of them parks on the wordmark. */
+.hero__glow--a { --g-rgb: 198 220  99; --g-a: .230; --g-w:  96%; --g-cx: 12%; --g-cy: 20%; }
+.hero__glow--b { --g-rgb: 198 220  99; --g-a: .207; --g-w:  78%; --g-cx: 90%; --g-cy: 72%; }
+.hero__glow--c { --g-rgb: 124 153 182; --g-a: .195; --g-w: 128%; --g-cx: 46%; --g-cy: 98%; }
+
+/* Translations are a share of each glow's own box, so the travel scales with
+   the glow. Three keyframes, not two, so the path wanders instead of sliding
+   back and forth along one line. */
+@keyframes hero-drift-a {
+  0%, 100% { transform: translate3d(-6%, -4%, 0)  scale(1);    }
+  30%      { transform: translate3d(16%, 10%, 0)  scale(1.16); }
+  62%      { transform: translate3d(8%, -12%, 0)  scale(.90);  }
+}
+@keyframes hero-drift-b {
+  0%, 100% { transform: translate3d(4%, 6%, 0)    scale(1.06); }
+  36%      { transform: translate3d(-14%, -10%, 0) scale(.90); }
+  68%      { transform: translate3d(-6%, 14%, 0)  scale(1.18); }
+}
+@keyframes hero-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0)      scale(1);    }
+  42%      { transform: translate3d(12%, -8%, 0)  scale(1.12); }
+  74%      { transform: translate3d(-10%, 5%, 0)  scale(.92);  }
+}
+
+/* The beat. Nine per cent of the cycle to swell, the rest of it to fall away —
+   that ratio is the whole difference between a light responding to a room and
+   a light blinking. The per-keyframe timing functions are what shape it: a
+   near-instant attack curve out of rest, then a long soft-landing curve back.
+   Peak scale is small (1.075) because these blobs are already enormous; on the
+   128% glow that is another 100px of reach at mobile width. */
+@keyframes hero-pulse {
+  0%   { opacity: .78; transform: scale(.982);
+         animation-timing-function: cubic-bezier(.12, .85, .30, 1); }
+  9%   { opacity: 1;   transform: scale(1.075);
+         animation-timing-function: cubic-bezier(.36, 0, .55, 1); }
+  48%  { opacity: .83; transform: scale(1.004);
+         animation-timing-function: ease-in-out; }
+  100% { opacity: .78; transform: scale(.982); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero__glow,
+  .hero__glow::before { will-change: transform, opacity; }
+
+  .hero__glow--a { animation: hero-drift-a 34s ease-in-out  -7s infinite; }
+  .hero__glow--b { animation: hero-drift-b 26s ease-in-out -13s infinite; }
+  .hero__glow--c { animation: hero-drift-c 39s ease-in-out  -3s infinite; }
+
+  /* 4, 6 and 7 beats. Coprime enough that the three never settle into a
+     pattern; the negative delays stop them from agreeing on the downbeat at
+     load, which is the one moment a visitor would notice them agreeing. */
+  .hero__glow--a::before { animation: hero-pulse calc(var(--hb-beat) * 4) linear  -0.4s infinite; }
+  .hero__glow--b::before { animation: hero-pulse calc(var(--hb-beat) * 6) linear  -1.9s infinite; }
+  .hero__glow--c::before { animation: hero-pulse calc(var(--hb-beat) * 7) linear  -3.1s infinite; }
+}
+
+/* ---- Padel balls: built, looked at, cut --------------------------------
+   Three balls were prototyped here on real ballistic arcs — a linear x on the
+   span against a quadratic y on a nested <i>, `alternate` supplying gravity by
+   replaying the deceleration to the apex backwards as the fall. The mechanism
+   was right and it cost nothing. It just looked bad.
+
+   At the size the composition can carry — 9 to 12px, dimmed to .4–.58 and sunk
+   under three scrims — a lime dot on a plain navy field does not read as a
+   padel ball. It reads as a dead pixel. At 1440 the field is wider and it
+   reads worse: one of them parked beside the CTA and looked exactly like dirt
+   on the monitor. Making them big enough to read as objects would have made
+   them the loudest thing in a hero whose whole argument is restraint, and a
+   still frame — which is what anyone sees first — cannot show an arc anyway.
+
+   The client's own instruction settles it: don't make it overcrowded. Three
+   specks of clutter is a worse trade than no balls. Cut, not deferred. */
+
+/* ---- The scrims ---------------------------------------------------------
+   Three shaped pools, one per text block, plus the poster's edge vignette.
+   Each is sized to the run it protects, so the ground still reads as a
+   surface between them rather than as a flat wash. The `-y` values are the
+   measured ink centre of each block as a percentage of viewport height —
+   move a block and its pool has to follow. */
+.hero__vignette {
+  background-image:
+    /* crest + date stamp */
+    radial-gradient(50% var(--hb-scrim-top-r, 16%) at 50% var(--hb-scrim-top-y, 29%),
+      rgb(5 10 28 / var(--hb-scrim-top-a, .68)),
+      rgb(5 10 28 / calc(var(--hb-scrim-top-a, .68) * .4)) 64%, transparent 82%),
+    /* the name — also the reason nothing behind it can out-shine it */
+    radial-gradient(78% var(--hb-scrim-wm-r, 13%) at 50% var(--hb-scrim-wm-y, 45%),
+      rgb(6 11 30 / var(--hb-scrim-wm-a, .52)),
+      rgb(6 11 30 / calc(var(--hb-scrim-wm-a, .52) * .44)) 62%, transparent 86%),
+    /* pitch → button → the two quiet lines */
+    radial-gradient(50% var(--hb-scrim-cta-r, 18%) at 50% var(--hb-scrim-cta-y, 64%),
+      rgb(5 10 28 / var(--hb-scrim-cta-a, .34)), transparent 78%),
+    /* poster vignette */
+    radial-gradient(140% 104% at 50% 46%, transparent 48%, rgb(7 12 34 / .14) 88%, rgb(6 10 28 / .34) 100%),
+    linear-gradient(180deg, rgb(8 14 38 / .22) 0%, rgb(8 14 38 / .04) 22%, transparent 40%),
+    linear-gradient(0deg,   rgb(7 12 32 / .30) 0%, rgb(7 12 32 / .10) 22%, transparent 44%);
+}
+
+/* ==================================================== 2. The glass box ==== */
+
+/* A padel enclosure is panes bolted into a frame — one rectangle, no pane
+   seams. Selector is `.hero__bg > .hero__frame` so it out-specifies the
+   `inset: 0` on `.hero__bg > div` above; at plain `.hero__frame` it lost, and
+   the frame silently rendered flush to the viewport edge. */
+.hero__bg > .hero__frame {
+  inset: var(--hb-frame);
+  border: 1px solid rgb(226 238 255 / .13);
+  border-radius: var(--hb-frame-radius);
+  box-shadow:
+    inset 0  1px 0 rgb(226 238 255 / .26),
+    inset 0 -1px 0 rgb(226 238 255 / .05),
+    inset  1px 0 0 rgb(226 238 255 / .07),
+    inset -1px 0 0 rgb(226 238 255 / .07);
+}
+
+/* ---- The specular sheen -------------------------------------------------
+   The wordmark is a pane of glass, and every few bars the light crosses it.
+
+   How it reads on the glyphs WITHOUT `background-clip: text` (banned outright,
+   base.css §7): `mix-blend-mode: color-dodge` against a DARK source colour is
+   arithmetically a multiply — dodge is Cb / (1 − Cs), and at Cs ≈ .17 that is
+   a flat ×1.2 on whatever is underneath. A multiply scales with what is
+   already there, which is precisely how a specular highlight behaves:
+
+     white glyph  #EDF3FC  ·  .929 × 1.2  →  clips to 1.0     +.071, obvious
+     navy ground  #0D1637  ·  .051 × 1.2  →  .061             +.010, a whisper
+
+   That 7:1 selectivity is the whole trick. A BRIGHT source colour would do the
+   opposite — dodge saturates everything to white — and an additive mode
+   (screen, plus-lighter) lifts the dark ground the most in absolute terms and
+   would just fog the poster. Dark source, dodge, nothing else.
+
+   The corollary is that the wordmark cannot be #FFFFFF any more: pure white
+   has no headroom and no highlight can land on it. It is now #EDF3FC, which
+   the sheen drives up to pure white as it crosses. See §6.
+
+   Placement: a child of #hero, NOT of the lockup. Blending only sees the
+   backdrop inside the nearest stacking context, and `.hero__inner` carries
+   `container-type: inline-size` — layout containment — which is one. Inside
+   it the backdrop is transparent, dodge degenerates to normal compositing, and
+   a dark band composites as a visible dark smear. At #hero level the backdrop
+   is the finished ground plus the finished type, which is what we want to
+   dodge. #hero's own `isolation: isolate` stops it reaching the page.
+
+   Vertical extent is a slab aimed at the name, and it HAS to be bounded: the
+   CTA is #C6DC63, bright enough that a ×1.2 clips it to near-white on every
+   pass. The numbers are measured, like the scrims' — at 390 the lockup runs
+   42.6–49.0% of the hero and the date stamp ends at 37.8%, so the slab is
+   38–55% and the stamp is outside it; at 1440 the lockup runs 33.5–55.5% and
+   the slab opens to 31.5–57.5% to match. Move the lockup and these follow. */
+.hero__sheen {
+  position: absolute;
+  z-index: 1;                          /* above .hero__wrap, below .hero__film */
+  left: 0;
+  right: 0;
+  top: calc(var(--hb-sheen-y, 46.5%) - var(--hb-sheen-r, 8.5%));
+  height: calc(var(--hb-sheen-r, 8.5%) * 2);
+  pointer-events: none;
+  opacity: 0;                          /* reduced motion: no sheen at all */
+  mix-blend-mode: color-dodge;
+  /* Feathers the slab's top and bottom edge so the pass has no seam on the
+     ground. The feather is a token because the slab is proportionally much
+     taller at 1440 and a 24% ramp there would eat the cap-line. Static — a
+     mask that never moves costs one raster, not a frame. */
+  -webkit-mask-image: linear-gradient(180deg, transparent,
+    #000 var(--hb-sheen-feather, 24%),
+    #000 calc(100% - var(--hb-sheen-feather, 24%)), transparent);
+          mask-image: linear-gradient(180deg, transparent,
+    #000 var(--hb-sheen-feather, 24%),
+    #000 calc(100% - var(--hb-sheen-feather, 24%)), transparent);
+}
+
+/* The band itself. Slightly off-vertical, soft-shouldered, and warm-neutral
+   rather than grey: the ground is overwhelmingly blue (#0D1637 is .22 blue
+   against .05 red), so a band with LESS blue in it than red keeps dodge from
+   boosting the one channel the ground actually has.
+
+   Width is a token because the pass has to stay legible, not stay the same
+   size. The glyph's whole headroom is #EDF3FC → #FFFFFF, about 18/255, and no
+   amount of extra dodge buys more than that — so what makes the pass read is
+   the DIFFERENCE between the lit letters and the unlit ones beside them. At
+   390 the name is 35px tall and a 42% band lights most of it at once, which
+   flattens that difference into an overall brightening; narrowing it to 30%
+   turns it back into a travelling edge. */
+.hero__sheen > i { position: absolute; }
+
+/* Ply 1, the gleam. No travel — a soft pool over the name whose STRENGTH
+   swells on the beat, phase-locked to glow A. This is the continuous half of
+   the interaction: the band is an event every thirteen seconds, and without
+   the gleam the name would spend twelve of those seconds ignoring the lights
+   entirely.
+
+   It replaced a scale breathe on the lockup, which is the obvious way to do
+   this and the wrong one. Measured, a 1.0065 scale walks the outer letters
+   4.3px sideways at 1440, twenty-seven times a minute; that is not a pane of
+   glass, it is a wobble, and it is exactly the "disco text" failure. Glass
+   does not change size when light hits it. It gets brighter — which, through
+   dodge, is what this does, on the glyphs and almost nowhere else.
+
+   Radial rather than a flat fill so the slab has no rectangular edge to
+   flicker: the falloff is what keeps the swell reading as light on the name
+   instead of a box behind it. */
+.hero__sheen-gleam {
+  inset: 0;
+  opacity: 0;
+  /* Flat to 34% before it falls away. A radial that starts interpolating at
+     the centre point puts full strength on about four letters and measured
+     10/255 at the peak, which is under the threshold of noticing; the name has
+     to be lit across its whole width for this to read as ambient light rather
+     than a spot. rgb(20 19 12) is dodge ×1.085 on red and ×1.049 on blue —
+     enough to take #EDF3FC to a true white at the peak, and +3/255 on the
+     ground, which is the ground's own share of the same light. */
+  background-image: radial-gradient(78% 104% at 50% 50%,
+    rgb(20 19 12) 0%, rgb(20 19 12) 34%, rgb(16 15 10 / .5) 62%, transparent 84%);
+}
+
+/* Ply 2, the travelling band. */
+.hero__sheen-band {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--hb-sheen-w, 30%);
+  transform: translate3d(-105%, 0, 0);
+  /* A translate percentage resolves against the element's OWN width, so the
+     travel has to be restated whenever the width changes: -105% parks the band
+     just past the left edge, and 100/w × 100 puts it just past the right one.
+     At 30% that is 333%, so 345%. Paired with --hb-sheen-w, always. */
+  background-image: linear-gradient(101deg,
+    rgb(48 44 28 / 0)   0%,
+    rgb(48 44 28 / .5) 34%,
+    rgb(50 46 30 / 1)  50%,
+    rgb(48 44 28 / .5) 66%,
+    rgb(48 44 28 / 0) 100%);
+}
+
+/* 24 beats between passes; the pass itself takes 5.5 of them and then the
+   glass is quiet for eighteen. The light is an event, not a texture — at every
+   two seconds it would be a disco.
+
+   `linear`, deliberately. An ease-in-out here parked the band off-screen at
+   both ends and whipped it across the middle in about a second: measured, the
+   visible travel was 1.1s of a 3.0s window. Light crossing a pane moves at one
+   speed. The geometry now starts and ends just outside the frame, so opacity
+   only has to switch the layer off between passes and never has to disguise a
+   band appearing mid-glass. */
+@keyframes hero-sheen {
+  0%   { transform: translate3d(-105%, 0, 0); opacity: 0; }
+  1%   { opacity: 1; }
+  22%  { opacity: 1; }
+  23%  { transform: translate3d(var(--hb-sheen-x1, 345%), 0, 0); opacity: 0; }
+  100% { transform: translate3d(var(--hb-sheen-x1, 345%), 0, 0); opacity: 0; }
+}
+
+/* Same envelope as hero-pulse, same period, same phase — the name and the
+   light it is catching are provably on one clock. The scale is the specular
+   pool widening as it brightens; at .97→1.03 of a soft radial it has no edge
+   to give itself away. */
+@keyframes hero-gleam {
+  0%   { opacity: .16; transform: scale(.97);
+         animation-timing-function: cubic-bezier(.12, .85, .30, 1); }
+  9%   { opacity: 1;   transform: scale(1.03);
+         animation-timing-function: cubic-bezier(.36, 0, .55, 1); }
+  48%  { opacity: .30; transform: scale(1);
+         animation-timing-function: ease-in-out; }
+  100% { opacity: .16; transform: scale(.97); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero__sheen { opacity: 1; }
+  .hero__sheen > i { will-change: transform, opacity; }
+
+  /* -0.4s is glow A's delay exactly: the gleam and the nearest light hit their
+     peak on the same frame. */
+  .hero__sheen-gleam {
+    animation: hero-gleam calc(var(--hb-beat) * 4) linear -0.4s infinite;
+  }
+  .hero__sheen-band {
+    animation: hero-sheen calc(var(--hb-beat) * 24) linear -2.4s infinite;
+  }
+}
+
+/* Film grain, over everything including the type — that is where grain sits
+   on a photograph, and it is what puts grain inside the letterforms. */
+.hero__film {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: .16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23g)'/></svg>");
+  background-size: 160px 160px;
+}
+
+/* ========================================================= 3. Layout ===== */
+
+.hero__wrap { position: relative; z-index: 1; width: 100%; }
+
+.hero__inner {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
+  row-gap: clamp(12px, 1.8vh, 22px);
+  padding-block:
+    clamp(18px, 2.6vh, 40px)
+    calc(clamp(20px, 3vh, 44px) + var(--hb-lift));
+}
+
+/* ========================================================== 4. Crest ===== */
+
+.hero__crest {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: var(--hb-paper);
+  line-height: 1;
+}
+.hero__crown {
+  display: block;
+  opacity: .95;
+  filter: drop-shadow(0 4px 12px rgb(5 11 36 / .5));
+}
+.hero__crest-rule {
+  width: clamp(88px, 10cqw, 148px);
+  height: 1px;
+  background-image: linear-gradient(90deg, transparent, rgb(226 238 255 / .55) 32%, rgb(226 238 255 / .55) 68%, transparent);
+}
+.hero__crest-sub {
+  font-family: var(--hb-serif);
+  font-size: clamp(9px, .4cqw + 7.4px, 12px);
+  font-weight: 600;
+  letter-spacing: .32em;
+  text-indent: .32em;
+  text-transform: uppercase;
+  color: rgb(244 247 251 / .74);
+}
+
+/* ====================================== 5. The date stamp (poster copy) === */
+
+/* Support copy: set small and quiet so it reads first because it is at the
+   top, not because it shouts. It must always measure below the wordmark. */
+.hero__stamp {
+  display: grid;
+  gap: clamp(1px, .35vh, 4px);
+  margin: 0;
+  margin-top: clamp(6px, 1.2vh, 16px);
+  font-family: var(--hb-serif);
+  line-height: 1.22;
+  text-wrap: nowrap;
+}
+.hero__stamp-i,
+.hero__stamp-b {
+  font-size: clamp(14px, 1.1cqw + 9.6px, 19px);
+  color: rgb(238 245 253 / var(--hb-stamp-a, .72));
+  text-transform: uppercase;
+}
+.hero__stamp-i { font-style: italic; font-weight: 500; letter-spacing: .04em; }
+.hero__stamp-b { font-weight: 600; letter-spacing: .06em; }
+.hero__arrow { opacity: .7; padding-inline: .06em; font-style: normal; }
+
+/* ====================================================== 6. The wordmark === */
+
+/* The name is the widest thing on the page and the container gutter is the
+   only thing capping it, so the lockup — and nothing else — opts out of that
+   gutter down to 14px — not lower, because the frame line sits at 10px and
+   the S's terminal would end up 4px off it. `justify-self: stretch` +
+   `width: auto` is what lets the negative margin actually widen the box; with
+   `width: 100%` it would only shift it. The `min(0px, …)` guard means a
+   narrower global gutter can never turn this into padding. Reset above 600px,
+   where the name already spans the frame. */
+.hero__lockup {
+  --hb-lockup-gutter: 14px;
+  justify-self: stretch;
+  width: auto;
+  margin-inline: min(0px, calc(var(--hb-lockup-gutter) - var(--gutter, 18px)));
+  margin-top: clamp(12px, 3vh, 40px);
+}
+
+/* The lockup itself never animates. The obvious way to make the name react to
+   the beat is a scale breathe on this box; it was built, measured and thrown
+   away — see the note on .hero__sheen-gleam in §2, which is what does the job
+   instead, and does it without moving a glyph. */
+
+/* Pre-JS fallback for the wordmark size. `cqw` resolves against .hero__inner,
+   so this lands within a few px of what the fitter computes — no flash. */
+.hero__title {
+  margin: 0;
+  font-weight: 400;
+  --hb-wm-fb: min(9.85cqw, 200px);
+}
+
+/* ⚠️ SOLID INK, ON PURPOSE — no `background-clip: text`, no transparent ink,
+   ever. With no image behind it that construction renders the name completely
+   invisible, silently, and has already shipped that way twice (BRIEF §0).
+
+   #EDF3FC, not #FFFFFF, and the seven hundredths that were given up are the
+   headroom the sheen needs — pure white cannot be lit (§2). It is a cool
+   off-white by eye, measures 15.7:1 on this ground against #FFFFFF's 16.9:1,
+   and the sheen drives it to a true 255 as the light crosses. */
+.hero__wordmark {
+  display: block;
+  font-family: var(--hb-serif);
+  font-size: var(--hb-wm, var(--hb-wm-fb));
+  font-weight: 700;
+  line-height: .95;
+  letter-spacing: .012em;
+  text-indent: .012em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #EDF3FC;
+  /* The poster's halo — it lifts the name off the ground without a scrim
+     heavy enough to flatten it. */
+  filter:
+    drop-shadow(0 1px 0 rgb(255 255 255 / .18))
+    drop-shadow(0 0 24px rgb(150 196 255 / .26))
+    drop-shadow(0 12px 30px rgb(4 9 30 / .62));
+}
+
+/* On the poster "& FRIENDS" is roughly half the wordmark: it is the second
+   line of the lockup, not a caption. */
+.hero__amp {
+  display: block;
+  margin-top: calc(var(--hb-wm, var(--hb-wm-fb)) * -.015);
+  font-family: var(--hb-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: calc(var(--hb-wm, var(--hb-wm-fb)) * .47);
+  line-height: 1.14;
+  letter-spacing: .1em;
+  text-indent: .1em;
+  text-transform: uppercase;
+  color: rgb(240 248 255 / .80);
+  filter: drop-shadow(0 6px 20px rgb(4 9 30 / .68));
+}
+.hero__amp i { font-style: italic; font-weight: 400; opacity: .92; }
+
+/* ============================== 7. One line of prose, one thing to do ==== */
+
+/* Pitch → button → the two quiet lines that qualify it. One decision, and
+   both routes out of the hero are real pages, not in-page jumps. */
+
+.hero__body {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  margin-top: clamp(14px, 2.2vh, 28px);
+}
+
+.hero__pitch {
+  max-width: 34ch;
+  margin: 0;
+  color: rgb(244 247 251 / .80);
+  font-size: clamp(15px, .9cqw + 11.6px, 19px);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.hero__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 0 clamp(28px, 2.4cqw, 44px);
+  border-radius: 999px;
+  font-family: var(--hb-ui);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -.008em;
+  white-space: nowrap;
+  margin-top: clamp(14px, 2.4vh, 28px);
+}
+
+/* Scarcity reads as a caption on the button, not as a second message. */
+.hero__slots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  margin-top: clamp(9px, 1.3vh, 14px);
+  font-size: .875rem;
+  font-weight: 500;
+  color: rgb(244 247 251 / .74);
+}
+.hero__slots b { color: var(--hb-ball); font-weight: 700; }
+
+.hero__dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hb-ball);
+  box-shadow: 0 0 0 4px rgb(198 220 99 / .13);
+}
+
+/* The demoted ticket route: a text link, deliberately not a button. */
+.hero__alt {
+  margin: 0;
+  margin-top: clamp(8px, 1.4vh, 16px);
+}
+.hero__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 6px;
+  color: rgb(244 247 251 / .70);
+  font-size: .9375rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgb(244 247 251 / .32);
+  text-underline-offset: 5px;
+  transition: color .18s ease, text-decoration-color .18s ease;
+}
+.hero__link:hover {
+  color: var(--hb-paper);
+  text-decoration-color: rgb(244 247 251 / .70);
+}
+
+/* Type on a raked surface needs a halo as well as a pool. Tight and dark, so
+   it never reads as a glow. */
+.hero__crest-sub,
+.hero__stamp,
+.hero__pitch,
+.hero__slots,
+.hero__link {
+  text-shadow: 0 1px 2px rgb(4 9 26 / .88), 0 0 12px rgb(4 9 26 / .62);
+}
+
+/* ========================================================== 8. Focus ===== */
+
+#hero a:focus-visible {
+  outline: 2px solid var(--hb-ball);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+/* ================================================== 9. Tablet and up ===== */
+
+@media (min-width: 600px) {
+  #hero { --hb-frame: 12px; }
+  .hero__lockup { margin-inline: 0; }
+  .hero__pitch { max-width: 46ch; font-size: clamp(16px, .8cqw + 12.4px, 20px); }
+}
+
+/* ==================================================== 10. Desktop ======== */
+
+/* At 1440 this is a poster, not a landing page squeezed into a column: the
+   wordmark owns the full frame and the three blocks sit at 23 / 45 / 70 % of
+   the height, which is what the scrims are aimed at. */
+
+@media (min-width: 900px) {
+  #hero {
+    --hb-frame: 14px;
+
+    /* The stamp is support copy, so its pool is light; the name gets the
+       deeper one. That ordering IS the type hierarchy — measured, not
+       asserted. */
+    --hb-stamp-a:     .78;
+    --hb-scrim-top-y: 23%;
+    --hb-scrim-top-r: 12%;
+    --hb-scrim-top-a: .54;
+    --hb-scrim-wm-y:  45%;
+    --hb-scrim-wm-r:  19%;
+    --hb-scrim-wm-a:  .62;
+    --hb-scrim-cta-y: 70%;
+    --hb-scrim-cta-r: 15%;
+    --hb-scrim-cta-a: .44;
+
+    /* The lockup is a far bigger share of the height up here (33.5–55.5%
+       against 42.6–49.0% at mobile), so the sheen's slab grows with it and
+       its feather tightens to keep the cap-line inside the full-strength
+       core. Measured, like the scrims — see the note above them. */
+    --hb-sheen-y: 44.5%;
+    --hb-sheen-r: 13%;
+    --hb-sheen-feather: 12%;
+    /* Wider band up here: the name is 128px tall and a 30% band would light
+       barely two letters at a time, which reads as a spotlight, not a pane
+       catching the light. x1 is restated with it — see the note on the band. */
+    --hb-sheen-w:  42%;
+    --hb-sheen-x1: 245%;
+  }
+
+  /* The ground up here is a wide, smooth gradient; grain is what keeps it
+     from reading as vector-flat. */
+  .hero__film { opacity: .22; }
+
+  .hero__crest-sub { color: rgb(244 247 251 / .80); }
+  /* '& FRIENDS' sits nearer the middle of the name's pool than the name does,
+     so at the same alpha it out-measures the wordmark. Hold it just under. */
+  .hero__amp { color: rgb(240 248 255 / .70); }
+
+  .hero__inner {
+    row-gap: clamp(10px, 1.6vh, 20px);
+    padding-block:
+      clamp(16px, 2.4vh, 36px)
+      calc(clamp(10px, 1.4vh, 24px) + var(--hb-lift));
+  }
+
+  .hero__lockup { margin-top: clamp(16px, 3.5vh, 48px); }
+
+  .hero__stamp {
+    grid-auto-flow: column;
+    justify-content: center;
+    align-items: baseline;
+    gap: clamp(18px, 2.4cqw, 40px);
+  }
+  .hero__stamp-i,
+  .hero__stamp-b { font-size: clamp(14px, .9cqw + 5px, 19px); }
+  .hero__stamp-i + .hero__stamp-i,
+  .hero__stamp-b { position: relative; }
+  .hero__stamp-i + .hero__stamp-i::before,
+  .hero__stamp-b::before {
+    content: "";
+    position: absolute;
+    left: calc(-1 * clamp(18px, 2.4cqw, 40px) / 2);
+    top: 50%;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgb(233 241 251 / .5);
+    transform: translate(-50%, -50%);
+  }
+
+  .hero__pitch { max-width: none; }
+}

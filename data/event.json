@@ -1,0 +1,37 @@
+{
+  "name": "CHAMPETOETERS",
+  "subtitle": "& FRIENDS",
+  "fullName": "CHAMPETOETERS & FRIENDS",
+  "crest": "À KUURNE-BELGIQUE",
+  "tagline": "Open air and padel.",
+  "stayTuned": "STAY TUNED",
+  "posterDate": "5 SEPT",
+  "posterPlace": "LEIEMEERS KUURNE",
+  "venue": "TC Leiemeers",
+  "address": "Luitenant-Generaal Gérardstraat 62, 8520 Kuurne",
+  "city": "Kuurne",
+  "country": "België",
+  "start": "2026-09-05T14:00:00+02:00",
+  "end": "2026-09-06T02:00:00+02:00",
+  "dateDisplay": "ZA 5 SEPT 2026",
+  "timeDisplay": "14:00 → 02:00",
+  "teamEntry": {
+    "price": 50,
+    "currency": "EUR",
+    "unit": "per team",
+    "places": 16,
+    "confirmed": 14,
+    "open": 2,
+    "includes": [
+      "Twee spelers",
+      "Minstens drie wedstrijden",
+      "Toegang tot de open air voor beide spelers"
+    ]
+  },
+  "stats": {
+    "teams": 16,
+    "courts": 3,
+    "djs": 5,
+    "matches": 31
+  }
+}

@@ -1,0 +1,161 @@
+/* Page shell — owned by the orchestrator. Section builders must not edit this.
+   Holds cross-page furniture: anchor offset, the back link, and the page header
+   used by register.html / tickets.html. */
+
+:root {
+  /* app.js reads this to offset in-page jumps. */
+  --anchor-offset: 18px;
+
+  /* Height of .page-head (14px pad + 44px button + 14px pad). Section CSS reads
+     it to run a background plate up behind the header, so keep it in sync if
+     .page-head padding changes — it is a real coupling. */
+  --page-head-h: 72px;
+}
+
+/* Native fragment navigation honours this even before app.js runs. */
+[data-section] { scroll-margin-top: var(--anchor-offset); }
+
+/* ---- the page ground ------------------------------------------------------
+   Drawn in CSS, never photographed: the only source plate is a 1410px crop, so
+   it is soft on any 2x display. Do not reintroduce court-*.webp/.jpg as a page
+   or section background (BRIEF §0).
+
+   Painted on fixed pseudo-elements rather than on body so it never scrolls or
+   repeats, and so nothing in it can move (§4: nothing blurred may animate).
+   ------------------------------------------------------------------------- */
+
+html { background: var(--navy-900, #0D1637); }
+
+/* body must stay transparent — an opaque body background paints over the
+   z-index:-2 ground below and the page goes flat navy. */
+body { position: relative; background: transparent; }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    /* two soft court bands — give the glass an edge to bend */
+    linear-gradient(107deg, transparent 34%,
+      rgba(150, 186, 240, .050) 34.7%, rgba(150, 186, 240, .050) 35.9%, transparent 36.6%),
+    linear-gradient(107deg, transparent 62%,
+      rgba(150, 186, 240, .034) 62.6%, rgba(150, 186, 240, .034) 63.6%, transparent 64.2%),
+    /* the sun, top right */
+    radial-gradient(120% 90% at 88% -8%, rgba(108, 152, 220, .40), transparent 62%),
+    /* court blue lifting through the middle */
+    radial-gradient(130% 100% at 30% 42%, rgba(45, 72, 133, .55), transparent 70%),
+    /* deep shadow, bottom left */
+    radial-gradient(100% 80% at 4% 108%, rgba(4, 8, 24, .85), transparent 60%),
+    linear-gradient(168deg, #10193C 0%, #0D1637 46%, #080F28 100%);
+}
+
+/* Film grain — one 140px SVG tile, so it is resolution-independent and ~1KB. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+/* ---- sub-page header ------------------------------------------------------
+   register.html and tickets.html are standalone pages; this is the quiet header
+   that gets you back. */
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px clamp(16px, 4vw, 40px);
+  position: relative;
+  z-index: 5;
+}
+
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  text-decoration: none;
+  font: 500 14px/1 var(--font-ui, system-ui, sans-serif);
+  color: var(--paper, #F4F7FB);
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .14);
+  transition: background .18s ease, transform .18s ease;
+}
+.page-back:hover { background: rgba(255, 255, 255, .12); }
+.page-back:active { transform: translateY(1px); }
+.page-back:focus-visible {
+  outline: 2px solid var(--ball, #C6DC63);
+  outline-offset: 3px;
+}
+.page-back svg { width: 15px; height: 15px; flex: none; }
+
+.page-head__mark {
+  margin-left: auto;
+  font: 600 11px/1 var(--font-display, Didot, serif);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(244, 247, 251, .55);
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .page-head__mark { display: none; }
+}
+
+/* ---- the closing line -----------------------------------------------------
+   Venue, address, contact — nothing else. It has to arrive without breaking the
+   DJ bill's night ending, so it sits on the exact colour the bill ends on
+   (#0F193C, .ln__sky's last stop) and carries no rule, no panel and no heading.
+   Measured off rendered pixels: .58 alpha on that ground is 4.8:1. */
+
+.site-foot {
+  position: relative;
+  z-index: 1;
+  background: #0F193C;
+  padding: 0 clamp(16px, 4vw, 40px) clamp(30px, 4vw, 44px);
+}
+
+.site-foot__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 9px;
+  margin: 0 auto;
+  max-width: 1292px;
+  font: 500 13px/1.6 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: .01em;
+  color: rgba(244, 247, 251, .58);
+  text-align: center;
+}
+.site-foot__sep { color: rgba(244, 247, 251, .3); }
+.site-foot a {
+  color: rgba(244, 247, 251, .58);
+  text-decoration: underline;
+  text-decoration-color: rgba(244, 247, 251, .26);
+  text-underline-offset: 4px;
+}
+.site-foot a:hover { color: var(--paper, #F4F7FB); }
+.site-foot a:focus-visible {
+  outline: 2px solid var(--ball, #C6DC63);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* The skip link is styled in base.css (drops in from the top, centred).
+   Do not restyle it here — a second definition once left the focused link
+   half off-screen when the two rulesets combined. */
+
+@media (prefers-reduced-motion: reduce) {
+  .page-back { transition: none; }
+}

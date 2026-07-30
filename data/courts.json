@@ -1,0 +1,20 @@
+[
+  {
+    "id": "court-3",
+    "name": "Baan 1",
+    "sub": "'t Kanaal",
+    "showcourt": false
+  },
+  {
+    "id": "court-1",
+    "name": "Baan 2",
+    "sub": "De Leie",
+    "showcourt": false
+  },
+  {
+    "id": "court-2",
+    "name": "Baan 3",
+    "sub": "De Meers",
+    "showcourt": true
+  }
+]

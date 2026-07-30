@@ -1,0 +1,15 @@
+[
+  {
+    "id": "openair",
+    "name": "Open air ticket",
+    "price": 12,
+    "currency": "EUR",
+    "desc": "Alle wedstrijden en alle dj's, tot 02:00.",
+    "includes": [
+      "Alle wedstrijden, alle drie de banen",
+      "Elke dj, 17:30 → 02:00",
+      "Heel de dag in en uit"
+    ],
+    "remaining": 240
+  }
+]

@@ -1,0 +1,127 @@
+<!--
+  tickets — ONE product, and four views that each fit one phone screen
+  (390×844, no scrolling): how many + who you are → versturen → how to pay →
+  gereserveerd. No <form>, so nothing here can navigate on its own.
+
+  There are no card fields and no provider redirect: the order is stored by the
+  backend (backend/API.md), which mails the confirmation, and the payment panel
+  shows the transfer details. What this page may do is decided by
+  ?action=health → orders — see js/tickets.js.
+-->
+<section id="tickets" class="section" data-section="tickets" lang="nl"
+         aria-labelledby="tk-title">
+  <div class="tk">
+    <div class="u-container u-container--narrow tk__inner">
+
+      <header class="tk__head">
+        <p class="u-eyebrow tk__eyebrow" id="tk-when">5 SEPT · LEIEMEERS KUURNE</p>
+        <h1 class="u-display tk__title" id="tk-title">Open air ticket</h1>
+        <p class="tk__gets" id="tk-gets"></p>
+        <p class="tk__price">
+          <span class="tk__cur" aria-hidden="true">€</span><span class="tk__amt u-tabular">12</span>
+          <span class="tk__per">per stuk</span>
+        </p>
+      </header>
+
+      <!-- ---------- 1. kopen ----------
+           .glass--frost, not the default panel: the stronger rim comes back via
+           custom properties in tickets.css, never a competing backdrop-filter. -->
+      <div class="tk-view tk-buy glass glass--panel glass--frost" data-view="form" id="tk-buy">
+
+        <div class="tk-qty">
+          <span class="tk-qty__k" id="tk-qty-k">Aantal</span>
+          <div class="tk-stepper" id="tk-stepper" role="group" aria-labelledby="tk-qty-k">
+            <button type="button" class="tk-stepper__btn" data-delta="-1"
+                    aria-label="Eén ticket minder" disabled>
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M3 8h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <output class="tk-stepper__val u-tabular" id="tk-qty"
+                    aria-label="Aantal tickets">1</output>
+            <button type="button" class="tk-stepper__btn" data-delta="1"
+                    aria-label="Eén ticket meer">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="tk-fields">
+          <div class="glass-field">
+            <label class="glass-label" for="tk-name">Naam</label>
+            <input class="glass-input" id="tk-name" name="holder" type="text"
+                   maxlength="60" autocomplete="name" enterkeyhint="next"
+                   aria-describedby="tk-name-err">
+            <p class="glass-error tk-err" id="tk-name-err" hidden></p>
+          </div>
+          <div class="glass-field">
+            <label class="glass-label" for="tk-email">E-mail</label>
+            <input class="glass-input" id="tk-email" name="email" type="email"
+                   maxlength="160" autocomplete="email" inputmode="email"
+                   enterkeyhint="done" aria-describedby="tk-email-err">
+            <p class="glass-error tk-err" id="tk-email-err" hidden></p>
+          </div>
+        </div>
+
+        <!-- Something that is not about a field: it stays until the next
+             keystroke, so a failed send cannot be recomputed away. -->
+        <p class="tk-err tk-notice" id="tk-notice" hidden></p>
+
+        <!-- The one action. Label, amount and closed state are written by
+             tickets.js once ?action=health has said whether sales are open. -->
+        <button type="button" class="glass-btn glass-btn--primary tk-pay is-off"
+                id="tk-pay" aria-disabled="true">
+          <span class="tk-pay__label" id="tk-pay-label">Ticketverkoop nog niet open</span>
+          <span class="tk-pay__dot" aria-hidden="true">·</span>
+          <span class="tk-pay__amt u-tabular" id="tk-pay-amt">€&nbsp;12</span>
+        </button>
+      </div>
+
+      <!-- ---------- 2. versturen ---------- -->
+      <div class="tk-view tk-buy glass glass--panel glass--frost tk-proc"
+           data-view="processing" hidden>
+        <div class="tk-spin" aria-hidden="true">
+          <span class="tk-spin__ring"></span>
+          <span class="tk-spin__ball"></span>
+        </div>
+        <p class="tk-proc__title" id="tk-proc-msg">Versturen…</p>
+      </div>
+
+      <!-- ---------- 3. betalen — js/payinfo.js fills the panel ---------- -->
+      <div class="tk-view tk-flow" data-view="pay" hidden>
+        <!-- js/payinfo.js adds .pay .glass .glass--panel here; --edge stays. -->
+        <div class="glass--edge" id="tk-pay-panel"></div>
+        <button type="button" class="glass-btn glass-btn--primary tk-flow__btn"
+                id="tk-pay-ok">Oké, begrepen</button>
+      </div>
+
+      <!-- ---------- 4. gereserveerd ----------
+           Only ever revealed after the backend answered ok. -->
+      <div class="tk-view tk-flow" data-view="done" hidden>
+        <div class="tk-done glass glass--panel glass--edge">
+          <p class="u-eyebrow tk-done__hd">
+            <span class="tk-done__check" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" focusable="false">
+                <path d="M4.5 10.5l3.6 3.6L15.5 6.5" fill="none" stroke="currentColor"
+                      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Gereserveerd
+          </p>
+          <h2 class="tk-done__title" tabindex="-1" id="tk-done-title">Je tickets zijn gereserveerd</h2>
+          <p class="tk-done__lead" id="tk-done-recap"></p>
+          <p class="tk-done__lead">Bevestiging in je mailbox. Betaald&nbsp;=&nbsp;binnen.</p>
+          <p class="tk-done__foot" id="tk-done-contact"></p>
+        </div>
+
+        <a class="glass-btn glass-btn--primary tk-flow__btn" href="index.html">Terug naar de startpagina</a>
+      </div>
+
+      <p class="tk__fine"><a href="register.html">Ploeg inschrijven</a></p>
+      <p class="tk-sr" id="tk-live" role="status" aria-live="polite"></p>
+
+    </div><!-- /.u-container -->
+  </div><!-- /.tk -->
+</section>

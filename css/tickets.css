@@ -1,0 +1,505 @@
+/* ============================================================================
+   tickets.css — ONE ticket. Owned by: flows builder.
+   Consumes tokens.css / base.css / glass.css / payinfo.css.
+
+   Four views — how many + two fields · versturen · betalen · gereserveerd —
+   and EACH fits one 390×844 screen: body.scrollHeight ≤ 844 in every view.
+   The payment panel itself lives in css/payinfo.css (shared with register).
+
+   House rules this file obeys:
+   · No image of any kind is painted here — no url(), no data: URI, no gradient
+     standing in for a plate. The ground and the grain are drawn once, page-wide,
+     in shell.css.
+   · No `backdrop-filter` of its own: every blurred surface is a §10 glass class,
+     and radius overrides go through --g-r so the ::after core keeps its inner
+     radius. No `opacity`/`filter`/`mask` on a `.glass` element — each of those
+     makes it a backdrop root and kills its own material.
+   · Only `transform` and `opacity` animate, and nothing blurred ever moves.
+   ========================================================================= */
+
+#tickets {
+  --tk-serif: var(--font-display);
+
+  /* §9: --haze at low alpha measures ~3.8:1 over the brightest part of a lit
+     pane. This one keeps the blue cast and clears 4.5:1 everywhere it is used
+     (micro-caps and the link below the panel). Plain-rgb first, for engines
+     without color-mix. */
+  --tk-ink-2: rgb(var(--haze-rgb));
+  --tk-ink-2: color-mix(in srgb, var(--haze) 72%, var(--paper));
+
+  /* ONE column. Client: the header text must come "as wide as the box below
+     it". The header block and the purchase panel both read this, so the two
+     edges cannot drift apart at any width. */
+  --tk-col: min(560px, 100%);
+}
+
+/* ---- 1. Section shell ----------------------------------------------------
+   BRIEF §0.8: the page is vertically centred in the viewport — the FULL
+   viewport, not the strip below the back button. Client: "just perfectly
+   vertical on screen." The shell's .page-head sits above this section in normal
+   flow, so the section pulls itself back up under it by exactly --page-head-h
+   (shell.css owns that token) and then centres inside a full 100svh. Identical
+   machinery to #register.u-section in register.css — the two pages must land
+   their block at the same height.
+
+   svh, not vh, so a phone's collapsing toolbar cannot push the block off
+   screen; the plain vh line before it is the fallback for engines without svh.
+   Header height + (100svh − header height) = 100svh exactly, so the page still
+   never scrolls. */
+#tickets.section {
+  display: grid;
+  align-content: center;
+  margin-top: calc(-1 * var(--page-head-h, 72px));
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-block: clamp(8px, 3vw, 40px);
+}
+
+.tk { position: relative; isolation: isolate; }
+
+.tk__inner { position: relative; }
+
+/* ---- 2. What the ticket is ----------------------------------------------- */
+
+/* One column at every width, in reading order: when · what · what you get ·
+   what it costs. The price used to sit in a side gutter on desktop; the client
+   asked for it under the rest of the text, with the whole block exactly as wide
+   as the panel below — so head and panel share --tk-col and one centre line. */
+.tk__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 6px;
+  width: var(--tk-col);
+  margin: 0 auto clamp(14px, 2.6vw, 30px);
+}
+
+.tk__eyebrow { letter-spacing: .26em; margin: 0; }
+
+/* Sized by what fits, not by appetite: 7.1vw keeps the title inside the 354px
+   phone measure, and at the 3.1rem ceiling "OPEN AIR TICKET" measures ~492px —
+   inside the 560px column, so it stays one line and does not force the column
+   wider than the panel. */
+.tk__title {
+  font-size: clamp(1.7rem, 7.1vw, 3.1rem);
+  line-height: .95;
+  letter-spacing: .03em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* No background-image on the headline, ever: with clip-to-text removed
+   site-wide it renders as a pale rectangle behind the type, not as a fill.
+   .u-display paints solid --paper and measures 13.6:1 over this ground. */
+
+/* The number is the confident bit. It appears exactly twice on the page: here,
+   and on the button that charges it. */
+.tk__price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: clamp(4px, .8vw, 10px) 0 0;
+  flex-wrap: wrap;
+}
+.tk__cur {
+  font-family: var(--tk-serif);
+  font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+  color: rgb(var(--haze-rgb) / .95);
+  translate: 0 -.32em;
+}
+.tk__amt {
+  font-family: var(--tk-serif);
+  font-size: clamp(2.7rem, 9vw, 3.9rem);
+  font-weight: var(--fw-reg);
+  line-height: .84;
+  color: var(--ball);
+}
+.tk__per {
+  font-family: var(--font-ui);
+  font-size: .58rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--tk-ink-2);
+  margin-left: 8px;
+}
+
+/* One line, not a three-row perk list with three tick marks. Client: "trim
+   down the text, too much talk." */
+/* No 46ch cap any more: --tk-col is the measure, and it is the same measure the
+   panel underneath uses. */
+.tk__gets {
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: rgb(var(--paper-rgb) / .84);
+}
+.tk__gets:empty { display: none; }
+
+/* ONE SCREEN PER VIEW. Once the order exists, the payment panel and then the
+   confirmation carry their own heading, so the sales header above them says
+   nothing new and costs the height that keeps a view on one screen. The link to
+   the other page belongs to the sales view only. tickets.js sets .is-flow. */
+#tickets.is-flow .tk__head,
+#tickets.is-flow .tk__fine { display: none; }
+
+#tickets [hidden] { display: none !important; }
+
+/* ==========================================================================
+   3. THE PURCHASE PANEL — one screen, no steps, no choices
+   ======================================================================== */
+
+.tk-buy {
+  --g-r: var(--r-2xl);
+  /* .glass--frost flattens the rim down to 6px / .34 chroma. This is still the
+     focal surface of the page, so the specular band comes back — as custom
+     properties glass.css already reads, never as a competing backdrop-filter. */
+  --g-band: 11px;
+  --g-chroma: .85;
+  --g-spec: 1.15;
+  box-shadow: var(--sh-lift);
+  width: var(--tk-col);
+  margin: 0 auto;
+  padding: clamp(16px, 2.2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.tk-view { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* The two flow views are not inside the purchase panel: the payment panel is a
+   pane of its own, and a pane inside a pane is the nesting the client rejected
+   (BRIEF: one radius per surface). Same column, same centre line. */
+.tk-flow {
+  display: grid;
+  gap: var(--sp-4);
+  width: var(--tk-col);
+  margin: 0 auto;
+}
+#tickets .tk-flow__btn { width: 100%; min-height: 54px; }
+
+/* -- how many ----------------------------------------------------------- */
+
+.tk-qty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.tk-qty__k {
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+}
+
+.tk-stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: rgb(2 5 16 / .46);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .3),
+              inset 0 2px 5px rgb(2 5 16 / .5);
+  flex: none;
+}
+.tk-stepper__btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--paper);
+  transition: background-color var(--dur-1) var(--ease-out), opacity var(--dur-1) linear;
+}
+.tk-stepper__btn:hover:not(:disabled) { background: rgb(var(--paper-rgb) / .12); }
+.tk-stepper__btn:active:not(:disabled) { background: rgb(var(--paper-rgb) / .2); }
+.tk-stepper__btn:disabled { opacity: .3; cursor: not-allowed; }
+.tk-stepper__btn:focus-visible { outline: 2px solid var(--ball); outline-offset: -2px; }
+.tk-stepper__btn svg { width: 15px; height: 15px; }
+.tk-stepper__val {
+  min-width: 34px;
+  text-align: center;
+  font-family: var(--tk-serif);
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- two fields --------------------------------------------------------- */
+
+.tk-fields { display: flex; flex-direction: column; gap: var(--sp-4); }
+@media (min-width: 560px) {
+  .tk-fields { flex-direction: row; }
+  .tk-fields > * { flex: 1 1 0; min-width: 0; }
+}
+
+.tk-err[hidden] { display: none; }
+.tk-err {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  color: var(--paper);
+}
+.tk-err::before {
+  content: "!";
+  flex: none;
+  width: 16px; height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ball);
+  color: var(--navy-900);
+  font-size: .68rem;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+}
+/* Not about a field: a failed send, or sold out. Same marker, full width. */
+.tk-notice { align-items: flex-start; line-height: 1.45; }
+.tk-notice::before { margin-top: 1px; }
+
+/* invalid = a bright hairline, never a hue. There is no red in this brand. */
+#tickets .glass-input[aria-invalid="true"] {
+  box-shadow:
+    inset 0 2px 5px rgb(2 5 16 / .55),
+    inset 0 0 0 1.5px rgb(var(--paper-rgb) / .85),
+    inset 0 -3px 0 -1px var(--ball);
+}
+
+/* -- the one button ------------------------------------------------------
+   A plain text label and the amount. No bank logo, no bank chrome, nothing that
+   could be mistaken for a card checkout — there is none on this site. */
+
+#tickets .glass-btn {
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+/* #tickets-qualified: the blanket `#tickets button { min-height: 44px }` floor
+   at the bottom of this file outranks a bare class, and was quietly holding the
+   one primary action on the page down at the accessibility minimum. */
+#tickets .tk-pay {
+  width: 100%;
+  min-height: 56px;
+  gap: 9px;
+  padding-inline: 14px;
+  margin-top: 2px;
+}
+.tk-pay__label { min-width: 0; }
+.tk-pay__dot { opacity: .5; }
+.tk-pay__amt {
+  font-family: var(--tk-serif);
+  font-size: 1.28rem;
+  font-weight: var(--fw-reg);
+  letter-spacing: .01em;
+  text-transform: none;
+}
+
+/* SALES CLOSED (§0.13). ?action=health reports orders off, or is unreachable, so
+   the button cannot take an order and must not look like it can: the accent
+   comes off, the price comes off, and the label says what is true. It stays
+   focusable and keeps its 56px target, so a keyboard user reaches the same
+   sentence a mouse user reads. */
+#tickets .tk-pay.is-off {
+  /* glass.css dims any [aria-disabled] control to .42 opacity, which is right
+     for a control whose label you already know and wrong here: the label IS the
+     message. aria-disabled stays (it is not actionable) but the type comes back
+     to full strength. Measured off rendered pixels at 390×844: 8.9:1. */
+  opacity: 1;
+  background: rgb(2 5 16 / .5);
+  color: var(--paper);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .34),
+              inset 0 1px 0 rgb(var(--paper-rgb) / .1);
+  cursor: not-allowed;
+  letter-spacing: .12em;
+}
+#tickets .tk-pay.is-off:hover { background: rgb(2 5 16 / .5); transform: none; }
+/* the amount belongs to a button that can take the order */
+.tk-pay.is-off .tk-pay__dot,
+.tk-pay.is-off .tk-pay__amt { display: none; }
+/* …and the rim above is a box-shadow, so it would have eaten glass.css's focus
+   ring. Put the ring back at the same specificity (§9: visible focus). */
+#tickets .tk-pay.is-off:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .34), var(--focus-ring);
+}
+
+/* "Tickets reserveren · € 24" survives a phone by giving up tracking, never by
+   wrapping — a two-line primary button reads as two actions. */
+@media (max-width: 430px) {
+  #tickets .tk-pay { font-size: .715rem; letter-spacing: .045em; gap: 7px; padding-inline: 10px; }
+  .tk-pay__amt { font-size: 1.1rem; }
+}
+@media (max-width: 359px) {
+  #tickets .tk-pay { font-size: .66rem; letter-spacing: .02em; gap: 6px; }
+  .tk-pay__amt { font-size: 1rem; }
+}
+
+/* -- working -------------------------------------------------------------
+   One spinner and one line: the page is waiting for a redirect and cannot know
+   more than that, so it must not draw progress it is inventing. */
+
+.tk-proc {
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: clamp(20px, 5vw, 34px) 8px clamp(16px, 3vw, 24px);
+}
+.tk-proc p { margin: 0; }
+.tk-spin { position: relative; width: 92px; height: 92px; margin-bottom: var(--sp-2); }
+.tk-spin::before {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: rgb(var(--navy-600-rgb) / .3);
+  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .16);
+}
+.tk-spin__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    rgb(var(--ball-rgb) / 0) 0deg,
+    rgb(var(--blue-050-rgb) / .3) 160deg,
+    rgb(var(--blue-050-rgb) / .85) 258deg,
+    var(--ball) 336deg,
+    #EAF5B8 357deg,
+    rgb(var(--ball-rgb) / 0) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
+  animation: tk-rot 1.15s linear infinite;
+}
+.tk-spin__ball { position: absolute; inset: 0; animation: tk-rot 1.15s linear infinite; }
+.tk-spin__ball::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: calc(50% - 5.5px);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--ball);
+  box-shadow: 0 0 16px 3px rgb(var(--ball-rgb) / .75);
+}
+@keyframes tk-rot { to { transform: rotate(360deg); } }
+
+.tk-proc__title {
+  font-family: var(--tk-serif);
+  font-size: 1.5rem;
+  font-weight: var(--fw-reg);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  min-height: 1.2em;
+}
+
+/* ==========================================================================
+   4. GERESERVEERD — only ever after the backend answered ok (BRIEF §8)
+   The payment panel above it is css/payinfo.css; this is the last view, so it
+   is one calm pane, no ticket to draw, nothing to scan.
+   ========================================================================== */
+
+.tk-done { --g-r: var(--r-2xl); display: grid; }
+.tk-done > * { margin: 0; }
+
+.tk-done__hd {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ball);
+}
+/* Same marker as the register confirmation: a flat accent disc, dark glyph. */
+.tk-done__check {
+  width: 24px; height: 24px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ball);
+  color: var(--navy-900);
+}
+.tk-done__check svg { width: 15px; height: 15px; }
+
+.tk-done__title {
+  margin-top: var(--sp-3);
+  font-family: var(--tk-serif);
+  font-size: clamp(1.5rem, 4.4vw, 2.1rem);
+  font-weight: var(--fw-bold);
+  letter-spacing: .02em;
+  line-height: 1.12;
+  color: var(--paper);
+}
+/* A focus TARGET, not a tab stop: focused when the view opens so a screen
+   reader lands in the confirmation. A ring here would read as a stray box. */
+.tk-done__title:focus, .tk-done__title:focus-visible { outline: none; }
+
+.tk-done__lead {
+  margin-top: var(--sp-3);
+  max-width: 46ch;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--paper-dim);
+  overflow-wrap: anywhere;
+}
+.tk-done__ref {
+  font-family: var(--tk-serif);
+  letter-spacing: .1em;
+  /* the tracking would otherwise leave a gap before the full stop after it */
+  margin-right: -.1em;
+  color: var(--ball);
+  white-space: nowrap;
+}
+.tk-done__foot {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid rgb(var(--haze-rgb) / .18);
+  font-size: var(--fs-xs);
+  color: var(--paper-mute);
+  overflow-wrap: anywhere;
+}
+
+/* ---- 5. The one link to the other page ----------------------------------- */
+
+.tk__fine {
+  margin: var(--sp-5) auto 0;
+  text-align: center;
+  font-size: var(--fs-xs);
+}
+/* Padded out to a 44px target without changing the line it sits on (§9). */
+.tk__fine a {
+  display: inline-block;
+  padding: 15px 10px;
+  color: var(--tk-ink-2);
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--ball-rgb) / .8);
+  text-underline-offset: 3px;
+}
+.tk__fine a:hover { color: var(--ball); }
+.tk__fine a:focus-visible { outline: 2px solid var(--ball); outline-offset: 3px; border-radius: 3px; }
+
+.tk-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Every target in this section clears the 44px floor (§9). */
+#tickets button { min-height: 44px; }
+#tickets .tk-stepper__btn { min-height: 44px; min-width: 44px; }
+
+/* §4 rule 7 — the spinner is the only ambient motion here, and it goes. */
+@media (prefers-reduced-motion: reduce) {
+  .tk-spin__ring, .tk-spin__ball { animation: none; }
+  .tk-spin__ball::after { top: calc(50% - 5.5px); left: -5px; }
+}

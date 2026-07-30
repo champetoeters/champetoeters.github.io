@@ -1,0 +1,218 @@
+/* ============================================================================
+   tokens.css — CHAMPETOETERS & FRIENDS design tokens
+   Owned by: glass builder. Consume these; never redefine them in a section.
+   Palette: cobalt monochrome + exactly one accent (--ball). No second accent.
+   ========================================================================= */
+
+:root {
+  /* ---- 1. Colour (BRIEF §5, sampled from refs/brand-poster.png) --------- */
+  --navy-900: #0D1637;
+  --navy-800: #142760;
+  --navy-700: #1B2C61;
+  --navy-600: #223B7A;
+  --blue-500: #2D4885;
+  --blue-400: #364E85;
+  --blue-300: #3A5A97;
+  --blue-200: #40609C;
+  --blue-100: #4A6BA4;
+  --blue-050: #5273AA;
+  --haze:     #7C99B6;
+  --ball:     #C6DC63;   /* THE accent */
+  --ball-deep:#AAC14B;
+  --paper:    #F4F7FB;
+
+  --paper-dim:  rgba(244, 247, 251, .74);
+  --paper-mute: rgba(244, 247, 251, .68);   /* meta only, never body copy */
+  --paper-faint:rgba(244, 247, 251, .16);
+
+  /* space-separated triplets, for rgb(var(--x) / alpha) */
+  --navy-900-rgb: 13 22 55;
+  --navy-800-rgb: 20 39 96;
+  --navy-700-rgb: 27 44 97;
+  --navy-600-rgb: 34 59 122;
+  --blue-500-rgb: 45 72 133;
+  --blue-300-rgb: 58 90 151;
+  --blue-100-rgb: 74 107 164;
+  --blue-050-rgb: 82 115 170;
+  --haze-rgb:     124 153 182;
+  --ball-rgb:     198 220 99;
+  --ball-deep-rgb:170 193 75;
+  --paper-rgb:    244 247 251;
+
+  --ok:     var(--ball);
+  --live:   var(--ball);
+  --danger: var(--ball-deep);
+
+  /* Deprecated pre-rebrand aliases. Do not use in new code. */
+  --court:     var(--blue-300);
+  --court-lift:var(--blue-050);
+  --turf:      var(--navy-700);
+  --gold:      var(--ball);
+  --gold-lift: var(--ball);
+  --coral:     var(--ball);
+  --coral-lift:var(--ball-deep);
+  --ink-900:   var(--navy-900);
+  --ink-800:   var(--navy-800);
+  --court-rgb: var(--blue-300-rgb);
+  --turf-rgb:  var(--navy-700-rgb);
+  --gold-rgb:  var(--ball-rgb);
+  --coral-rgb: var(--ball-rgb);
+  --ink-900-rgb: var(--navy-900-rgb);
+  --ink-800-rgb: var(--navy-800-rgb);
+
+  /* ---- 2. Glass material ----------------------------------------------
+     ⚠️ Transmission and legibility are separate budgets. The fill buys
+     transmission only; contrast is bought locally with --g-ink. Never raise a
+     fill to fix text — raise --g-ink, or use .glass--frost.                */
+
+  --g-blur:        11px;
+  --g-blur-panel:  11px;
+  --g-blur-bar:    12px;
+  --g-blur-pill:    9px;
+  --g-blur-inset:   8px;
+  --g-blur-frost:  22px;
+
+  --g-sat:      1.45;
+  --g-bright:   .88;
+  --g-contrast: 1.12;
+
+  --g-fill:       rgb(var(--navy-900-rgb) / .16);
+  --g-fill-panel: rgb(var(--navy-900-rgb) / .16);
+  --g-fill-bar:   rgb(var(--navy-900-rgb) / .22);
+  --g-fill-pill:  rgb(var(--navy-800-rgb) / .30);
+  --g-fill-inset: rgb(6 11 30 / .72);   /* a well is a hole, not a window */
+  --g-fill-frost: rgb(var(--navy-900-rgb) / .52);
+  --g-fill-flat:  rgb(18 32 70 / .84);
+
+  /* Local scrim: a tight halo under the glyphs only, so contrast is won in
+     the few pixels that need it and the rest of the pane stays a window. */
+  --g-ink:      0 1px 2px rgb(2 5 16 / .70),
+                0 0 3px  rgb(2 5 16 / .78),
+                0 0 13px rgb(3 7 22 / .62);
+  --g-ink-soft: 0 1px 2px rgb(2 5 16 / .48), 0 0 4px rgb(2 5 16 / .40);
+
+  /* Sheen — one lit film, head to foot. The only broad light on a pane. */
+  --g-sheen-top: rgb(var(--haze-rgb) / .055);
+  --g-sheen-bot: rgb(var(--navy-900-rgb) / .18);
+
+  /* Rim — A LIT EDGE, NOT A LIGHT SOURCE. Three hairlines, 1px each, over the
+     drawn gradient ground. Measured peak rel-luminance around the registration
+     panel: 0.096 (was 0.211 with a wide specular band — the "white highlight"
+     the client rejected). Re-measure off rendered pixels before raising these. */
+  --g-rim:      rgb(var(--paper-rgb) / .085);  /* lit top edge      */
+  --g-rim-soft: rgb(var(--haze-rgb) / .15);    /* hairline all round */
+  --g-rim-dark: rgb(3 6 18 / .26);             /* shaded foot        */
+
+  --g-tint: transparent;
+
+  /* ---- 3. Shadow — one stop each --------------------------------------- */
+  --sh-contact: 0 24px 54px -26px rgb(2 5 16 / .78);
+  --sh-card:    0 16px 36px -22px rgb(2 5 16 / .72);
+  --sh-bar:     0 12px 28px -18px rgb(2 5 16 / .70);
+  --sh-pill:    0 5px 14px -9px   rgb(2 5 16 / .52);
+  --sh-lift:    0 28px 62px -28px rgb(2 5 16 / .82);
+
+  /* ---- 4. Radii — ONE RADIUS PER SURFACE -------------------------------
+     Three tiers only, and they must never be mixed inside one panel:
+       --r-2xl / --r-xl   THE SURFACE: panel, card, ticket.
+       --r-well           anything cut INTO a surface: inputs, wells, tracks.
+                          Small enough that it cannot echo the surface arc.
+       --r-pill           controls, chips, steppers.
+     --r-sm / --r-md are aliases of --r-well so a section reaching for a
+     "medium" corner inside a panel still lands on the single inner radius. */
+  --r-well: 10px;
+  --r-xs:    8px;
+  --r-sm:   10px;
+  --r-md:   10px;
+  --r-lg:   22px;
+  --r-xl:   26px;
+  --r-2xl:  30px;
+  --r-3xl:  38px;
+  --r-pill: 999px;
+
+  /* ---- 5. Type — Didone display, sans UI (BRIEF §1.3, §5) -------------- */
+  --font-display: "Playfair Display", "Didot", "Bodoni 72", "Bodoni 72 Oldstyle",
+                  "Big Caslon", "Times New Roman", Times, serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui,
+             "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --f-sans: var(--font-ui);    /* deprecated alias */
+  --f-mono: var(--font-mono);  /* deprecated alias */
+
+  --fs-display: clamp(1.85rem, 8.5vw, 7.5rem);
+  --fs-h1:      clamp(1.95rem, 5.2vw, 3.6rem);
+  --fs-h2:      clamp(1.5rem, 3.2vw, 2.35rem);
+  --fs-h3:      clamp(1.12rem, 2vw, 1.4rem);
+  --fs-lead:    clamp(1.02rem, 1.4vw, 1.22rem);
+  --fs-body:    1rem;
+  --fs-sm:      .875rem;
+  --fs-xs:      .75rem;
+  --fs-eyebrow: .7rem;
+
+  --lh-display: 1.0;
+  --lh-head:    1.12;
+  --lh-body:    1.62;
+
+  --ls-display: .055em;
+  --ls-head:    .02em;
+  --ls-body:    0em;
+  --ls-eyebrow: .22em;
+
+  --fw-reg: 400;
+  --fw-med: 500;
+  --fw-semi:600;
+  --fw-bold:700;
+
+  /* ---- 6. Space & layout ----------------------------------------------- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+  --sp-9: 96px; --sp-10:128px;
+
+  --gutter:   clamp(18px, 4.6vw, 56px);
+  --maxw:     1180px;
+  --maxw-nar: 760px;
+  --section-y: clamp(56px, 9vw, 128px);
+
+  /* ---- 7. Grain — the poster is film. One tile, rasterised once. -------- */
+  --grain-opacity: .042;
+  --grain-size: 150px;
+  --grain-tile: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='150' height='150' filter='url(%23g)' opacity='.62'/></svg>");
+  --grain-surface: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='150' height='150' filter='url(%23g)' opacity='.085'/></svg>");
+
+  /* ---- 8. Motion ------------------------------------------------------- */
+  --ease-glass:  cubic-bezier(.22, 1, .36, 1);
+  --ease-out:    cubic-bezier(.16, 1, .3, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+  --dur-3: 480ms;
+  --dur-4: 900ms;
+
+  /* ---- 9. Z-index scale ------------------------------------------------ */
+  --z-base:    0;
+  --z-raised: 10;
+  --z-sticky:100;
+  --z-bar:   200;
+  --z-overlay:300;
+  --z-modal: 400;
+  --z-toast: 500;
+
+  /* ---- 10. Focus ------------------------------------------------------- */
+  --focus-ring: 0 0 0 2px rgb(var(--navy-900-rgb) / .95),
+                0 0 0 4px rgb(var(--ball-rgb) / .95),
+                0 0 22px -2px rgb(var(--ball-rgb) / .55);
+}
+
+/* Coarse pointers: cheaper blur. The perf gate lives here (BRIEF §4). */
+@media (pointer: coarse) {
+  :root {
+    --g-blur:        7px;
+    --g-blur-panel:  7px;
+    --g-blur-bar:    9px;
+    --g-blur-frost: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 1ms; --dur-2: 1ms; --dur-3: 1ms; --dur-4: 1ms; }
+}

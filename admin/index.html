@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin — CHAMPETOETERS &amp; FRIENDS</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/glass.css">
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="ad">
+
+<i class="bg-field" aria-hidden="true"></i>
+<i class="ad-ground" aria-hidden="true"></i>
+<i class="bg-grain" aria-hidden="true"></i>
+
+<header class="ad-top">
+  <div class="ad-top__in">
+    <span class="ad-brand">CHAMPETOETERS<span class="ad-brand__sub">Admin</span></span>
+    <div class="ad-top__act" data-el="topAct" hidden>
+      <button type="button" class="glass-btn glass-btn--ghost glass-btn--sm" data-act="refresh">Verversen</button>
+      <button type="button" class="ad-link" data-act="logout">Afmelden</button>
+    </div>
+  </div>
+</header>
+
+<main class="ad-main" id="main">
+
+  <!-- ── login ─────────────────────────────────────────────────────────── -->
+  <section class="ad-view" data-view="login">
+    <form class="glass glass--panel ad-login" data-el="loginForm" novalidate onsubmit="return false">
+      <h1 class="ad-h1">Aanmelden</h1>
+      <div class="glass-field">
+        <label class="glass-label" for="ad-pw">Wachtwoord</label>
+        <!-- deliberately no name=: this form has no action, so an Enter before
+             admin.js binds its submit handler would GET /admin/?password=… and
+             put the password in the URL, history and Referer. -->
+        <input class="glass-input" id="ad-pw" data-el="pw" type="password"
+               autocomplete="current-password" autocapitalize="off" spellcheck="false" maxlength="80">
+      </div>
+      <p class="glass-error" data-el="loginError" role="status" aria-live="polite"></p>
+      <button type="submit" class="glass-btn glass-btn--primary glass-btn--block" data-el="loginBtn">Aanmelden</button>
+      <p class="ad-note" data-el="loginNote" hidden>Backend nog niet verbonden. Vraag het aan de beheerder.</p>
+    </form>
+  </section>
+
+  <!-- ── app ───────────────────────────────────────────────────────────── -->
+  <section class="ad-view" data-view="app" hidden>
+    <div class="ad-sticky">
+    <div class="glass glass--bar glass--flat ad-tabs" role="tablist" aria-label="Onderdelen">
+      <button type="button" class="ad-tab" role="tab" id="ad-t-matches"
+              aria-selected="true" aria-controls="ad-p-matches" data-tab="matches">Wedstrijden</button>
+      <button type="button" class="ad-tab" role="tab" id="ad-t-teams" tabindex="-1"
+              aria-selected="false" aria-controls="ad-p-teams" data-tab="teams">Teams €50</button>
+      <button type="button" class="ad-tab" role="tab" id="ad-t-orders" tabindex="-1"
+              aria-selected="false" aria-controls="ad-p-orders" data-tab="orders">Open air €12</button>
+    </div>
+    </div>
+
+    <div class="glass glass--panel glass--flat ad-panel" role="tabpanel" id="ad-p-matches"
+         aria-labelledby="ad-t-matches" data-panel="matches" tabindex="0"></div>
+    <div class="glass glass--panel glass--flat ad-panel" role="tabpanel" id="ad-p-teams"
+         aria-labelledby="ad-t-teams" data-panel="teams" tabindex="0" hidden></div>
+    <div class="glass glass--panel glass--flat ad-panel" role="tabpanel" id="ad-p-orders"
+         aria-labelledby="ad-t-orders" data-panel="orders" tabindex="0" hidden></div>
+  </section>
+
+</main>
+
+<p class="ad-toast" data-el="toast" role="status" aria-live="polite"></p>
+
+<script src="../js/config.js"></script>
+<script src="../js/bracket.js"></script>
+<script src="../js/livedata.js"></script>
+<script src="../js/admin.js"></script>
+</body>
+</html>
