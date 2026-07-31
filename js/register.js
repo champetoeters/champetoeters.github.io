@@ -7,6 +7,10 @@
    The flow is three views, each fitting one phone screen:
      form → POST action=register (ChampLive) → payment panel → confirmation.
 
+   A fourth view stands in for the form when the draw is full: no fields, one
+   panel, and the one thing still possible (come and watch). It is reached only
+   from a live API — the count at load, or a `full` answer to a submit.
+
    Liveness (BRIEF §0 item 13): CHAMP_CONFIG.health() decides. register:true
    plus an apiEndpoint and the live module means a real POST and a real
    confirmation; anything else — feature off, API unreachable, config missing —
@@ -185,8 +189,8 @@ window.Sections.register = {
 
       /* The confirmation carries its own full-width way home, so the page-chrome
          "Terug" pill beside it would be a second one (register.css §7). */
-      if (name === 'done') document.body.dataset.champDone = '1';
-      else delete document.body.dataset.champDone;
+      if (name === 'done') document.body.dataset.champFlowDone = '1';
+      else delete document.body.dataset.champFlowDone;
     }
 
     /* =====================================================================

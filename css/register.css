@@ -447,7 +447,32 @@
 /* The confirmation's own "Terug naar de startpagina" is the way home, so the
    page-chrome pill beside it is a second one. shell.css owns .page-back; this
    only hides it, and only while register.js says the confirmation is up. */
-body[data-champ-done="1"] .page-back { display: none; }
+body[data-champ-flow-done="1"] .page-back { display: none; }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7b. THE PHONE HEIGHT BUDGET
+   Measured, not guessed. At 390×844 the worst case is the form with all four
+   errors showing: the section is centred in the FULL viewport (§1), so a block
+   that grows pushes its own eyebrow up UNDER the floating "Terug" pill — which
+   paints over it (shell.css z-index 5). Adding the "wat krijg je" line cost
+   39px, so this block gives 39px back: no single change is visible on its own,
+   the pill keeps 3px of air above the eyebrow, and the panel still ends 54px
+   above the fold. Controls stay over the 44px target floor (48 / 52).
+   ⚠️ If you add a line to this page, re-measure this state first.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 430px) {
+  #register { --reg-gap: 12px; --reg-ctl-h: 48px; }
+  .reg__eyebrow { margin-bottom: 4px; }
+  .reg__head { margin-bottom: 12px; }
+  .reg__gets { margin-top: 6px; font-size: .82rem; }
+  .reg__slots { margin-top: 6px; }
+  .reg-live { margin-bottom: 11px; }
+  .reg-error { margin-top: 4px; font-size: .78rem; line-height: 1.35; }
+  .reg-form { padding: 15px; }
+  .reg-btn { margin-top: 13px; }
+}
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -484,6 +509,19 @@ body[data-champ-done="1"] .page-back { display: none; }
   font-size: 1rem;
   line-height: 1.6;
   color: var(--paper-dim);
+}
+
+/* One long label on one pill: it gives up tracking before it gives up a line,
+   and it may take a second line rather than run off the edge. */
+#register .reg-full__cta {
+  padding-block: 12px;
+  font-size: .78rem;
+  letter-spacing: .07em;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+@media (max-width: 430px) {
+  #register .reg-full__cta { font-size: .71rem; letter-spacing: .04em; padding-inline: 14px; }
 }
 
 /* Secondary, and deliberately not a second button: the view has one primary

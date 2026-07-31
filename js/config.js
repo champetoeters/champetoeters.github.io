@@ -13,7 +13,7 @@
  */
 
 window.CHAMP_CONFIG = {
-  apiEndpoint: "",
+  apiEndpoint: "https://script.google.com/macros/s/AKfycbwP7UgY4GRaunT597IgpGot0suHRIVg_ZTLyaMBBu5BqYb8R0zBBM-X5RroC0H9pZHs/exec",
 
   /* Manual payments: bank transfer or at the event. The IBAN also drives the
      scannable EPC QR on the payment panel; leave it empty until it is known

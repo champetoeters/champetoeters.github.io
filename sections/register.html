@@ -2,6 +2,7 @@
   register — team entry, in three views: the form, then how to pay, then the
   confirmation. Each view fits one phone screen on its own (390×844); only the
   form view keeps the page header, so the flow never grows a scrollbar.
+  A fourth view (volzet) replaces the form when the live draw has no place left.
 
   Nothing here can print a confirmation: the done view is revealed by
   js/register.js only after the backend answered ok (backend/API.md).
@@ -104,8 +105,12 @@
           <p class="reg-full__lead" data-reg="full-lead"></p>
         </div>
 
-        <a class="glass-btn glass-btn--primary reg-btn" href="tickets.html"
-           data-reg="full-tickets">Kom supporteren — open air ticket €12</a>
+        <!-- The label is a span, not a bare text node: a text node in a flex
+             button is an anonymous item that will not shrink, and this label is
+             long enough to have overflowed the pill on a phone. -->
+        <a class="glass-btn glass-btn--primary reg-btn reg-full__cta" href="tickets.html">
+          <span data-reg="full-tickets">Kom supporteren — open air ticket €12</span>
+        </a>
         <a class="reg-full__home" href="index.html">Terug naar de startpagina</a>
       </div>
 

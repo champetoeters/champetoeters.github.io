@@ -183,7 +183,7 @@
     const tile = svg
       ? '<div class="pay__tile" role="img" aria-label="' +
           esc('QR-code: overschrijving van ' + euro(amount) +
-              (kind === 'order' ? ' voor je tickets' : ' voor je inschrijving') +
+              (kind === 'order' ? ' voor je open air tickets' : ' voor je inschrijving') +
               (reference ? ', mededeling ' + reference : '')) + '">' + svg + '</div>' +
         '<p class="pay__hint">Scan met je bank-app.</p>'
       : iban

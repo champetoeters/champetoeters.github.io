@@ -250,8 +250,8 @@ window.Sections.tickets = (() => {
 
       /* The confirmation carries its own full-width way home, so the
          page-chrome "Terug" pill beside it would be a second one. */
-      if (next === 'done') document.body.dataset.champDone = '1';
-      else delete document.body.dataset.champDone;
+      if (next === 'done') document.body.dataset.champFlowDone = '1';
+      else delete document.body.dataset.champFlowDone;
     }
 
     /* ---- 5. order --------------------------------------------------------- */

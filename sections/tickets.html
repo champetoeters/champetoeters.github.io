@@ -75,7 +75,7 @@
                 id="tk-pay" aria-disabled="true">
           <span class="tk-pay__label" id="tk-pay-label">Ticketverkoop nog niet open</span>
           <span class="tk-pay__dot" aria-hidden="true">·</span>
-          <span class="tk-pay__amt u-tabular" id="tk-pay-amt">€&nbsp;12</span>
+          <span class="tk-pay__amt u-tabular" id="tk-pay-amt">€12</span>
         </button>
       </div>
 
@@ -113,6 +113,9 @@
           <h2 class="tk-done__title" tabindex="-1" id="tk-done-title">Je tickets zijn gereserveerd</h2>
           <p class="tk-done__lead" id="tk-done-recap"></p>
           <p class="tk-done__lead">Bevestiging in je mailbox. Betaald&nbsp;=&nbsp;binnen.</p>
+          <!-- The payment details survive the payment view: bedrag · rekening ·
+               mededeling, written by tickets.js via PayInfo.recap(). -->
+          <p class="tk-done__pay" id="tk-done-pay"></p>
           <p class="tk-done__foot" id="tk-done-contact"></p>
         </div>
 

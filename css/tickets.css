@@ -94,10 +94,13 @@
 
 /* The number is the confident bit. It appears exactly twice on the page: here,
    and on the button that charges it. */
+/* gap: 0 — the sign sits against the number, "€12", the one euro format the site
+   uses everywhere (the button, the payment panel, the mail). "per stuk" keeps its
+   own 8px via margin-left. */
 .tk__price {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 0;
   margin: clamp(4px, .8vw, 10px) 0 0;
   flex-wrap: wrap;
 }
@@ -332,7 +335,7 @@
   box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .34), var(--focus-ring);
 }
 
-/* "Tickets reserveren · € 24" survives a phone by giving up tracking, never by
+/* "Tickets reserveren · €24" survives a phone by giving up tracking, never by
    wrapping — a two-line primary button reads as two actions. */
 @media (max-width: 430px) {
   #tickets .tk-pay { font-size: .715rem; letter-spacing: .045em; gap: 7px; padding-inline: 10px; }
@@ -457,6 +460,19 @@
   color: var(--ball);
   white-space: nowrap;
 }
+/* The payment details, kept alive past the payment view: one quiet line. */
+.tk-done__pay {
+  margin-top: var(--sp-4);
+  font-family: var(--font-ui);
+  font-size: .82rem;
+  line-height: 1.5;
+  letter-spacing: .01em;
+  color: var(--paper-dim);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.tk-done__pay[hidden] { display: none; }
+
 .tk-done__foot {
   margin-top: var(--sp-5);
   padding-top: var(--sp-4);
@@ -465,6 +481,11 @@
   color: var(--paper-mute);
   overflow-wrap: anywhere;
 }
+
+/* The confirmation's own "Terug naar de startpagina" is the way home, so the
+   page-chrome pill beside it is a second one. shell.css owns .page-back; this
+   only hides it, and only while tickets.js says the confirmation is up. */
+body[data-champ-flow-done="1"] .page-back { display: none; }
 
 /* ---- 5. The one link to the other page ----------------------------------- */
 
