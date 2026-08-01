@@ -357,43 +357,42 @@
   padding: clamp(20px, 5vw, 34px) 8px clamp(16px, 3vw, 24px);
 }
 .tk-proc p { margin: 0; }
-.tk-spin { position: relative; width: 92px; height: 92px; margin-bottom: var(--sp-2); }
-.tk-spin::before {
-  content: "";
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background: rgb(var(--navy-600-rgb) / .3);
-  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .16);
+/* Waiting = champagne. Three bubbles rise and dissolve on a staggered beat —
+   the house indicator, instead of a stock spinner. Transform/opacity only
+   (BRIEF §4); reduced motion gets three still bubbles. */
+.champ-bubbles {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 30px;
+  margin-bottom: var(--sp-4);
 }
-.tk-spin__ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg,
-    rgb(var(--ball-rgb) / 0) 0deg,
-    rgb(var(--blue-050-rgb) / .3) 160deg,
-    rgb(var(--blue-050-rgb) / .85) 258deg,
-    var(--ball) 336deg,
-    #EAF5B8 357deg,
-    rgb(var(--ball-rgb) / 0) 360deg);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
-          mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px));
-  animation: tk-rot 1.15s linear infinite;
-}
-.tk-spin__ball { position: absolute; inset: 0; animation: tk-rot 1.15s linear infinite; }
-.tk-spin__ball::after {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: calc(50% - 5.5px);
-  width: 11px;
-  height: 11px;
+.champ-bubbles i {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--ball);
-  box-shadow: 0 0 16px 3px rgb(var(--ball-rgb) / .75);
+  opacity: .3;
 }
-@keyframes tk-rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  .champ-bubbles i {
+    animation: champ-bubble 1.5s cubic-bezier(.35, 0, .25, 1) infinite;
+  }
+  .champ-bubbles i:nth-child(2) { animation-delay: .22s; }
+  .champ-bubbles i:nth-child(3) { animation-delay: .44s; }
+  @keyframes champ-bubble {
+    0%   { transform: translateY(0)     scale(.7); opacity: 0; }
+    30%  { transform: translateY(-7px)  scale(1);  opacity: .95; }
+    75%  { transform: translateY(-17px) scale(.85); opacity: 0; }
+    100% { transform: translateY(-17px) scale(.85); opacity: 0; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .champ-bubbles i:nth-child(1) { opacity: .35; }
+  .champ-bubbles i:nth-child(2) { opacity: .6; transform: translateY(-4px); }
+  .champ-bubbles i:nth-child(3) { opacity: .95; transform: translateY(-8px); }
+}
+
 
 .tk-proc__title {
   font-family: var(--tk-serif);
@@ -518,12 +517,6 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
 /* Every target in this section clears the 44px floor (§9). */
 #tickets button { min-height: 44px; }
 #tickets .tk-stepper__btn { min-height: 44px; min-width: 44px; }
-
-/* §4 rule 7 — the spinner is the only ambient motion here, and it goes. */
-@media (prefers-reduced-motion: reduce) {
-  .tk-spin__ring, .tk-spin__ball { animation: none; }
-  .tk-spin__ball::after { top: calc(50% - 5.5px); left: -5px; }
-}
 
 /* Waiting for the health probe — see register.css: label stays the action,
    dimmed and inert, so the text never flips from "niet open" to open. */
