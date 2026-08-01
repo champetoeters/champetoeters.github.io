@@ -195,3 +195,9 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .page-back { transition: none; }
 }
+
+/* Overscroll (rubber-band) area on the LANDING page: a solid tone matching the
+   footer, so bouncing past the bottom never reveals a disconnected gradient.
+   Only the landing carries .page-landing — the other pages keep the drawn
+   ground behind their overscroll. */
+html.page-landing { background-color: #141D44; }

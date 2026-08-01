@@ -7,7 +7,7 @@
  *  3. Left rail → Project Settings → Script properties → Add script property,
  *     three times:
  *        ADMIN_PASSWORD  the password the organisers type in /admin/
- *        PAY_IBAN        e.g. BE68 5390 0754 7034  (leave empty until known)
+ *        PAY_IBAN        optional — defaults to BE37 9731 8485 2328
  *        PAY_HOLDER      e.g. Champetoeters
  *     Optional: SHEET_ID to use an existing Google Sheet. Without it the script
  *     creates a Sheet named "CHAMPETOETERS backend" in your Drive on first use
@@ -54,7 +54,7 @@ var MAX_QTY = 8;
    Script cannot read it, so the two numbers it needs live here. Keep in step:
    TOTAL_SLOTS = teams.length, OPEN_SLOTS = the ids with confirmed:false. */
 var TOTAL_SLOTS = 16;
-var OPEN_SLOTS = ['t15', 't16'];
+var OPEN_SLOTS = ['t09', 't10', 't11', 't12', 't13', 't14', 't15', 't16'];
 
 /* register/order are unauthenticated and send mail, so they are capped: the
    same address may not pile up rows, and a whole day cannot be flooded (the
@@ -415,14 +415,14 @@ function cleanResult_(sets, winner) {
 
 /* -------------------------------------------------------------------- mail */
 
-function payIban_() { return String(props_().getProperty('PAY_IBAN') || '').trim(); }
+function payIban_() { return String(props_().getProperty('PAY_IBAN') || 'BE37 9731 8485 2328').trim(); }
 function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Champetoeters').trim(); }
 
-function paymentLines_(reference) {
+function paymentLines_(mededeling) {
   var iban = payIban_();
   var first = iban
     ? '• Overschrijving naar ' + iban + ' op naam van ' + payHolder_() +
-      ' met mededeling "' + reference + '".'
+      ' met mededeling "' + mededeling + '".'
     : '• Het rekeningnummer volgt nog — betalen kan ook ter plaatse.';
   return [
     'Betalen kan op twee manieren:',
@@ -450,11 +450,11 @@ function registerMail_(entry) {
     lines: [
       'Hallo ' + who + ',',
       '',
-      'Jullie inschrijving is binnen. Nummer ' + entry.ref + '.',
+      'Jullie inschrijving is binnen.',
       'Team: ' + (entry.teamName || who) + ' (' + who + ')',
       'Inschrijvingsgeld: €' + TEAM_PRICE + ' per team.',
       ''
-    ].concat(paymentLines_(entry.ref), [''], footerLines_())
+    ].concat(paymentLines_(entry.teamName || who), [''], footerLines_())
   };
 }
 
@@ -466,10 +466,10 @@ function orderMail_(order) {
     lines: [
       'Hallo ' + order.name + ',',
       '',
-      'Je tickets zijn gereserveerd. Nummer ' + order.ref + '.',
+      'Je tickets zijn gereserveerd.',
       'Aantal: ' + order.quantity + ' × €' + TICKET_PRICE + ' = €' + total + '.',
       ''
-    ].concat(paymentLines_(order.ref), [''], footerLines_())
+    ].concat(paymentLines_(order.name), [''], footerLines_())
   };
 }
 

@@ -90,75 +90,50 @@
   {
     "id": "t09",
     "group": "A",
-    "confirmed": true,
-    "name": "De Tiebreakers",
-    "players": [
-      "Seppe Boonen",
-      "Elise Maes"
-    ],
-    "club": "Padel Kortrijk"
+    "confirmed": false,
+    "players": [],
+    "label": "Vrije plaats"
   },
   {
     "id": "t10",
     "group": "B",
-    "confirmed": true,
-    "name": "De Gouden Setters",
-    "players": [
-      "Camille Willems",
-      "Hanne Wouters"
-    ],
-    "club": "TC Leiemeers"
+    "confirmed": false,
+    "players": [],
+    "label": "Vrije plaats"
   },
   {
     "id": "t11",
     "group": "C",
-    "confirmed": true,
-    "name": "Los Padelos",
-    "players": [
-      "Noor Deprez",
-      "Noor Vanhoutte"
-    ],
-    "club": "Izegem Racket"
+    "confirmed": false,
+    "players": [],
+    "label": "Vrije plaats"
   },
   {
     "id": "t12",
     "group": "D",
-    "confirmed": true,
-    "name": "De Muurkletsers",
-    "players": [
-      "Julie Depuydt",
-      "Mathis De Ridder"
-    ],
-    "club": "Padel Kortrijk"
+    "confirmed": false,
+    "players": [],
+    "label": "Vrije plaats"
   },
   {
     "id": "t13",
     "group": "A",
-    "confirmed": true,
-    "name": "Team Vibora",
-    "players": [
-      "Kobe Dubois",
-      "Arne Van Acker"
-    ],
-    "club": "Waregem Padel"
+    "confirmed": false,
+    "players": [],
+    "label": "Vrije plaats"
   },
   {
     "id": "t14",
     "group": "B",
-    "confirmed": true,
-    "name": "De Dropshotters",
-    "players": [
-      "Noor Michiels",
-      "Thibault De Clercq"
-    ],
-    "club": "Harelbeke Padel"
+    "confirmed": false,
+    "players": [],
+    "label": "Vrije plaats"
   },
   {
     "id": "t15",
     "group": "C",
     "confirmed": false,
     "players": [],
-    "club": null,
     "label": "Vrije plaats"
   },
   {
@@ -166,7 +141,6 @@
     "group": "D",
     "confirmed": false,
     "players": [],
-    "club": null,
     "label": "Vrije plaats"
   }
 ]

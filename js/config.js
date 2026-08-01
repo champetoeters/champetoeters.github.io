@@ -19,8 +19,7 @@ window.CHAMP_CONFIG = {
      scannable EPC QR on the payment panel; leave it empty until it is known
      and the QR shows a tidy "volgt nog" placeholder instead. */
   payment: {
-    iban: "",                    // e.g. "BE68 5390 0754 7034"
-    bic: "",                     // optional
+    iban: "BE37 9731 8485 2328",
     holder: "Champetoeters",
   },
 

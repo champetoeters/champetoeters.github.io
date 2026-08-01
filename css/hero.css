@@ -646,8 +646,11 @@
   color: rgb(244 247 251 / .70);
   font-size: .9375rem;
   font-weight: 500;
+  /* .32 alpha disappeared on phone screens — the client read it as "no
+     underline". It must read as a link at every viewport. */
   text-decoration: underline;
-  text-decoration-color: rgb(244 247 251 / .32);
+  text-decoration-color: rgb(244 247 251 / .6);
+  text-decoration-thickness: 1px;
   text-underline-offset: 5px;
   transition: color .18s ease, text-decoration-color .18s ease;
 }

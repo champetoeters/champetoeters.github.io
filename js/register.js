@@ -194,7 +194,9 @@ window.Sections.register = {
 
       /* The confirmation carries its own full-width way home, so the page-chrome
          "Terug" pill beside it would be a second one (register.css §7). */
-      if (name === 'done') document.body.dataset.champFlowDone = '1';
+      /* From the payment step on there is nothing to go "Terug" to — the
+         entry is already submitted. The pill leaves with the form. */
+      if (name === 'pay' || name === 'done') document.body.dataset.champFlowDone = '1';
       else delete document.body.dataset.champFlowDone;
     }
 
@@ -462,7 +464,9 @@ window.Sections.register = {
     let flowStarted = false;   /* past the form: a late count must not intrude */
 
     function showPay(body) {
-      const refNo  = (body && (body.reference || body.ref)) || '';
+      /* The mededeling is the TEAM NAME — that is how the organisers match a
+         transfer to a team. The server's INS-nn stays internal bookkeeping. */
+      const mededeling = payload().teamName;
       const amount = (body && typeof body.amount === 'number') ? body.amount : FEE;
       payAmount = amount;
       flowStarted = true;
@@ -472,14 +476,13 @@ window.Sections.register = {
       setView('pay');
 
       const panel = window.PayInfo
-        ? window.PayInfo.render(ref('pay'), { amount: amount, reference: refNo, kind: 'register' })
+        ? window.PayInfo.render(ref('pay'), { amount: amount, mededeling: mededeling, kind: 'register' })
         : null;
 
-      ref('pay-ok').onclick = () => showDone(refNo);
+      ref('pay-ok').onclick = () => showDone(mededeling);
 
       if (panel && panel.title) panel.title.focus();
-      speakStatus('Inschrijving ontvangen.' + (refNo ? ' Nummer ' + refNo + '.' : '') +
-        ' Betalen: €' + amount + '.');
+      speakStatus('Inschrijving ontvangen. Betalen: €' + amount + '.');
 
       /* A place really was taken, so the count on screen moves with it. */
       if (remaining > 0) { remaining -= 1; paintCounts(); }
@@ -487,7 +490,7 @@ window.Sections.register = {
 
     /* ---- view 3: confirmed ----------------------------------------------- */
 
-    function showDone(refNo) {
+    function showDone(mededeling) {
       const p = payload();
       const who = p.teamName ||
         [p.player1, p.player2].filter(Boolean).join(' & ') || 'Jullie team';
@@ -496,14 +499,13 @@ window.Sections.register = {
       root.dataset.state = 'success';
       setView('done');
 
-      ref('done-lead').innerHTML = esc(who) + '.' +
-        (refNo ? ' Nummer <span class="reg-done__ref">' + esc(refNo) + '</span>.' : '');
+      ref('done-lead').innerHTML = esc(who) + '.';
 
       /* The payment view is gone; its three facts are not. One line: bedrag ·
          rekening · mededeling (payinfo.js owns the wording). */
       const payEl = ref('done-pay');
       const recap = (window.PayInfo && typeof window.PayInfo.recap === 'function')
-        ? window.PayInfo.recap({ amount: payAmount, reference: refNo })
+        ? window.PayInfo.recap({ amount: payAmount, mededeling: mededeling })
         : '';
       payEl.textContent = recap;
       payEl.hidden = !recap;
@@ -511,8 +513,7 @@ window.Sections.register = {
       ref('done-contact').textContent = contactLine();
 
       ref('done-title').focus();
-      speakStatus('Jullie zijn ingeschreven.' + (refNo ? ' Nummer ' + refNo + '.' : '') +
-        ' We hebben je een bevestiging gemaild.');
+      speakStatus('Jullie zijn ingeschreven. We hebben je een bevestiging gemaild.');
     }
 
     /* ---- volzet: one panel INSTEAD of the form ---------------------------

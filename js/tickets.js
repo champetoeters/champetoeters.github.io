@@ -250,7 +250,9 @@ window.Sections.tickets = (() => {
 
       /* The confirmation carries its own full-width way home, so the
          page-chrome "Terug" pill beside it would be a second one. */
-      if (next === 'done') document.body.dataset.champFlowDone = '1';
+      /* From the payment step on there is nothing to go "Terug" to — the
+         order is already submitted. The pill leaves with the form. */
+      if (next === 'pay' || next === 'done') document.body.dataset.champFlowDone = '1';
       else delete document.body.dataset.champFlowDone;
     }
 
@@ -302,42 +304,36 @@ window.Sections.tickets = (() => {
     let paidAmount = 0;
 
     function showPay(body) {
-      const reference = (body && (body.reference || body.ref)) || '';
+      /* The mededeling is the BUYER'S NAME — that is how the organisers match
+         a transfer to an order. The server's TKT-nn stays internal. */
+      const mededeling = nameEl.value.trim();
       const amount = (body && typeof body.amount === 'number') ? body.amount : total();
       paidAmount = amount;
 
       setView('pay');
       const panel = window.PayInfo
-        ? window.PayInfo.render($('#tk-pay-panel'), { amount: amount, reference: reference, kind: 'order' })
+        ? window.PayInfo.render($('#tk-pay-panel'), { amount: amount, mededeling: mededeling, kind: 'order' })
         : null;
 
-      $('#tk-pay-ok').onclick = () => showDone(reference);
+      $('#tk-pay-ok').onclick = () => showDone(mededeling);
 
       if (panel && panel.title && !frozen) panel.title.focus();
-      say('Gereserveerd.' + (reference ? ' Nummer ' + reference + '.' : '') +
-        ' Betalen: ' + EUR(amount) + '.');
+      say('Gereserveerd. Betalen: ' + EUR(amount) + '.');
     }
 
     /* ---- 7. reserved ------------------------------------------------------ */
 
-    function showDone(reference) {
+    function showDone(mededeling) {
       setView('done');
 
       const recap = $('#tk-done-recap');
-      recap.textContent = qty + ' ' + units(qty) + (reference ? ' · nummer ' : '');
-      if (reference) {
-        const tag = document.createElement('span');
-        tag.className = 'tk-done__ref';
-        tag.textContent = reference;
-        recap.appendChild(tag);
-      }
-      recap.appendChild(document.createTextNode('.'));
+      recap.textContent = qty + ' ' + units(qty) + '.';
 
       /* The payment view is gone; its three facts are not. One line: bedrag ·
          rekening · mededeling (payinfo.js owns the wording). */
       const payLine = $('#tk-done-pay');
       const txt = (window.PayInfo && typeof window.PayInfo.recap === 'function')
-        ? window.PayInfo.recap({ amount: paidAmount || total(), reference: reference })
+        ? window.PayInfo.recap({ amount: paidAmount || total(), mededeling: mededeling })
         : '';
       payLine.textContent = txt;
       payLine.hidden = !txt;
@@ -347,8 +343,7 @@ window.Sections.tickets = (() => {
 
       const title = $('#tk-done-title');
       if (!frozen) title.focus();
-      say('Je tickets zijn gereserveerd.' + (reference ? ' Nummer ' + reference + '.' : '') +
-        ' Bevestiging in je mailbox.');
+      say('Je tickets zijn gereserveerd. Bevestiging in je mailbox.');
     }
 
     /* ---- 8. boot ----------------------------------------------------------

@@ -465,10 +465,11 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
 
 @media (max-width: 430px) {
   #register { --reg-gap: 12px; --reg-ctl-h: 48px; }
-  /* On a phone the section centres BELOW the page head instead of underneath
-     it, so the heading always clears the Terug pill (client: it sat too
-     close) — the panel keeps its own air whatever the content height. */
-  #register.u-section {
+  /* On a phone the FORM view centres BELOW the page head, so the heading
+     always clears the Terug pill (client: it sat too close). The pay/done/
+     volzet views hide that header, so they centre in the FULL viewport —
+     "like the reserved screen" (client). */
+  #register.u-section:not([data-state="pay"]):not([data-state="success"]):not([data-state="full"]) {
     margin-top: 0;
     min-height: calc(100svh - var(--page-head-h, 72px));
     padding-block-start: 12px;
