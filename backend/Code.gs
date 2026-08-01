@@ -423,12 +423,12 @@ function paymentLines_(mededeling) {
   var first = iban
     ? '• Overschrijving naar ' + iban + ' op naam van ' + payHolder_() +
       ' met mededeling "' + mededeling + '".'
-    : '• Het rekeningnummer volgt nog — betalen kan ook ter plaatse.';
+    : '• Het rekeningnummer volgt nog. Betalen kan ook ter plaatse.';
   return [
     'Betalen kan op twee manieren:',
     first,
     '• Of ter plaatse op het event (cash of Payconiq).',
-    'Nog niet betaald? Geen probleem — je plaats/tickets staan vast zodra we je',
+    'Nog niet betaald? Geen probleem: je plaats/tickets staan vast zodra we je',
     'betaling ontvangen of je ter plaatse betaalt.'
   ];
 }
@@ -437,7 +437,7 @@ function footerLines_() {
   return [
     'Vragen? Mail ' + CONTACT_EMAIL + ' of bel ' + CONTACT_PHONE + '.',
     '',
-    EVENT_NAME + ' — ' + EVENT_WHEN,
+    EVENT_NAME + ' · ' + EVENT_WHEN,
     EVENT_WHERE
   ];
 }
@@ -446,7 +446,7 @@ function registerMail_(entry) {
   var who = [entry.player1, entry.player2].filter(Boolean).join(' & ');
   return {
     to: entry.email,
-    subject: 'Inschrijving ontvangen — ' + EVENT_NAME,
+    subject: 'Inschrijving ontvangen · ' + EVENT_NAME,
     lines: [
       'Hallo ' + who + ',',
       '',
@@ -462,7 +462,7 @@ function orderMail_(order) {
   var total = order.quantity * TICKET_PRICE;
   return {
     to: order.email,
-    subject: 'Je open air tickets — ' + EVENT_NAME,
+    subject: 'Je open air tickets · ' + EVENT_NAME,
     lines: [
       'Hallo ' + order.name + ',',
       '',

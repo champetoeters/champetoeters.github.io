@@ -142,7 +142,7 @@ window.Sections.register = {
        things it includes are teamEntry.includes, said shorter than the data spells
        them out (BRIEF §0 rule 6 — plain and short beats complete). */
     ref('gets').textContent =
-      FEE_TXT + ' per team — twee spelers, minstens drie wedstrijden, open air voor beiden.';
+      FEE_TXT + ' per team: twee spelers, minstens drie wedstrijden, open air voor beiden.';
 
     let remaining = REMAINING;
 
@@ -345,8 +345,8 @@ window.Sections.register = {
       if (!bad.length) return '';
       const f = bad[0];
       return bad.length === 1
-        ? '1 fout. ' + f.name + ' — ' + f.msg
-        : bad.length + ' fouten. Eerst: ' + f.name + ' — ' + f.msg;
+        ? '1 fout. ' + f.name + ': ' + f.msg
+        : bad.length + ' fouten. Eerst: ' + f.name + ': ' + f.msg;
     }
 
     /* Field errors live under their fields, never in a box above the form
@@ -543,7 +543,7 @@ window.Sections.register = {
 
       ref('full-eyebrow').textContent = EYEBROW_TXT;
       ref('full-lead').textContent = lead;
-      ref('full-tickets').textContent = 'Kom supporteren — open air ticket ' + TKT_TXT;
+      ref('full-tickets').textContent = 'Kom supporteren: open air ticket ' + TKT_TXT;
 
       ref('full-title').focus();
       speakStatus('Volzet. ' + lead);
@@ -565,7 +565,7 @@ window.Sections.register = {
          what happened — nothing. No path from here to the payment view. */
       if (!isLive) {
         notice(closedTxt === 'Volzet'
-          ? 'Volzet — er is niets verstuurd.'
+          ? 'Volzet. Er is niets verstuurd.'
           : 'Inschrijvingen zijn nog niet open. Er is niets verstuurd.');
         return;
       }

@@ -201,3 +201,17 @@ body::after {
    Only the landing carries .page-landing — the other pages keep the drawn
    ground behind their overscroll. */
 html.page-landing { background-color: #141D44; }
+
+/* iOS keeps painting the FIXED page gradient over the rubber-band area, so the
+   html colour alone never showed. This bleed scrolls WITH the page: it hangs
+   under the footer, costs no layout height, and covers the bounce in the
+   footer's own end colour. */
+html.page-landing .site-foot::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 120vh;
+  background: #141D44;
+}

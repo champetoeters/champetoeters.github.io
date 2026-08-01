@@ -118,8 +118,9 @@ window.Sections.tickets = (() => {
     /* ---- 1. what the ticket is ------------------------------------------- */
 
     $('#tk-title').textContent = COPY.name;
+    /* The exact same date-and-place line as the register page (client). */
     $('#tk-when').textContent =
-      (event.posterDate || '5 SEPT') + ' · ' + (event.posterPlace || 'LEIEMEERS KUURNE');
+      (event.dateDisplay || 'ZA 5 SEPT 2026') + ' · ' + (event.venue || 'TC Leiemeers');
     root.querySelector('.tk__amt').textContent = String(T.price);
     $('#tk-gets').textContent = COPY.gets;
 

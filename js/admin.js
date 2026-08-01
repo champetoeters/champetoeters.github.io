@@ -156,7 +156,7 @@
       if (r && (r.ok || (alsoOk && r.error === alsoOk))) { toast(okMsg || 'Bewaard', 'ok'); return; }
       revert();
       if (r && r.error === 'unauthorized') { expire(); return; }
-      toast('Niet bewaard — probeer opnieuw', 'bad');
+      toast('Niet bewaard, probeer opnieuw', 'bad');
     });
   }
 
@@ -294,7 +294,7 @@
         '<span class="ad-m__meta u-tabular">' + esc(meta) + '</span>' +
         '<span class="ad-m__tie">' + nm(A, 0) + nm(B, 1) + '</span>' +
         '<span class="ad-m__sc u-tabular' + (res ? '' : ' is-none') + '">' +
-        (res ? esc(scoreText(res)) : '—') + '</span>' +
+        (res ? esc(scoreText(res)) : '\u2013') + '</span>' +
         '</button>' + (isOpen ? editorHtml(m, A, B, !!res) : '') + '</div>');
     });
 
@@ -574,13 +574,13 @@
         mergeTeams();
         renderTeams();
         renderMatches();
-        toast('Team toegevoegd — ' + r.reference, 'ok');
+        toast('Team toegevoegd (' + r.reference + ')', 'ok');
         return;
       }
       if (r && r.error === 'unauthorized') { expire(); return; }
       formError(r && r.error === 'full' ? 'Alle plaatsen zijn bezet.'
         : r && r.error === 'bad-request' ? 'Controleer de gegevens.'
-          : 'Niet bewaard — probeer opnieuw.');
+          : 'Niet bewaard, probeer opnieuw.');
     });
   }
 
@@ -603,12 +603,12 @@
         });
         S.form = null;
         renderOrders();
-        toast('Bestelling toegevoegd — ' + r.reference, 'ok');
+        toast('Bestelling toegevoegd (' + r.reference + ')', 'ok');
         return;
       }
       if (r && r.error === 'unauthorized') { expire(); return; }
       formError(r && r.error === 'bad-request' ? 'Controleer de gegevens.'
-        : 'Niet bewaard — probeer opnieuw.');
+        : 'Niet bewaard, probeer opnieuw.');
     });
   }
 
@@ -668,7 +668,7 @@
         '<span class="ad-t__m">' + esc(meta.join(' · ')) + '</span></span>' +
         '<input type="checkbox" class="ad-t__i u-sr-only" data-act="paid" data-key="' + esc(p.key) + '"' +
         (p.paid ? ' checked' : '') + (has ? '' : ' disabled') +
-        ' aria-label="Betaald — ' + esc(name) + '">' +
+        ' aria-label="Betaald: ' + esc(name) + '">' +
         '<span class="ad-check" aria-hidden="true"></span>' +
         '</label>' +
         /* Only a registration is ours to delete; t01–t14 are pre-entered. */
@@ -731,9 +731,9 @@
       var d = shortDate(o.at);
       if (d) meta.push(d);
       return '<div class="ad-item"><div class="ad-r"><div class="ad-o">' +
-        '<span class="ad-o__b"><span class="ad-o__n">' + esc(o.name || '—') + '</span>' +
+        '<span class="ad-o__b"><span class="ad-o__n">' + esc(o.name || '\u2013') + '</span>' +
         '<span class="ad-o__m u-tabular">' + esc(meta.join(' · ')) + '</span></span>' +
-        '<span class="ad-step" role="group" aria-label="Betaalde tickets — ' + esc(o.name || o.ref) + '">' +
+        '<span class="ad-step" role="group" aria-label="Betaalde tickets: ' + esc(o.name || o.ref) + '">' +
         '<button type="button" class="ad-step__b" data-act="dec" data-ref="' + esc(o.ref) + '"' +
         (pc <= 0 ? ' disabled' : '') + ' aria-label="Eén ticket minder betaald">−</button>' +
         '<span class="ad-step__v u-tabular' + (pc === q && q ? ' is-full' : '') + '">' + pc + '/' + q + '</span>' +
@@ -817,7 +817,7 @@
   function expire() {
     S.pw = '';
     try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* private mode */ }
-    showLogin('Sessie verlopen — meld je opnieuw aan.');
+    showLogin('Sessie verlopen. Meld je opnieuw aan.');
   }
 
   function apply(data) {

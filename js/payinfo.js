@@ -53,7 +53,7 @@
       mededeling ? 'mededeling "' + mededeling + '"' : ''
     ].filter(Boolean).join(' · ');
     if (!line) return '';
-    return iban ? line : line + ' — alle details staan in je mailbox';
+    return iban ? line : line + ' · alle details staan in je mailbox';
   }
 
   function render(el, opts) {
@@ -74,7 +74,7 @@
       rows.push(
         '<div class="pay__row">' +
           '<p class="pay__k">Rekeningnummer</p>' +
-          '<p class="pay__note">Volgt nog — je krijgt het per mail.</p>' +
+          '<p class="pay__note">Volgt nog. Je krijgt het per mail.</p>' +
         '</div>');
     } else {
       rows.push(
@@ -99,7 +99,7 @@
     el.innerHTML =
       '<p class="u-eyebrow pay__eyebrow">' +
         (kind === 'order' ? 'Open air ticket' : 'Inschrijving') + '</p>' +
-      '<h2 class="pay__title" tabindex="-1" data-pay="title">Betalen — ' +
+      '<h2 class="pay__title" tabindex="-1" data-pay="title">Betalen: ' +
         '<span class="pay__amt">' + esc(euro(amount)) + '</span></h2>' +
       '<div class="pay__body">' +
         '<div class="pay__rows">' + rows.join('') + '</div>' +
@@ -149,7 +149,7 @@
           btn.classList.remove('is-copied');
         }, 2600);
       };
-      const fallback = () => { speak(select() ? 'Rekeningnummer geselecteerd.' : 'Kopiëren lukt niet — typ het nummer over.'); };
+      const fallback = () => { speak(select() ? 'Rekeningnummer geselecteerd.' : 'Kopiëren lukt niet. Typ het nummer over.'); };
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(iban).then(done, fallback);
