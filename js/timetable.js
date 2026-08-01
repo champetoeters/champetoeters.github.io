@@ -605,7 +605,10 @@ window.Sections = window.Sections || {};
        there is a backend, re-pulls the state and re-applies the whole overlay.
        Nothing here animates and nothing polls while the tab is in the
        background; coming back to the tab repaints at once. */
-    var TICK = 60000;
+    /* Three minutes, not one: a padel match lasts thirty, and every tick is a
+       billed backend execution when the static state is unavailable. The ±30%
+       jitter keeps a crowd of phones from asking in the same second. */
+    var TICK = 180000;
     var tick = null;
 
     function clockNow() {
@@ -627,6 +630,11 @@ window.Sections = window.Sections || {};
       var next = clockNow();
       var moved = next !== now;
       now = next;
+
+      /* Outside the event window there is nothing live to fetch — the one-shot
+         pull at mount already filled the draw. Without this gate every open
+         tab polled the backend once a minute, every day of the year. */
+      if (next === null) { if (moved) paint(); return; }
 
       var L = window.ChampLive;
       if (endpoint() && L && typeof L.refresh === 'function') {
@@ -668,7 +676,7 @@ window.Sections = window.Sections || {};
       } catch (e) { /* keep static */ }
     }
 
-    tick = setInterval(update, TICK);
+    tick = setInterval(update, TICK * (0.7 + Math.random() * 0.6));
     document.addEventListener('visibilitychange', onVisible);
 
     /* pause the render loop whenever we are off screen (BRIEF §4.6) */

@@ -13,6 +13,11 @@
  */
 
 window.CHAMP_CONFIG = {
+  /* Where the published live state lives (pushed by the backend on every
+     change; GitHub serves it to any crowd for free). Empty = read state from
+     apiEndpoint directly. */
+  stateUrl: "https://raw.githubusercontent.com/champetoeters/champetoeters.github.io/state/state.json",
+
   apiEndpoint: "https://script.google.com/macros/s/AKfycbwP7UgY4GRaunT597IgpGot0suHRIVg_ZTLyaMBBu5BqYb8R0zBBM-X5RroC0H9pZHs/exec",
 
   /* Manual payments: bank transfer or at the event. The IBAN also drives the

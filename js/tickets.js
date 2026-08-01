@@ -372,7 +372,9 @@ window.Sections.tickets = (() => {
 
     /* Local preview of the rendered design (§0 rule 8): query only, no visible
        affordance, and it never reaches the network. */
-    const wanted = params.get('state');
+    /* Screenshot hooks are for the UNWIRED build only (BRIEF §0 rule 8): a
+       production build must not be able to fabricate a confirmation. */
+    const wanted = cfg().apiEndpoint ? null : params.get('state');
     if (wanted === 'filled' || wanted === 'pay' || wanted === 'success') {
       frozen = true;
       qty = 2;

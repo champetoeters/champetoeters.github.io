@@ -9,6 +9,10 @@
  *        ADMIN_PASSWORD  the password the organisers type in /admin/
  *        PAY_IBAN        optional — defaults to BE37 9731 8485 2328
  *        PAY_HOLDER      e.g. Champetoeters
+ *     Optional: GITHUB_TOKEN — a fine-grained token (Contents: read/write on
+ *     the champetoeters.github.io repo only). With it, every score/registration
+ *     is pushed to GitHub as static state.json and visitors' phones read THAT,
+ *     costing this script no runtime. Strongly recommended for the event day.
  *     Optional: SHEET_ID to use an existing Google Sheet. Without it the script
  *     creates a Sheet named "CHAMPETOETERS backend" in your Drive on first use
  *     and remembers its id here; if you paste this into a Sheet-bound script
@@ -60,9 +64,19 @@ var OPEN_SLOTS = ['t09', 't10', 't11', 't12', 't13', 't14', 't15', 't16'];
    same address may not pile up rows, and a whole day cannot be flooded (the
    MailApp quota is about 100 mails a day). */
 var MAX_PER_EMAIL = 3;
-var MAX_PER_DAY = 150;
+var MAX_PER_DAY = 40;              /* stays under the ~100/day MailApp quota */
 var STATE_CACHE_KEY = 'state-v1';
-var STATE_CACHE_TTL = 20;
+var STATE_CACHE_TTL = 60;
+
+/* Static-state publishing: after every mutation the fresh state is pushed to
+   the GitHub repo (branch 'state'), and the SITE reads it from GitHub — reads
+   then cost NO script runtime, so any number of phones can watch the scores.
+   Needs Script property GITHUB_TOKEN (fine-grained, Contents read/write on the
+   one repo). Without the token the feature is simply off and reads fall back
+   to ?action=state here. */
+var STATE_REPO = 'champetoeters/champetoeters.github.io';
+var STATE_BRANCH = 'state';
+var STATE_PATH = 'state.json';
 
 var CONTACT_EMAIL = 'padel@tcleiemeers.be';
 var CONTACT_PHONE = '+32 476 95 35 33';
@@ -101,15 +115,63 @@ function doPost(e) {
   if (!body || typeof body !== 'object') return out_(fail_('bad-request'));
 
   var action = String(body.action || '');
+  var result;
   try {
-    if (action === 'register') return out_(actRegister_(body));
-    if (action === 'order') return out_(actOrder_(body));
-    if (action === 'admin') return out_(actAdmin_(body));
-    if (action === 'health') return out_(actHealth_());
-    if (action === 'state') return out_(actState_());
-    return out_(fail_('bad-request'));
+    if (action === 'register') result = actRegister_(body);
+    else if (action === 'order') result = actOrder_(body);
+    else if (action === 'admin') result = actAdmin_(body);
+    else if (action === 'health') result = actHealth_();
+    else if (action === 'state') result = actState_();
+    else result = fail_('bad-request');
   } catch (err) {
-    return out_(serverError_(action, err));
+    result = serverError_(action, err);
+  }
+  /* Publishing happens OUTSIDE the lock and after the work, like mail: a slow
+     GitHub round-trip may delay this response but never blocks another write. */
+  if (PUBLISH_) { PUBLISH_ = false; publishState_(); }
+  return out_(result);
+}
+
+/* Set by dropStateCache_ — i.e. by every successful mutation. */
+var PUBLISH_ = false;
+
+function publishState_() {
+  var token = String(props_().getProperty('GITHUB_TOKEN') || '').trim();
+  if (!token) return;   /* feature off — reads fall back to ?action=state */
+  try {
+    var payload = buildState_();
+    try {
+      CacheService.getScriptCache()
+        .put(STATE_CACHE_KEY, JSON.stringify(payload), STATE_CACHE_TTL);
+    } catch (e) { /* cache is a bonus */ }
+
+    var api = 'https://api.github.com/repos/' + STATE_REPO + '/contents/' + STATE_PATH;
+    var headers = {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json'
+    };
+    var sha = null;
+    var got = UrlFetchApp.fetch(api + '?ref=' + STATE_BRANCH,
+      { headers: headers, muteHttpExceptions: true });
+    if (got.getResponseCode() === 200) {
+      sha = JSON.parse(got.getContentText()).sha || null;
+    }
+    var put = UrlFetchApp.fetch(api, {
+      method: 'put',
+      headers: headers,
+      contentType: 'application/json',
+      muteHttpExceptions: true,
+      payload: JSON.stringify({
+        message: 'state ' + new Date().toISOString(),
+        content: Utilities.base64Encode(JSON.stringify(payload), Utilities.Charset.UTF_8),
+        branch: STATE_BRANCH,
+        sha: sha || undefined
+      })
+    });
+    var code = put.getResponseCode();
+    if (code < 200 || code >= 300) log_('publish-failed', 'HTTP ' + code);
+  } catch (err) {
+    try { log_('publish-failed', String(err && err.message ? err.message : err)); } catch (e) { /* noop */ }
   }
 }
 
@@ -239,22 +301,29 @@ function log_(action, detail) {
 /* --------------------------------------------------------------- read model */
 
 function registrations_() {
+  /* ⚠️ Every column in COLUMNS.registrations must be mapped here, or a stored
+     field silently reads back as undefined — teamName and clientRef were once
+     written but never read, which disabled the public team names AND the
+     idempotent-replay dedupe in production. tools/gascheck.mjs guards this. */
   return rows_('registrations').map(function (r) {
     return {
       ref: String(r.ref),
       teamId: r.teamId ? String(r.teamId) : null,
+      teamName: String(r.teamName || ''),
       player1: String(r.player1),
       player2: String(r.player2),
       email: String(r.email),
       phone: String(r.phone),
       at: iso_(r.at),
       paid: bool_(r.paid),
+      clientRef: String(r.clientRef || ''),
       __row: r.__row
     };
   });
 }
 
 function orders_() {
+  /* Same rule as registrations_: map every COLUMNS.orders field. */
   return rows_('orders').map(function (r) {
     return {
       ref: String(r.ref),
@@ -263,6 +332,7 @@ function orders_() {
       quantity: Number(r.quantity) || 0,
       at: iso_(r.at),
       paidCount: Number(r.paidCount) || 0,
+      clientRef: String(r.clientRef || ''),
       __row: r.__row
     };
   });
@@ -304,15 +374,21 @@ function freeSlots_(regs) {
 }
 
 /* Same address piling up, or the whole tab flooded today. */
+/* One mailbox, one identity: lowercase and strip a +tag, so jan+2@ cannot
+   sidestep the per-address cap. */
+function capEmail_(v) {
+  return String(v || '').toLowerCase().replace(/\+[^@]*(?=@)/, '');
+}
+
 function overLimit_(rows, email) {
   var today = new Date().toISOString().slice(0, 10);
   var sameDay = rows.filter(function (r) {
     return String(r.at || '').slice(0, 10) === today;
   }).length;
   if (sameDay >= MAX_PER_DAY) return true;
-  var mail = String(email).toLowerCase();
+  var mail = capEmail_(email);
   return rows.filter(function (r) {
-    return String(r.email || '').toLowerCase() === mail;
+    return capEmail_(r.email) === mail;
   }).length >= MAX_PER_EMAIL;
 }
 
@@ -543,6 +619,7 @@ function actState_() {
 }
 
 function dropStateCache_() {
+  PUBLISH_ = true;   /* every mutation republishes the static state */
   try { CacheService.getScriptCache().remove(STATE_CACHE_KEY); } catch (err) { /* noop */ }
 }
 

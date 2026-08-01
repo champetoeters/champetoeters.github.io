@@ -46,11 +46,27 @@
 
   function pull() {
     var base = endpoint();
-    if (base) return get(base + (base.indexOf('?') === -1 ? '?' : '&') + 'action=state');
+    var conf = cfg();
+    if (base) {
+      /* Static-first: the backend publishes state.json to GitHub on every
+         mutation, and GitHub serves any crowd for free — the script's daily
+         runtime quota is spent on writes only. The minute bucket defeats the
+         CDN cache without a stampede; an empty or failed static read falls
+         back to the script itself. */
+      var staticUrl = String(conf.stateUrl || '').trim();
+      var live = function () {
+        return get(base + (base.indexOf('?') === -1 ? '?' : '&') + 'action=state');
+      };
+      if (!staticUrl) return live();
+      var bucket = Math.floor(Date.now() / 60000);
+      return get(staticUrl + (staticUrl.indexOf('?') === -1 ? '?' : '&') + 'b=' + bucket)
+        .then(function (j) {
+          return (j && j.ok && j.counts) ? j : live();
+        });
+    }
     /* No API. The fabricated demo story may only show while the demo clock is
        on — demoNow is the ONE seam that switches the whole demo off. */
-    var cfg = window.CHAMP_CONFIG || {};
-    if (cfg.demoNow) return get(dataUrl('demo-state.json'));
+    if (conf.demoNow) return get(dataUrl('demo-state.json'));
     return Promise.resolve({});
   }
 

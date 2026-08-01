@@ -632,6 +632,11 @@ window.Sections.register = {
     try { params = new URLSearchParams(window.location.search); }
     catch (err) { params = new URLSearchParams(''); }
 
+    /* Screenshot hooks are for the UNWIRED build only (BRIEF §0 rule 8): on a
+       build with a backend they are dead, so nobody can fabricate a
+       confirmation on the production site. */
+    if (CFG.apiEndpoint) return;
+
     switch (params.get('state')) {
       case 'error':
         fill({ 'team-name': 'D', 'p1-name': 'Jasper Vanhoutte', 'p2-name': '',

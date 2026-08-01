@@ -97,7 +97,10 @@
   /* ------------------------------------------------------------------ state */
 
   var S = {
-    demo: /(^|&)state=demo(&|$)/.test(location.search.slice(1)),
+    /* The demo fixture opens the tool WITHOUT the password, so it exists only
+       on an unwired build — never where a backend (and real data) lives. */
+    demo: !((window.CHAMP_CONFIG || {}).apiEndpoint) &&
+          /(^|&)state=demo(&|$)/.test(location.search.slice(1)),
     pw: '',
     schedule: { slots: [], matches: [] },
     courtName: {},

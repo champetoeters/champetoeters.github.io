@@ -8,7 +8,12 @@ One backend, two implementations with **identical behaviour**:
   `server-data/state.json` (gitignored), email = appended to `server-data/outbox.jsonl`.
   Also serves `site/` on :8080 and exposes the API under the SAME origin at `/api`.
 
-The site talks to exactly one URL: `CHAMP_CONFIG.apiEndpoint`.
+The site READS live state static-first: the backend pushes `state.json` to the
+repo's `state` branch on every mutation (Script property `GITHUB_TOKEN`,
+fine-grained, Contents read/write on the one repo), and clients fetch it from
+raw.githubusercontent.com (`CHAMP_CONFIG.stateUrl`) — reads cost the script no
+runtime, so any crowd can watch. A failed/empty static read falls back to
+`?action=state`. All WRITES go to `CHAMP_CONFIG.apiEndpoint`.
 - Production: `https://script.google.com/macros/s/…/exec`
 - Dev: `/api` (devserver)
 
@@ -23,7 +28,7 @@ The site talks to exactly one URL: `CHAMP_CONFIG.apiEndpoint`.
   `{ "ok": false, "error": "<code>" }`. Error codes: `bad-request`, `unauthorized`,
   `full`, `not-found`, `too-many`, `closed`, `server`.
 - `too-many` = an abuse cap was hit on a public write (`register` / `order`):
-  max 3 rows per e-mail address per tab, max 150 rows per tab per calendar day.
+  max 3 rows per e-mail address per tab (lowercased, +tag stripped), max 40 rows per tab per calendar day.
   Both are protections for the Sheet and the mail quota, not user-facing states;
   the client may show the generic "probeer opnieuw" failure.
 - All server responses include no secrets. The public actions never return emails,
