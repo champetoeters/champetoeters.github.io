@@ -63,7 +63,7 @@ function regNeed(rel) {
 const REG_CTRL = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E]/g;
 const REG_DISALLOWED = /[^\p{L}\p{N} .,'\u2019&@+()/-]/gu;
 const REG_LETTER = /\p{L}/u;
-const REG_MAX = { 'p1-name': 60, 'p2-name': 60, 'reg-email': 160, 'reg-tel': 40 };
+const REG_MAX = { 'team-name': 40, 'p1-name': 60, 'p2-name': 60, 'reg-email': 160, 'reg-tel': 40 };
 
 /* collapse=false while typing, so a space the visitor just pressed survives. */
 function scrub(value, max, collapse) {
@@ -265,6 +265,13 @@ window.Sections.register = {
     };
 
     const RULES = {
+      'team-name': v => {
+        const s = scrub(v, 40, true);
+        if (!s) return 'Vul jullie teamnaam in.';
+        if (s.length < 2) return 'Deze naam is te kort.';
+        if (!REG_LETTER.test(s)) return 'Gebruik gewone letters.';
+        return '';
+      },
       'p1-name': nameRule(1),
       'p2-name': nameRule(2),
       'reg-email': v => {
@@ -278,7 +285,7 @@ window.Sections.register = {
         return TEL.test(telDigits(s)) ? '' : 'Dit gsm-nummer klopt niet.';
       }
     };
-    const ORDER = ['p1-name', 'p2-name', 'reg-email', 'reg-tel'];
+    const ORDER = ['team-name', 'p1-name', 'p2-name', 'reg-email', 'reg-tel'];
 
     const labelOf = el => {
       const l = root.querySelector('label[for="' + el.id + '"]');
@@ -332,17 +339,14 @@ window.Sections.register = {
         : bad.length + ' fouten. Eerst: ' + f.name + ' — ' + f.msg;
     }
 
+    /* Field errors live under their fields, never in a box above the form
+       (client). The visible box is only ever a notice (volzet, network); the
+       screen-reader summary still speaks on submit via speakAlert. */
     function paintSummary(bad) {
-      const txt = summaryText(bad);
-      if (!txt) {
-        live.textContent = '';               /* .reg-live:empty hides the box */
-        delete live.dataset.tone;
-        summaryOn = false;
-        return;
-      }
-      live.dataset.tone = 'alert';
-      if (live.textContent !== txt) live.textContent = txt;
-      summaryOn = true;
+      void bad;
+      live.textContent = '';                 /* .reg-live:empty hides the box */
+      delete live.dataset.tone;
+      summaryOn = false;
     }
 
     /* A message that is not about a field, so it must not be recomputed away
@@ -416,6 +420,7 @@ window.Sections.register = {
 
     /* Exactly what the server will store, computed the way the server does. */
     const payload = () => ({
+      teamName: scrub(byId('team-name').value, 40, true),
       player1: scrub(byId('p1-name').value, 60, true),
       player2: scrub(byId('p2-name').value, 60, true),
       email:   scrubEmail(byId('reg-email').value),
@@ -476,7 +481,8 @@ window.Sections.register = {
 
     function showDone(refNo) {
       const p = payload();
-      const who = [p.player1, p.player2].filter(Boolean).join(' & ') || 'Jullie team';
+      const who = p.teamName ||
+        [p.player1, p.player2].filter(Boolean).join(' & ') || 'Jullie team';
 
       flowStarted = true;
       root.dataset.state = 'success';
@@ -586,7 +592,8 @@ window.Sections.register = {
       Object.keys(map).forEach(id => { const el = byId(id); if (el) el.value = map[id]; });
     }
 
-    const FIXTURE = { 'p1-name': 'Jasper Vanhoutte', 'p2-name': 'Lien Vandewalle',
+    const FIXTURE = { 'team-name': 'De Baseliners',
+                      'p1-name': 'Jasper Vanhoutte', 'p2-name': 'Lien Vandewalle',
                       'reg-email': 'jasper@example.be', 'reg-tel': '+32 470 12 34 56' };
 
     let params;
@@ -595,7 +602,7 @@ window.Sections.register = {
 
     switch (params.get('state')) {
       case 'error':
-        fill({ 'p1-name': 'Jasper Vanhoutte', 'p2-name': '',
+        fill({ 'team-name': 'D', 'p1-name': 'Jasper Vanhoutte', 'p2-name': '',
                'reg-email': 'jasper@', 'reg-tel': '0499' });
         paintSummary(checkAll());
         break;

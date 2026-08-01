@@ -65,6 +65,26 @@
   }
   function num(v) { var n = parseInt(String(v).replace(/[^0-9]/g, ''), 10); return isNaN(n) ? null : Math.min(99, n); }
 
+  /* ------------------------------------------------- row input sanitising
+     Same rules as the server's clean()/cleanEmail() (backend/API.md), so a row
+     typed here is scrubbed to exactly what the server would have stored — and
+     the organiser is told what is wrong before the round trip. */
+
+  var RX_CTRL = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E]/g;
+  var RX_BAD = /[^\p{L}\p{N} .,'’&@+()/-]/gu;
+  var RX_LETTER = /\p{L}/u;
+  var RX_EMAIL = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+  var RX_TEL = /^(?:\+|00)?\d{8,15}$/;
+  var MAX_QTY = 8;
+
+  function scrub(v, max) {
+    return String(v == null ? '' : v)
+      .replace(RX_CTRL, '').replace(RX_BAD, '').replace(/\s+/g, ' ').trim().slice(0, max);
+  }
+  function scrubEmail(v) {
+    return String(v == null ? '' : v).replace(RX_CTRL, '').replace(/\s+/g, '').slice(0, 160);
+  }
+
   /* --------------------------------------------------------------- elements */
 
   var E = {};
@@ -93,7 +113,9 @@
     bracket: null,
     open: null,      /* matchId whose editor is open */
     draft: null,     /* { sets: [[a,b],…], winner: 'A'|'B'|null } */
-    tab: 'matches'
+    tab: 'matches',
+    ask: null,       /* ref whose delete is waiting for Ja / Nee */
+    form: null       /* { kind:'team'|'order', … typed values …, err } */
   };
 
   /* ------------------------------------------------------------------- toast */
@@ -125,10 +147,13 @@
     return post(body);
   }
 
-  /* One write, one revert. The UI is already updated when this runs. */
-  function write(op, extra, revert, okMsg) {
+  /* One write, one revert. The UI is already updated when this runs.
+     alsoOk names an error code that means the same thing as success — a delete
+     answered 'not-found' has already happened, so reverting would resurrect a
+     row that is gone. */
+  function write(op, extra, revert, okMsg, alsoOk) {
     admin(op, extra).then(function (r) {
-      if (r && r.ok) { toast(okMsg || 'Bewaard', 'ok'); return; }
+      if (r && (r.ok || (alsoOk && r.error === alsoOk))) { toast(okMsg || 'Bewaard', 'ok'); return; }
       revert();
       if (r && r.error === 'unauthorized') { expire(); return; }
       toast('Niet bewaard — probeer opnieuw', 'bad');
@@ -169,7 +194,10 @@
     var ph = (m.teams || [])[i];
     var tid = (bm.resolvedTeams && bm.resolvedTeams[i]) || (S.teamMap[ph] ? ph : null);
     var t = tid && S.teamMap[tid];
-    if (t && (t.players || []).length) return { tid: tid, name: pairShort(t.players), full: pairFull(t.players) };
+    if (t && (t.players || []).length) {
+      var label = (typeof t.name === 'string' && t.name.trim()) ? t.name.trim() : pairShort(t.players);
+      return { tid: tid, name: label, full: label + ' (' + pairFull(t.players) + ')' };
+    }
     if (t) return { tid: tid, name: t.label || OPEN, full: t.label || OPEN, dim: true };
     return { tid: null, name: KO[ph] || String(ph || ''), full: KO[ph] || String(ph || ''), dim: true };
   }
@@ -188,7 +216,11 @@
   function mergeTeams() {
     var state = {
       teams: S.registrations.filter(function (r) { return r.teamId; }).map(function (r) {
-        return { teamId: r.teamId, players: [r.player1, r.player2].filter(Boolean) };
+        return {
+          teamId: r.teamId,
+          name: String(r.teamName || ''),
+          players: [r.player1, r.player2].filter(Boolean)
+        };
       })
     };
     var live = window.ChampLive;
@@ -203,6 +235,7 @@
         var c = {};
         Object.keys(t).forEach(function (k) { c[k] = t[k]; });
         c.players = hit.players;
+        if (hit.name) c.name = hit.name;
         c.confirmed = true;
         return c;
       });
@@ -392,6 +425,225 @@
     }, 'Gewist');
   }
 
+  /* ======================= rows: delete + add (shared) ====================
+     Registrations and ticket orders are spreadsheet rows, and the organisers
+     edit them like rows: a quiet ✕ at the end, one inline "Verwijderen? Ja /
+     Nee" (never a browser confirm), and one add form at the end of the list.
+     Only ref-keyed rows can go — the 14 pre-entered teams are not ours. */
+
+  function delBtn(kind, ref, label) {
+    return '<button type="button" class="ad-x" data-act="del-ask" data-kind="' + kind +
+      '" data-ref="' + esc(ref) + '" aria-label="' + esc(label) + '">✕</button>';
+  }
+
+  function askHtml(kind, ref) {
+    return '<div class="ad-conf"><span class="ad-conf__q">Verwijderen?</span>' +
+      '<button type="button" class="glass-btn glass-btn--sm glass-btn--primary" data-act="del-yes"' +
+      ' data-kind="' + kind + '" data-ref="' + esc(ref) + '">Ja</button>' +
+      '<button type="button" class="glass-btn glass-btn--sm glass-btn--ghost" data-act="del-no"' +
+      ' data-kind="' + kind + '" data-ref="' + esc(ref) + '">Nee</button></div>';
+  }
+
+  function fieldHtml(id, label, key, value, type, max, extra) {
+    return '<div class="glass-field"><label class="glass-label" for="ad-f-' + id + '">' +
+      esc(label) + '</label><input class="glass-input" id="ad-f-' + id + '" data-f="' + key +
+      '" type="' + type + '" maxlength="' + max + '" autocomplete="off" spellcheck="false"' +
+      (type === 'text' ? '' : ' autocapitalize="off"') + (extra || '') +
+      ' value="' + esc(value == null ? '' : value) + '"></div>';
+  }
+
+  function addBtnHtml(kind, label) {
+    return '<div class="ad-item ad-item--add"><button type="button" class="ad-add" data-act="add-open"' +
+      ' data-kind="' + kind + '">+ ' + esc(label) + '</button></div>';
+  }
+
+  function formActs(err) {
+    return '<p class="glass-error ad-err" data-el="formErr" role="status" aria-live="polite">' +
+      esc(err || '') + '</p><div class="ad-act">' +
+      '<button type="button" class="glass-btn glass-btn--primary" data-act="add-save">Toevoegen</button>' +
+      '<button type="button" class="glass-btn glass-btn--ghost" data-act="add-cancel">Annuleren</button>' +
+      '</div>';
+  }
+
+  function checkHtml(key, on, label) {
+    return '<label class="ad-fchk"><input type="checkbox" class="ad-t__i u-sr-only" data-f="' + key + '"' +
+      (on ? ' checked' : '') + '><span class="ad-check" aria-hidden="true"></span>' +
+      '<span class="ad-fchk__l">' + esc(label) + '</span></label>';
+  }
+
+  function blankForm(kind) {
+    return kind === 'team'
+      ? { kind: 'team', teamName: '', player1: '', player2: '', email: '', phone: '', paid: false, err: '' }
+      : { kind: 'order', name: '', email: '', quantity: '1', paidCount: '0', err: '' };
+  }
+
+  /* The form re-renders whenever its list does (a payment tick elsewhere, a
+     failed write), so what was typed lives in S.form, not only in the DOM. */
+  function readForm() {
+    var f = S.form;
+    if (!f) return null;
+    var box = document.querySelector('.ad-form');
+    if (!box) return f;
+    Array.prototype.forEach.call(box.querySelectorAll('[data-f]'), function (el) {
+      f[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+    return f;
+  }
+
+  function formError(msg) {
+    S.form.err = msg;
+    var box = document.querySelector('[data-el="formErr"]');
+    if (box) box.textContent = msg;
+  }
+
+  function formBusy(on) {
+    var b = document.querySelector('[data-act="add-save"]');
+    if (b) b.disabled = on;
+  }
+
+  function rerender(kind) { if (kind === 'team') renderTeams(); else renderOrders(); }
+
+  /* One confirmation at a time; tapping the same ✕ again takes it back. */
+  function askDelete(kind, ref) {
+    S.ask = S.ask === ref ? null : ref;
+    rerender(kind);
+    keepFocus(S.ask
+      ? '[data-act="del-yes"][data-ref="' + ref + '"]'
+      : '.ad-x[data-ref="' + ref + '"]');
+  }
+
+  function openForm(kind) {
+    S.form = blankForm(kind);
+    S.ask = null;
+    if (kind === 'team') renderTeams(); else renderOrders();
+    var first = document.querySelector('.ad-form input[data-f]');
+    if (first) first.focus();
+  }
+
+  function closeForm() {
+    var kind = S.form && S.form.kind;
+    S.form = null;
+    if (kind === 'team') renderTeams(); else renderOrders();
+  }
+
+  /* Server rules, said in Dutch. Anything that passes here passes there. */
+  function teamError(f) {
+    if (!f.teamName || f.teamName.length < 2) return 'Vul een teamnaam in (minstens 2 tekens).';
+    if (!RX_LETTER.test(f.teamName)) return 'Deze teamnaam klopt niet.';
+    if (!f.player1) return 'Vul de naam van speler 1 in.';
+    if (!RX_LETTER.test(f.player1)) return 'De naam van speler 1 klopt niet.';
+    if (!f.player2) return 'Vul de naam van speler 2 in.';
+    if (!RX_LETTER.test(f.player2)) return 'De naam van speler 2 klopt niet.';
+    if (!f.email) return 'Vul een e-mailadres in.';
+    if (!RX_EMAIL.test(f.email)) return 'Dit e-mailadres klopt niet.';
+    if (!f.phone) return 'Vul een gsm-nummer in.';
+    if (!RX_TEL.test(f.phone.replace(/[\s.\-()/]/g, ''))) return 'Dit gsm-nummer klopt niet.';
+    return '';
+  }
+
+  function orderError(f) {
+    if (!f.name) return 'Vul een naam in.';
+    if (!RX_LETTER.test(f.name)) return 'Deze naam klopt niet.';
+    if (!f.email) return 'Vul een e-mailadres in.';
+    if (!RX_EMAIL.test(f.email)) return 'Dit e-mailadres klopt niet.';
+    if (!(f.quantity >= 1 && f.quantity <= MAX_QTY)) return 'Aantal tickets: 1 tot ' + MAX_QTY + '.';
+    return '';
+  }
+
+  /* An add cannot be optimistic: the ref and the slot are the server's to give.
+     The button locks, the answer draws the row. */
+  function addTeam() {
+    var raw = readForm();
+    var f = {
+      teamName: scrub(raw.teamName, 40),
+      player1: scrub(raw.player1, 60), player2: scrub(raw.player2, 60),
+      email: scrubEmail(raw.email), phone: scrub(raw.phone, 40), paid: !!raw.paid
+    };
+    var err = teamError(f);
+    if (err) { formError(err); return; }
+    formBusy(true);
+    admin('addRegistration', f).then(function (r) {
+      formBusy(false);
+      if (r && r.ok) {
+        S.registrations.push({
+          ref: r.reference, teamId: r.teamId, teamName: f.teamName,
+          player1: f.player1, player2: f.player2,
+          email: f.email, phone: f.phone, at: new Date().toISOString(), paid: f.paid
+        });
+        S.form = null;
+        mergeTeams();
+        renderTeams();
+        renderMatches();
+        toast('Team toegevoegd — ' + r.reference, 'ok');
+        return;
+      }
+      if (r && r.error === 'unauthorized') { expire(); return; }
+      formError(r && r.error === 'full' ? 'Alle plaatsen zijn bezet.'
+        : r && r.error === 'bad-request' ? 'Controleer de gegevens.'
+          : 'Niet bewaard — probeer opnieuw.');
+    });
+  }
+
+  function addOrder() {
+    var raw = readForm();
+    var f = {
+      name: scrub(raw.name, 60), email: scrubEmail(raw.email),
+      quantity: num(raw.quantity), paidCount: num(raw.paidCount) || 0
+    };
+    var err = orderError(f);
+    if (err) { formError(err); return; }
+    f.paidCount = Math.max(0, Math.min(f.quantity, f.paidCount));
+    formBusy(true);
+    admin('addOrder', f).then(function (r) {
+      formBusy(false);
+      if (r && r.ok) {
+        S.orders.push({
+          ref: r.reference, name: f.name, email: f.email, quantity: f.quantity,
+          at: new Date().toISOString(), paidCount: f.paidCount
+        });
+        S.form = null;
+        renderOrders();
+        toast('Bestelling toegevoegd — ' + r.reference, 'ok');
+        return;
+      }
+      if (r && r.error === 'unauthorized') { expire(); return; }
+      formError(r && r.error === 'bad-request' ? 'Controleer de gegevens.'
+        : 'Niet bewaard — probeer opnieuw.');
+    });
+  }
+
+  function delTeam(ref) {
+    var i = -1;
+    S.registrations.forEach(function (r, n) { if (r.ref === ref) i = n; });
+    if (i === -1) return;
+    var row = S.registrations[i];
+    S.registrations.splice(i, 1);
+    S.ask = null;
+    mergeTeams();
+    renderTeams();
+    renderMatches();
+    write('deleteRegistration', { ref: ref }, function () {
+      S.registrations.splice(i, 0, row);
+      mergeTeams();
+      renderTeams();
+      renderMatches();
+    }, 'Verwijderd', 'not-found');
+  }
+
+  function delOrder(ref) {
+    var i = -1;
+    S.orders.forEach(function (o, n) { if (o.ref === ref) i = n; });
+    if (i === -1) return;
+    var row = S.orders[i];
+    S.orders.splice(i, 1);
+    S.ask = null;
+    renderOrders();
+    write('deleteOrder', { ref: ref }, function () {
+      S.orders.splice(i, 0, row);
+      renderOrders();
+    }, 'Verwijderd', 'not-found');
+  }
+
   /* ============================== RENDER: teams ========================== */
 
   function renderTeams() {
@@ -404,24 +656,44 @@
       if (p.paid) paid++;
       var meta = ['Groep ' + (t.group || '?')];
       if (p.ref) meta.push(p.ref);
-      if (t.club) meta.push(t.club);
+      /* The team name is the row; the players become its detail line. */
+      var teamLabel = (typeof t.name === 'string' && t.name.trim()) ? t.name.trim() : '';
+      if (has && teamLabel) meta.push(pairFull(t.players));
+      else if (t.club) meta.push(t.club);
       if (!has) meta.push('nog geen inschrijving');
-      return '<div class="ad-item"><label class="ad-t">' +
+      var name = has ? (teamLabel || pairFull(t.players)) : (t.label || OPEN);
+      return '<div class="ad-item"><div class="ad-r"><label class="ad-t">' +
         '<span class="ad-t__b"><span class="ad-t__n' + (has ? '' : ' is-open') + '">' +
-        esc(has ? pairFull(t.players) : (t.label || OPEN)) + '</span>' +
+        esc(name) + '</span>' +
         '<span class="ad-t__m">' + esc(meta.join(' · ')) + '</span></span>' +
         '<input type="checkbox" class="ad-t__i u-sr-only" data-act="paid" data-key="' + esc(p.key) + '"' +
         (p.paid ? ' checked' : '') + (has ? '' : ' disabled') +
-        ' aria-label="Betaald — ' + esc(has ? pairFull(t.players) : (t.label || OPEN)) + '">' +
+        ' aria-label="Betaald — ' + esc(name) + '">' +
         '<span class="ad-check" aria-hidden="true"></span>' +
-        '</label></div>';
+        '</label>' +
+        /* Only a registration is ours to delete; t01–t14 are pre-entered. */
+        (p.ref ? delBtn('team', p.ref, 'Inschrijving ' + name + ' verwijderen') : '') +
+        '</div>' + (p.ref && S.ask === p.ref ? askHtml('team', p.ref) : '') + '</div>';
     }).join('');
+
+    var free = S.teams.filter(function (t) { return !(t.players || []).length; }).length;
+    var form = S.form && S.form.kind === 'team';
+    var add = form
+      ? '<div class="ad-item ad-item--add"><div class="glass glass--inset ad-form">' +
+        fieldHtml('tn', 'Teamnaam', 'teamName', S.form.teamName, 'text', 40) +
+        fieldHtml('p1', 'Speler 1', 'player1', S.form.player1, 'text', 60) +
+        fieldHtml('p2', 'Speler 2', 'player2', S.form.player2, 'text', 60) +
+        fieldHtml('em', 'E-mail', 'email', S.form.email, 'email', 160) +
+        fieldHtml('tel', 'Gsm', 'phone', S.form.phone, 'tel', 40) +
+        checkHtml('paid', S.form.paid, 'Betaald (' + euro(S.teamPrice) + ')') +
+        formActs(S.form.err) + '</div></div>'
+      : (free ? addBtnHtml('team', 'Team toevoegen') : '');
 
     el.innerHTML = '<div class="ad-head"><span class="ad-tot"><span class="ad-tot__x u-tabular">' +
       paid + '/' + S.teams.length + '</span> betaald · <span class="u-tabular">' +
       euro(paid * S.teamPrice) + '</span></span>' +
       '<span class="ad-hint">' + euro(S.teamPrice) + ' per team.</span></div>' +
-      '<div class="ad-list">' + rows + '</div>';
+      '<div class="ad-list">' + rows + add + '</div>';
   }
 
   function setTeamPaid(key, paid) {
@@ -458,7 +730,7 @@
       var meta = [o.ref, euro(q * TICKET_PRICE)];
       var d = shortDate(o.at);
       if (d) meta.push(d);
-      return '<div class="ad-item"><div class="ad-o">' +
+      return '<div class="ad-item"><div class="ad-r"><div class="ad-o">' +
         '<span class="ad-o__b"><span class="ad-o__n">' + esc(o.name || '—') + '</span>' +
         '<span class="ad-o__m u-tabular">' + esc(meta.join(' · ')) + '</span></span>' +
         '<span class="ad-step" role="group" aria-label="Betaalde tickets — ' + esc(o.name || o.ref) + '">' +
@@ -467,14 +739,30 @@
         '<span class="ad-step__v u-tabular' + (pc === q && q ? ' is-full' : '') + '">' + pc + '/' + q + '</span>' +
         '<button type="button" class="ad-step__b" data-act="inc" data-ref="' + esc(o.ref) + '"' +
         (pc >= q ? ' disabled' : '') + ' aria-label="Eén ticket meer betaald">+</button>' +
-        '</span></div></div>';
+        '</span></div>' +
+        delBtn('order', o.ref, 'Bestelling ' + (o.name || o.ref) + ' verwijderen') +
+        '</div>' + (S.ask === o.ref ? askHtml('order', o.ref) : '') + '</div>';
     }).join('');
+
+    var form = S.form && S.form.kind === 'order';
+    var add = form
+      ? '<div class="ad-item ad-item--add"><div class="glass glass--inset ad-form">' +
+        fieldHtml('nm', 'Naam', 'name', S.form.name, 'text', 60) +
+        fieldHtml('oem', 'E-mail', 'email', S.form.email, 'email', 160) +
+        '<div class="ad-fgrid">' +
+        fieldHtml('qty', 'Aantal (1–' + MAX_QTY + ')', 'quantity', S.form.quantity, 'text', 1,
+          ' inputmode="numeric" pattern="[0-9]*"') +
+        fieldHtml('pc', 'Betaald', 'paidCount', S.form.paidCount, 'text', 1,
+          ' inputmode="numeric" pattern="[0-9]*"') +
+        '</div>' + formActs(S.form.err) + '</div></div>'
+      : addBtnHtml('order', 'Bestelling toevoegen');
 
     el.innerHTML = '<div class="ad-head"><span class="ad-tot"><span class="ad-tot__x u-tabular">' +
       paid + ' van ' + tickets + '</span> tickets betaald · <span class="u-tabular">' +
       euro(paid * TICKET_PRICE) + '</span></span>' +
       '<span class="ad-hint">' + euro(TICKET_PRICE) + ' per ticket.</span></div>' +
-      '<div class="ad-list">' + (rows || '<p class="ad-empty">Nog geen ticketbestellingen.</p>') + '</div>';
+      '<div class="ad-list">' +
+      (rows || '<p class="ad-empty">Nog geen ticketbestellingen.</p>') + add + '</div>';
   }
 
   function stepOrder(ref, delta) {
@@ -533,6 +821,8 @@
   }
 
   function apply(data) {
+    S.ask = null;                /* the rows are being replaced under it */
+    S.form = null;
     S.results = (data && data.results) || {};
     S.registrations = (data && data.registrations) || [];
     S.orders = (data && data.orders) || [];
@@ -570,6 +860,23 @@
     if (a === 'clear') { clearMatch(S.open); return; }
     if (a === 'inc') { stepOrder(act.dataset.ref, 1); return; }
     if (a === 'dec') { stepOrder(act.dataset.ref, -1); return; }
+    if (a === 'del-ask') { askDelete(act.dataset.kind, act.dataset.ref); return; }
+    if (a === 'del-no') {
+      S.ask = null;
+      rerender(act.dataset.kind);
+      keepFocus('.ad-x[data-ref="' + act.dataset.ref + '"]');
+      return;
+    }
+    if (a === 'del-yes') {
+      if (act.dataset.kind === 'team') delTeam(act.dataset.ref); else delOrder(act.dataset.ref);
+      return;
+    }
+    if (a === 'add-open') { openForm(act.dataset.kind); return; }
+    if (a === 'add-cancel') { closeForm(); return; }
+    if (a === 'add-save') {
+      if (S.form && S.form.kind === 'team') addTeam(); else if (S.form) addOrder();
+      return;
+    }
     if (a === 'win') {
       if (!S.draft) return;
       S.draft.winner = act.dataset.w;
@@ -588,13 +895,31 @@
 
   document.addEventListener('change', function (e) {
     var box = e.target;
-    if (!box.dataset || box.dataset.act !== 'paid') return;
+    if (!box.dataset) return;
+    if (box.dataset.f && S.form) {
+      S.form[box.dataset.f] = box.type === 'checkbox' ? box.checked : box.value;
+      return;
+    }
+    if (box.dataset.act !== 'paid') return;
     setTeamPaid(box.dataset.key, box.checked);
   });
 
   document.addEventListener('input', function (e) {
     var i = e.target;
-    if (!i.dataset || i.dataset.set == null || !i.closest('.ad-ed')) return;
+    if (!i.dataset) return;
+
+    /* An add form survives a re-render because what is typed lands in S.form. */
+    if (i.dataset.f && S.form) {
+      if (i.dataset.f === 'quantity' || i.dataset.f === 'paidCount') {
+        var only = i.value.replace(/[^0-9]/g, '').slice(0, 1);
+        if (only !== i.value) i.value = only;
+      }
+      S.form[i.dataset.f] = i.value;
+      formError('');
+      return;
+    }
+
+    if (i.dataset.set == null || !i.closest('.ad-ed')) return;
     var cleaned = i.value.replace(/[^0-9]/g, '').slice(0, 2);
     if (cleaned !== i.value) i.value = cleaned;
     var ed = i.closest('.ad-ed');
@@ -605,6 +930,13 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && S.form) { closeForm(); return; }
+    if (e.key === 'Escape' && S.ask) { S.ask = null; renderTeams(); renderOrders(); return; }
+    if (e.key === 'Enter' && S.form && e.target.matches && e.target.matches('.ad-form input[data-f]')) {
+      e.preventDefault();
+      if (S.form.kind === 'team') addTeam(); else addOrder();
+      return;
+    }
     if (e.key === 'Escape' && S.open) { closeMatch(true); return; }
     if (e.key === 'Enter' && S.open && e.target.matches && e.target.matches('input[data-set]')) {
       e.preventDefault();

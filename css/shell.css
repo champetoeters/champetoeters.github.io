@@ -125,8 +125,33 @@ body::after {
   position: relative;
   z-index: 1;
   background: linear-gradient(180deg, #1E294E 0%, #141D44 100%);
-  padding: clamp(22px, 3vw, 34px) clamp(16px, 4vw, 40px) clamp(30px, 4vw, 44px);
+  /* The text sits in the vertical middle of the band: equal padding both
+     sides plus centred flex, not a top-hugging block with dead space below. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  min-height: clamp(96px, 12vw, 150px);
+  padding: clamp(22px, 3vw, 34px) clamp(16px, 4vw, 40px);
 }
+
+/* The quietest thing on the page — clearly subordinate to the contact line. */
+.site-foot__credit {
+  position: relative;
+  margin: 0;
+  font: 400 11px/1.6 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: .02em;
+  color: rgba(244, 247, 251, .34);
+  text-align: center;
+}
+.site-foot__credit a {
+  color: rgba(244, 247, 251, .5);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(244, 247, 251, .22);
+}
+.site-foot__credit a:hover,
+.site-foot__credit a:focus-visible { color: rgba(244, 247, 251, .8); }
 
 .site-foot__line {
   position: relative;          /* over the grain, never under it */

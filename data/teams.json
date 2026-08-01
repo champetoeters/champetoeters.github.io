@@ -3,6 +3,7 @@
     "id": "t01",
     "group": "A",
     "confirmed": true,
+    "name": "Smash & Bubbels",
     "players": [
       "Milan Verhoeven",
       "Jonas Coppens"
@@ -13,6 +14,7 @@
     "id": "t02",
     "group": "B",
     "confirmed": true,
+    "name": "De Leiemeersters",
     "players": [
       "Margot Peeters",
       "Wout Cools"
@@ -23,6 +25,7 @@
     "id": "t03",
     "group": "C",
     "confirmed": true,
+    "name": "Padel Pompiers",
     "players": [
       "Vic Hermans",
       "Jonas Janssens"
@@ -33,6 +36,7 @@
     "id": "t04",
     "group": "D",
     "confirmed": true,
+    "name": "Glazen Kanonnen",
     "players": [
       "Amber Lambert",
       "Finn Vandewalle"
@@ -43,6 +47,7 @@
     "id": "t05",
     "group": "A",
     "confirmed": true,
+    "name": "De Kurkentrekkers",
     "players": [
       "Noah Simon",
       "Lise Van Damme"
@@ -53,6 +58,7 @@
     "id": "t06",
     "group": "B",
     "confirmed": true,
+    "name": "Bandeja Boys",
     "players": [
       "Finn Vermeulen",
       "Fien Segers"
@@ -63,6 +69,7 @@
     "id": "t07",
     "group": "C",
     "confirmed": true,
+    "name": "De Netvliegers",
     "players": [
       "Lotte Verhelst",
       "Emma Declercq"
@@ -73,6 +80,7 @@
     "id": "t08",
     "group": "D",
     "confirmed": true,
+    "name": "Kuurnse Knallers",
     "players": [
       "Kobe Vanden Berghe",
       "Nina De Smet"
@@ -83,6 +91,7 @@
     "id": "t09",
     "group": "A",
     "confirmed": true,
+    "name": "De Tiebreakers",
     "players": [
       "Seppe Boonen",
       "Elise Maes"
@@ -93,6 +102,7 @@
     "id": "t10",
     "group": "B",
     "confirmed": true,
+    "name": "De Gouden Setters",
     "players": [
       "Camille Willems",
       "Hanne Wouters"
@@ -103,6 +113,7 @@
     "id": "t11",
     "group": "C",
     "confirmed": true,
+    "name": "Los Padelos",
     "players": [
       "Noor Deprez",
       "Noor Vanhoutte"
@@ -113,6 +124,7 @@
     "id": "t12",
     "group": "D",
     "confirmed": true,
+    "name": "De Muurkletsers",
     "players": [
       "Julie Depuydt",
       "Mathis De Ridder"
@@ -123,6 +135,7 @@
     "id": "t13",
     "group": "A",
     "confirmed": true,
+    "name": "Team Vibora",
     "players": [
       "Kobe Dubois",
       "Arne Van Acker"
@@ -133,6 +146,7 @@
     "id": "t14",
     "group": "B",
     "confirmed": true,
+    "name": "De Dropshotters",
     "players": [
       "Noor Michiels",
       "Thibault De Clercq"

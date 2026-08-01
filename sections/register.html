@@ -35,15 +35,26 @@
 
       <!-- ---------- 1. the form ---------- -->
       <div class="reg-view" data-view="form">
-        <form class="reg-form glass glass--panel glass--edge" novalidate autocomplete="on"
+        <!-- .glass--frost, exactly like the ticket page's buy panel: the two
+             forms must read as one family (client). -->
+        <form class="reg-form glass glass--panel glass--frost" novalidate autocomplete="on"
               aria-labelledby="reg-title" data-reg="form">
           <i class="u-grain" aria-hidden="true"></i>
 
           <p class="reg-live" data-reg="live"></p>
 
           <!-- maxlength mirrors the scrub rules in js/register.js and the server:
-               60 / 60 / 160 / 40. -->
+               40 / 60 / 60 / 160 / 40. -->
           <div class="reg-fields">
+            <div class="reg-row">
+              <div class="reg-field glass-field reg-field--wide">
+                <label class="glass-label" for="team-name">Teamnaam</label>
+                <input class="glass-input reg-input" id="team-name" name="teamName" type="text"
+                       maxlength="40" autocomplete="off" autocapitalize="words"
+                       aria-describedby="team-name-err">
+                <p class="glass-error reg-error" id="team-name-err" hidden></p>
+              </div>
+            </div>
             <div class="reg-row">
               <div class="reg-field glass-field">
                 <label class="glass-label" for="p1-name">Speler 1</label>

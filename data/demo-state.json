@@ -1,44 +1,434 @@
 {
   "ok": true,
   "results": {
-    "m01": { "sets": [[6, 3], [6, 4]], "winner": "A" },
-    "m02": { "sets": [[6, 2], [6, 1]], "winner": "A" },
-    "m03": { "sets": [[6, 4], [6, 4]], "winner": "A" },
-    "m04": { "sets": [[4, 6], [6, 7]], "winner": "B" },
-    "m05": { "sets": [[6, 2], [6, 3]], "winner": "A" },
-    "m06": { "sets": [[4, 6], [3, 6]], "winner": "B" },
-    "m07": { "sets": [[6, 2], [6, 4]], "winner": "A" },
-    "m08": { "sets": [[6, 4], [6, 2]], "winner": "A" },
-    "m09": { "sets": [[7, 5], [4, 6], [10, 8]], "winner": "A" },
-    "m10": { "sets": [[6, 4], [7, 5]], "winner": "A" },
-    "m11": { "sets": [[4, 6], [6, 3], [8, 10]], "winner": "B" },
-    "m12": { "sets": [[6, 2], [6, 3]], "winner": "A" },
-    "m13": { "sets": [[6, 4], [3, 6], [10, 6]], "winner": "A" },
-    "m14": { "sets": [[2, 6], [4, 6]], "winner": "B" },
-    "m15": { "sets": [[6, 3], [6, 2]], "winner": "A" },
-    "m16": { "sets": [[6, 1], [6, 0]], "winner": "A" },
-    "m17": { "sets": [[4, 6], [4, 6]], "winner": "B" },
-    "m18": { "sets": [[6, 4], [4, 6], [10, 7]], "winner": "A" },
-    "m19": { "sets": [[6, 1], [6, 2]], "winner": "A" },
-    "m20": { "sets": [[6, 0], [6, 2]], "winner": "A" },
-    "m21": { "sets": [[3, 6], [4, 6]], "winner": "B" },
-    "m22": { "sets": [[5, 7], [3, 6]], "winner": "B" },
-    "m23": { "sets": [[7, 6], [3, 6], [10, 8]], "winner": "A" },
-    "m24": { "sets": [[6, 3], [6, 4]], "winner": "A" },
-    "m25": { "sets": [[6, 4], [5, 7], [10, 7]], "winner": "A" },
-    "m26": { "sets": [[4, 6], [6, 3], [7, 10]], "winner": "B" },
-    "m27": { "sets": [[6, 2], [6, 4]], "winner": "A" }
+    "m01": {
+      "sets": [
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "winner": "A"
+    },
+    "m02": {
+      "sets": [
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          1
+        ]
+      ],
+      "winner": "A"
+    },
+    "m03": {
+      "sets": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "winner": "A"
+    },
+    "m04": {
+      "sets": [
+        [
+          4,
+          6
+        ],
+        [
+          6,
+          7
+        ]
+      ],
+      "winner": "B"
+    },
+    "m05": {
+      "sets": [
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ]
+      ],
+      "winner": "A"
+    },
+    "m06": {
+      "sets": [
+        [
+          4,
+          6
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "winner": "B"
+    },
+    "m07": {
+      "sets": [
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "winner": "A"
+    },
+    "m08": {
+      "sets": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          2
+        ]
+      ],
+      "winner": "A"
+    },
+    "m09": {
+      "sets": [
+        [
+          7,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          10,
+          8
+        ]
+      ],
+      "winner": "A"
+    },
+    "m10": {
+      "sets": [
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          5
+        ]
+      ],
+      "winner": "A"
+    },
+    "m11": {
+      "sets": [
+        [
+          4,
+          6
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          8,
+          10
+        ]
+      ],
+      "winner": "B"
+    },
+    "m12": {
+      "sets": [
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ]
+      ],
+      "winner": "A"
+    },
+    "m13": {
+      "sets": [
+        [
+          6,
+          4
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          10,
+          6
+        ]
+      ],
+      "winner": "A"
+    },
+    "m14": {
+      "sets": [
+        [
+          2,
+          6
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "winner": "B"
+    },
+    "m15": {
+      "sets": [
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          2
+        ]
+      ],
+      "winner": "A"
+    },
+    "m16": {
+      "sets": [
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          0
+        ]
+      ],
+      "winner": "A"
+    },
+    "m17": {
+      "sets": [
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "winner": "B"
+    },
+    "m18": {
+      "sets": [
+        [
+          6,
+          4
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          10,
+          7
+        ]
+      ],
+      "winner": "A"
+    },
+    "m19": {
+      "sets": [
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ]
+      ],
+      "winner": "A"
+    },
+    "m20": {
+      "sets": [
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          2
+        ]
+      ],
+      "winner": "A"
+    },
+    "m21": {
+      "sets": [
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "winner": "B"
+    },
+    "m22": {
+      "sets": [
+        [
+          5,
+          7
+        ],
+        [
+          3,
+          6
+        ]
+      ],
+      "winner": "B"
+    },
+    "m23": {
+      "sets": [
+        [
+          7,
+          6
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          10,
+          8
+        ]
+      ],
+      "winner": "A"
+    },
+    "m24": {
+      "sets": [
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "winner": "A"
+    },
+    "m25": {
+      "sets": [
+        [
+          6,
+          4
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          10,
+          7
+        ]
+      ],
+      "winner": "A"
+    },
+    "m26": {
+      "sets": [
+        [
+          4,
+          6
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          7,
+          10
+        ]
+      ],
+      "winner": "B"
+    },
+    "m27": {
+      "sets": [
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "winner": "A"
+    }
   },
   "teams": [
-    { "teamId": "t15", "players": ["Wannes Vanoverbeke", "Roos Debbaut"] },
-    { "teamId": "t16", "players": ["Stan Callewaert", "Febe Vandendriessche"] }
+    {
+      "teamId": "t15",
+      "players": [
+        "Wannes Vanoverbeke",
+        "Roos Debbaut"
+      ],
+      "name": "De Cavaliers"
+    },
+    {
+      "teamId": "t16",
+      "players": [
+        "Stan Callewaert",
+        "Febe Vandendriessche"
+      ],
+      "name": "Smash Royale"
+    }
   ],
-  "counts": { "registrations": 16, "slots": 16 },
+  "counts": {
+    "registrations": 16,
+    "slots": 16
+  },
   "adminDemo": {
     "orders": [
-      { "ref": "TKT-01", "name": "Bram Vanwalleghem", "email": "bram.vanwalleghem@example.be", "quantity": 1, "at": "2026-08-11T18:22:00Z", "paidCount": 1 },
-      { "ref": "TKT-02", "name": "Marieke Dhondt", "email": "marieke.dhondt@example.be", "quantity": 2, "at": "2026-08-19T09:05:00Z", "paidCount": 0 },
-      { "ref": "TKT-03", "name": "Wouter Vanhee", "email": "wouter.vanhee@example.be", "quantity": 4, "at": "2026-08-27T20:41:00Z", "paidCount": 2 }
+      {
+        "ref": "TKT-01",
+        "name": "Bram Vanwalleghem",
+        "email": "bram.vanwalleghem@example.be",
+        "quantity": 1,
+        "at": "2026-08-11T18:22:00Z",
+        "paidCount": 1
+      },
+      {
+        "ref": "TKT-02",
+        "name": "Marieke Dhondt",
+        "email": "marieke.dhondt@example.be",
+        "quantity": 2,
+        "at": "2026-08-19T09:05:00Z",
+        "paidCount": 0
+      },
+      {
+        "ref": "TKT-03",
+        "name": "Wouter Vanhee",
+        "email": "wouter.vanhee@example.be",
+        "quantity": 4,
+        "at": "2026-08-27T20:41:00Z",
+        "paidCount": 2
+      }
     ],
     "teamPaid": {
       "t01": true,
@@ -65,7 +455,8 @@
         "email": "wannes.vanoverbeke@example.be",
         "phone": "+32 478 21 44 09",
         "at": "2026-08-24T12:15:00Z",
-        "paid": false
+        "paid": false,
+        "teamName": "De Cavaliers"
       },
       {
         "ref": "INS-02",
@@ -75,7 +466,8 @@
         "email": "stan.callewaert@example.be",
         "phone": "+32 471 88 02 63",
         "at": "2026-08-26T19:40:00Z",
-        "paid": true
+        "paid": true,
+        "teamName": "Smash Royale"
       }
     ]
   }

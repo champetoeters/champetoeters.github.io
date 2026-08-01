@@ -189,6 +189,7 @@
 @container (min-width: 560px) { .reg-row { grid-template-columns: 1fr 1fr; } }
 
 .reg-field { display: block; min-width: 0; }
+.reg-field--wide { grid-column: 1 / -1; }   /* teamnaam spans the full row */
 
 #register .glass-label {
   display: block;
@@ -464,6 +465,14 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
 
 @media (max-width: 430px) {
   #register { --reg-gap: 12px; --reg-ctl-h: 48px; }
+  /* On a phone the section centres BELOW the page head instead of underneath
+     it, so the heading always clears the Terug pill (client: it sat too
+     close) — the panel keeps its own air whatever the content height. */
+  #register.u-section {
+    margin-top: 0;
+    min-height: calc(100svh - var(--page-head-h, 72px));
+    padding-block-start: 12px;
+  }
   .reg__eyebrow { margin-bottom: 4px; }
   .reg__head { margin-bottom: 12px; }
   .reg__gets { margin-top: 6px; font-size: .82rem; }

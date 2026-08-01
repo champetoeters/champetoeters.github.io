@@ -143,17 +143,23 @@
       if (!e || typeof e.teamId !== 'string' || !Array.isArray(e.players)) return;
       var names = e.players.filter(function (p) { return typeof p === 'string' && p.trim(); })
         .map(function (p) { return p.trim(); });
-      if (names.length) fill[e.teamId] = names;
+      if (names.length) {
+        fill[e.teamId] = {
+          players: names,
+          name: (typeof e.name === 'string' && e.name.trim()) ? e.name.trim() : ''
+        };
+      }
     });
 
     return list.map(function (t) {
       if (!t || typeof t !== 'object') return t;
-      var names = fill[t.id];
-      if (!names || t.confirmed === true) return t;
+      var got = fill[t.id];
+      if (!got || t.confirmed === true) return t;
 
       var out = {};
       Object.keys(t).forEach(function (k) { out[k] = t[k]; });
-      out.players = names.slice();
+      out.players = got.players.slice();
+      if (got.name) out.name = got.name;
       out.confirmed = true;
       delete out.label;            /* no stale "Vrije plaats" on a filled slot */
       return out;

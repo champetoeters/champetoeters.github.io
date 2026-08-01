@@ -24,12 +24,20 @@
  *     {"ok":true,"register":true,"orders":true}.
  *  8. Changed this file later? Deploy → Manage deployments → pencil → Version:
  *     New version → Deploy. The /exec URL stays the same.
+ *     Changed columns? Delete the old tabs/spreadsheet — they are recreated.
+ *     (COLUMNS below is the header row; a tab that already exists is never
+ *     re-headed, so an added column would land in the wrong cell. Deleting the
+ *     "CHAMPETOETERS backend" Sheet — or just its tabs — makes the script build
+ *     them again on the next call. Old rows are gone, so do it before go-live.)
  *
  * Notes
  *  - Runtime must be V8 (the default since 2020).
  *  - Tabs registrations / orders / results / payments / log are created on first
  *    use. You may read them freely; the script only ever appends or edits rows
  *    it owns, so do not re-order the columns.
+ *  - Did the COLUMNS layout change in a newer version of this file? Delete the
+ *    old tabs (or the whole "CHAMPETOETERS backend" spreadsheet) before using
+ *    it — they are recreated with the new columns on first use.
  *  - Apps Script cannot answer CORS preflight, which is why the site POSTs
  *    text/plain (see API.md) and why every reply is HTTP 200 + JSON.
  *  - register/order are public and send mail, so they are rate-capped
@@ -63,7 +71,7 @@ var EVENT_WHEN = 'zaterdag 5 september 2026, 14:00 → 02:00';
 var EVENT_WHERE = 'TC Leiemeers, Luitenant-Generaal Gérardstraat 62, 8520 Kuurne';
 
 var COLUMNS = {
-  registrations: ['ref', 'teamId', 'player1', 'player2', 'email', 'phone', 'at', 'paid'],
+  registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone', 'at', 'paid'],
   orders: ['ref', 'name', 'email', 'quantity', 'at', 'paidCount'],
   results: ['matchId', 'sets', 'winner', 'at'],
   payments: ['key', 'paid', 'at'],
@@ -347,13 +355,34 @@ function isTeamId_(key) {
 
 function pad2_(n) { return n < 10 ? '0' + n : String(n); }
 
-function nextRef_(prefix, rows) {
+function maxRefNumber_(rows) {
   var max = 0;
-  rows.forEach(function (r) {
+  (rows || []).forEach(function (r) {
     var m = /(\d+)$/.exec(String(r && r.ref));
     if (m) max = Math.max(max, parseInt(m[1], 10));
   });
-  return prefix + '-' + pad2_(max + 1);
+  return max;
+}
+
+function refSeq_(prefix) {
+  var n = parseInt(props_().getProperty('REF_SEQ_' + prefix), 10);
+  return n > 0 ? n : 0;
+}
+
+function setRefSeq_(prefix, n) {
+  props_().setProperty('REF_SEQ_' + prefix, String(n > 0 ? n : 0));
+}
+
+/* A ref is never reused. The next number is one past a high-water mark kept in
+   Script Properties (REF_SEQ_INS / REF_SEQ_TKT), not one past the highest row
+   still present — deleting the newest registration must not hand its number to
+   the next one. The live rows are still consulted, so a hand-edited sheet or a
+   wiped property store can only ever push the counter forward, never back.
+   resetAll clears both marks; seedDemo rebuilds them from the seeded rows. */
+function nextRef_(prefix, rows) {
+  var n = Math.max(maxRefNumber_(rows), refSeq_(prefix)) + 1;
+  setRefSeq_(prefix, n);
+  return prefix + '-' + pad2_(n);
 }
 
 /* 1..3 sets, integers 0..99. Winner: the side that took more sets; a given
@@ -422,7 +451,7 @@ function registerMail_(entry) {
       'Hallo ' + who + ',',
       '',
       'Jullie inschrijving is binnen. Nummer ' + entry.ref + '.',
-      'Team: ' + who,
+      'Team: ' + (entry.teamName || who) + ' (' + who + ')',
       'Inschrijvingsgeld: €' + TEAM_PRICE + ' per team.',
       ''
     ].concat(paymentLines_(entry.ref), [''], footerLines_())
@@ -497,7 +526,11 @@ function buildState_() {
     ok: true,
     results: results_(),
     teams: regs.filter(function (r) { return !!r.teamId; }).map(function (r) {
-      return { teamId: r.teamId, players: [r.player1, r.player2].filter(Boolean) };
+      return {
+        teamId: r.teamId,
+        name: String(r.teamName || ''),
+        players: [r.player1, r.player2].filter(Boolean)
+      };
     }),
     counts: {
       registrations: TOTAL_SLOTS - freeSlots_(regs).length,
@@ -506,21 +539,50 @@ function buildState_() {
   };
 }
 
-function actRegister_(body) {
+/* Shared by the public register action and the admin addRegistration op, so the
+   two can never drift apart. Returns the scrubbed entry, or null when invalid. */
+function cleanEntry_(body, paid) {
   var entry = {
     ref: '',
     teamId: null,
+    teamName: clean_(body.teamName, 40),
     player1: clean_(body.player1, 60),
     player2: clean_(body.player2, 60),
     email: cleanEmail_(body.email),
     phone: clean_(body.phone, 40),
     at: new Date().toISOString(),
-    paid: false
+    paid: !!paid
   };
-  if (!entry.player1 || !entry.player2) return fail_('bad-request');
-  if (!hasLetter_(entry.player1) || !hasLetter_(entry.player2)) return fail_('bad-request');
-  if (!isEmail_(entry.email)) return fail_('bad-request');
-  if (!isPhone_(entry.phone)) return fail_('bad-request');
+  if (entry.teamName.length < 2 || !hasLetter_(entry.teamName)) return null;
+  if (!entry.player1 || !entry.player2) return null;
+  if (!hasLetter_(entry.player1) || !hasLetter_(entry.player2)) return null;
+  if (!isEmail_(entry.email)) return null;
+  if (!isPhone_(entry.phone)) return null;
+  return entry;
+}
+
+/* Same deal for order / addOrder. paidCount is clamped to 0..quantity; the
+   public action always passes 0. */
+function cleanOrder_(body, paidCount) {
+  var qty = Number(body.quantity);
+  var order = {
+    ref: '',
+    name: clean_(body.name, 60),
+    email: cleanEmail_(body.email),
+    quantity: qty,
+    at: new Date().toISOString(),
+    paidCount: 0
+  };
+  if (!order.name || !hasLetter_(order.name)) return null;
+  if (!isEmail_(order.email)) return null;
+  if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) return null;
+  order.paidCount = Math.max(0, Math.min(qty, Math.trunc(Number(paidCount)) || 0));
+  return order;
+}
+
+function actRegister_(body) {
+  var entry = cleanEntry_(body, false);
+  if (!entry) return fail_('bad-request');
 
   var mail = null;
   var res = withLock_(function () {
@@ -543,18 +605,8 @@ function actRegister_(body) {
 }
 
 function actOrder_(body) {
-  var qty = Number(body.quantity);
-  var order = {
-    ref: '',
-    name: clean_(body.name, 60),
-    email: cleanEmail_(body.email),
-    quantity: qty,
-    at: new Date().toISOString(),
-    paidCount: 0
-  };
-  if (!order.name || !hasLetter_(order.name)) return fail_('bad-request');
-  if (!isEmail_(order.email)) return fail_('bad-request');
-  if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) return fail_('bad-request');
+  var order = cleanOrder_(body, 0);
+  if (!order) return fail_('bad-request');
 
   var mail = null;
   var res = withLock_(function () {
@@ -664,6 +716,65 @@ function actAdmin_(body) {
     });
   }
 
+  /* Row bookkeeping the organisers do by hand: someone signs up at the bar, or
+     a duplicate has to go. Same validation as the public actions, but no abuse
+     caps (the caller is authenticated) and no confirmation mail (the organiser
+     talks to the person in front of them). */
+  if (op === 'addRegistration') {
+    var newReg = cleanEntry_(body, body.paid);
+    if (!newReg) return fail_('bad-request');
+    return withLock_(function () {
+      var regs = registrations_();
+      var free = freeSlots_(regs);
+      if (!free.length) return fail_('full');
+      newReg.teamId = free[0];
+      newReg.ref = nextRef_('INS', regs);
+      append_('registrations', newReg);
+      log_('addRegistration', newReg.ref + ' ' + newReg.teamId);
+      dropStateCache_();
+      return { ok: true, reference: newReg.ref, teamId: newReg.teamId };
+    });
+  }
+
+  /* Deleting frees the slot again (health.register flips back to true), and
+     never frees the ref — see nextRef_. A second call is simply not-found. */
+  if (op === 'deleteRegistration') {
+    var regRef = String(body.ref || '');
+    return withLock_(function () {
+      var hit = registrations_().filter(function (r) { return r.ref === regRef; })[0];
+      if (!hit) return fail_('not-found');
+      tab_('registrations').deleteRow(hit.__row);
+      log_('deleteRegistration', regRef);
+      dropStateCache_();
+      return { ok: true };
+    });
+  }
+
+  if (op === 'addOrder') {
+    var newOrder = cleanOrder_(body, body.paidCount);
+    if (!newOrder) return fail_('bad-request');
+    return withLock_(function () {
+      var rows = orders_();
+      newOrder.ref = nextRef_('TKT', rows);
+      append_('orders', newOrder);
+      log_('addOrder', newOrder.ref + ' x' + newOrder.quantity);
+      dropStateCache_();
+      return { ok: true, reference: newOrder.ref };
+    });
+  }
+
+  if (op === 'deleteOrder') {
+    var orderRef = String(body.ref || '');
+    return withLock_(function () {
+      var row = orders_().filter(function (o) { return o.ref === orderRef; })[0];
+      if (!row) return fail_('not-found');
+      tab_('orders').deleteRow(row.__row);
+      log_('deleteOrder', orderRef);
+      dropStateCache_();
+      return { ok: true };
+    });
+  }
+
   if (op === 'seedDemo') {
     return withLock_(function () {
       seed_(body.state);
@@ -679,6 +790,8 @@ function actAdmin_(body) {
       clearTab_('orders');
       clearTab_('results');
       clearTab_('payments');
+      setRefSeq_('INS', 0);
+      setRefSeq_('TKT', 0);
       log_('resetAll', '');
       dropStateCache_();
       return { ok: true };
@@ -721,6 +834,9 @@ function seed_(raw) {
   clearTab_('orders');
   clearTab_('results');
   clearTab_('payments');
+  /* The demo state carries its own refs, so the counters restart from it. */
+  setRefSeq_('INS', 0);
+  setRefSeq_('TKT', 0);
 
   var kept = [];
   src.registrations.forEach(function (r) {
@@ -730,6 +846,7 @@ function seed_(raw) {
     var entry = {
       ref: clean_(r.ref, 20) || nextRef_('INS', kept),
       teamId: teamId,
+      teamName: clean_(r.teamName || r.name, 40),
       player1: clean_(players[0], 60),
       player2: clean_(players[1], 60),
       email: cleanEmail_(r.email),
@@ -784,4 +901,7 @@ function seed_(raw) {
     if (!isTeamId_(key)) return;
     append_('payments', { key: key, paid: !!src.teamPaid[key], at: new Date().toISOString() });
   });
+
+  setRefSeq_('INS', Math.max(refSeq_('INS'), maxRefNumber_(kept)));
+  setRefSeq_('TKT', Math.max(refSeq_('TKT'), maxRefNumber_(keptOrders)));
 }

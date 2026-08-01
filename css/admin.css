@@ -318,6 +318,79 @@ body.ad { min-height: 100vh; padding-bottom: var(--sp-8); }
 .ad-err { margin-top: var(--sp-3); }
 
 
+/* ---- a row you can delete, and the row you add --------------------------
+   Registrations and ticket orders are spreadsheet rows. The ✕ stays quiet
+   until it is wanted — it is destructive, so it must never be the thing the
+   eye lands on — and its confirmation opens under the row instead of in a
+   browser dialog. */
+
+.ad-r { display: flex; align-items: center; gap: var(--sp-1); }
+.ad-r > .ad-t,
+.ad-r > .ad-o { flex: 1 1 auto; min-width: 0; }
+
+.ad-x {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  font-size: .82rem;
+  line-height: 1;
+  color: var(--paper-mute);
+  transition: color var(--dur-1) var(--ease-glass),
+              background-color var(--dur-1) var(--ease-glass);
+}
+.ad-x:hover { color: var(--paper); background-color: rgb(var(--haze-rgb) / .12); }
+.ad-x:active { background-color: rgb(2 5 16 / .34); }
+
+.ad-conf {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 2px var(--sp-3);
+}
+.ad-conf__q {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--paper-dim);
+}
+.ad-conf .glass-btn { flex: 0 0 auto; min-width: 76px; }
+
+.ad-add {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 2px;
+  text-align: left;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--ball);
+  border-radius: var(--r-well);
+  transition: background-color var(--dur-1) var(--ease-glass);
+}
+.ad-add:hover { background-color: rgb(var(--haze-rgb) / .08); }
+
+.ad-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+.ad-fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.ad-fchk {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 44px;
+  cursor: pointer;
+}
+.ad-fchk__l { font-size: var(--fs-sm); font-weight: var(--fw-med); }
+.ad-form .ad-act { margin-top: var(--sp-1); }
+
+
 /* ---- teams (€50) -------------------------------------------------------- */
 
 .ad-t {

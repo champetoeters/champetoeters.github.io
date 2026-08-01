@@ -274,7 +274,13 @@ window.Sections = window.Sections || {};
            hidden, never blank, never "TBD". A registration that filled the
            slot arrives with its two players and reads like any other team. */
         if (!players.length) return { open: true, name: t.label || OPEN, full: 'een vrije plaats' };
-        return { open: false, name: players.map(surname).join(' & '), full: players.join(' en ') };
+        /* Teams enter under a team name; the players stay in the aria text so
+           a listener still hears who is on court. Data without a name (never
+           the case in production) falls back to the surname pair. */
+        var label = (typeof t.name === 'string' && t.name.trim())
+          ? t.name.trim()
+          : players.map(surname).join(' & ');
+        return { open: false, name: label, full: label + ' (' + players.join(' en ') + ')' };
       }
       var k = KO[id] || String(id);
       return { open: false, tbd: true, name: k, full: k };
