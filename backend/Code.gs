@@ -497,8 +497,19 @@ function sendMail_(mail) {
 
 /* ------------------------------------------------------------- public acts */
 
+/* Script properties REGISTER_OPEN / ORDERS_OPEN: set to "false" to close a
+   flow (the site then reads "nog niet open"); anything else, or unset, is
+   open. Read at runtime, so flipping them needs NO redeploy. */
+function flagOpen_(key) {
+  return String(props_().getProperty(key) || '').trim().toLowerCase() !== 'false';
+}
+
 function actHealth_() {
-  return { ok: true, register: freeSlots_(registrations_()).length > 0, orders: true };
+  return {
+    ok: true,
+    register: flagOpen_('REGISTER_OPEN') && freeSlots_(registrations_()).length > 0,
+    orders: flagOpen_('ORDERS_OPEN')
+  };
 }
 
 /* The landing page polls ?action=state, and each build costs a handful of Sheets
@@ -581,6 +592,7 @@ function cleanOrder_(body, paidCount) {
 }
 
 function actRegister_(body) {
+  if (!flagOpen_('REGISTER_OPEN')) return fail_('closed');
   var entry = cleanEntry_(body, false);
   if (!entry) return fail_('bad-request');
 
@@ -605,6 +617,7 @@ function actRegister_(body) {
 }
 
 function actOrder_(body) {
+  if (!flagOpen_('ORDERS_OPEN')) return fail_('closed');
   var order = cleanOrder_(body, 0);
   if (!order) return fail_('bad-request');
 

@@ -21,7 +21,7 @@ The site talks to exactly one URL: `CHAMP_CONFIG.apiEndpoint`.
   googleusercontent). Never send custom headers.
 - Response is always HTTP 200 with JSON `{ "ok": true, ... }` or
   `{ "ok": false, "error": "<code>" }`. Error codes: `bad-request`, `unauthorized`,
-  `full`, `not-found`, `too-many`, `server`.
+  `full`, `not-found`, `too-many`, `closed`, `server`.
 - `too-many` = an abuse cap was hit on a public write (`register` / `order`):
   max 3 rows per e-mail address per tab, max 150 rows per tab per calendar day.
   Both are protections for the Sheet and the mail quota, not user-facing states;
@@ -53,6 +53,11 @@ The site talks to exactly one URL: `CHAMP_CONFIG.apiEndpoint`.
 ```
 
 ## Public actions
+
+Script properties `REGISTER_OPEN` / `ORDERS_OPEN` (dev: env vars): set to
+`false` to close a flow — health reports it closed and the public write answers
+`{ok:false,error:"closed"}`. Unset or anything else = open. Read at runtime:
+flipping them needs no redeploy.
 
 ### GET `?action=health`
 → `{ ok:true, register:true, orders:true }` (flags flip when the event is full/closed).
