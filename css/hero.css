@@ -648,18 +648,21 @@
   font-weight: 500;
   transition: color .18s ease;
 }
-/* The underline lives on an inner span as a border: WebKit does not render
-   text-decoration on an inline-flex box, so iOS silently dropped it. A border
-   renders in every engine and never fades below legibility. */
+/* The underline is PAINTED (a 1px background line under the span): WebKit
+   refuses text-decoration anywhere inside this inline-flex anchor, measured on
+   real pixels. A painted line renders in every engine and hugs the text. */
 .hero__link-t {
-  border-bottom: 1px solid rgb(244 247 251 / .6);
-  padding-bottom: 3px;
+  padding-bottom: 2px;
+  background-image: linear-gradient(rgb(244 247 251 / .6), rgb(244 247 251 / .6));
+  background-size: 100% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
 }
 .hero__link:hover {
   color: var(--hb-paper);
 }
 .hero__link:hover .hero__link-t {
-  border-bottom-color: rgb(244 247 251 / .85);
+  background-image: linear-gradient(rgb(244 247 251 / .85), rgb(244 247 251 / .85));
 }
 
 /* Type on a raked surface needs a halo as well as a pool. Tight and dark, so
