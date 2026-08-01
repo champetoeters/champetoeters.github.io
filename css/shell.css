@@ -153,6 +153,10 @@ body::after {
 .site-foot__credit a:hover,
 .site-foot__credit a:focus-visible { color: rgba(244, 247, 251, .8); }
 
+/* Verification-round build marker: which build is this device actually
+   rendering? Removed at the production-cleanup round. */
+.site-foot__build { margin-left: 6px; opacity: .55; font-size: 10px; }
+
 .site-foot__line {
   position: relative;          /* over the grain, never under it */
   display: flex;
@@ -208,5 +212,7 @@ html.page-landing { background-color: #141D44; }
    not layout, so the page cannot scroll into it (an absolute block here made
    the page scroll 120vh past the footer into nothing). */
 html.page-landing .site-foot {
-  box-shadow: 0 50vh 0 50vh #141D44;
+  /* px, not vh: Safari has a history of mangling viewport units inside
+     box-shadow. 400px covers any rubber-band distance. */
+  box-shadow: 0 400px 0 400px #141D44;
 }

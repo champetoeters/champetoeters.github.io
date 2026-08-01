@@ -652,10 +652,12 @@
    refuses text-decoration anywhere inside this inline-flex anchor, measured on
    real pixels. A painted line renders in every engine and hugs the text. */
 .hero__link-t {
-  padding-bottom: 2px;
+  /* No padding: with line-height 1 the content-box bottom is ~3px under the
+     baseline, so the line sits where a native underline would — hugging the
+     text, not floating under the descenders. */
   background-image: linear-gradient(rgb(244 247 251 / .6), rgb(244 247 251 / .6));
   background-size: 100% 1px;
-  background-position: 0 100%;
+  background-position: 0 calc(100% - 1px);
   background-repeat: no-repeat;
 }
 .hero__link:hover {
