@@ -212,7 +212,15 @@ html.page-landing { background-color: #141D44; }
    not layout, so the page cannot scroll into it (an absolute block here made
    the page scroll 120vh past the footer into nothing). */
 html.page-landing .site-foot {
-  /* px, not vh: Safari has a history of mangling viewport units inside
-     box-shadow. 400px covers any rubber-band distance. */
+  /* For engines that paint ink below the document (Android, desktop). */
   box-shadow: 0 400px 0 400px #141D44;
+}
+
+/* iOS pins the FIXED page ground over the rubber-band gap, above anything the
+   page itself can paint there (measured on device) — so the gap cannot be
+   recoloured, only removed: no overscroll, the page ends at the footer.
+   Supported iOS 16.4+ / all modern engines; older ones keep the old bounce. */
+html.page-landing,
+html.page-landing body {
+  overscroll-behavior-y: none;
 }
