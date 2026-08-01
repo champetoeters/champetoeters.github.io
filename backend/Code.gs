@@ -71,8 +71,8 @@ var EVENT_WHEN = 'zaterdag 5 september 2026, 14:00 → 02:00';
 var EVENT_WHERE = 'TC Leiemeers, Luitenant-Generaal Gérardstraat 62, 8520 Kuurne';
 
 var COLUMNS = {
-  registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone', 'at', 'paid'],
-  orders: ['ref', 'name', 'email', 'quantity', 'at', 'paidCount'],
+  registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone', 'at', 'paid', 'clientRef'],
+  orders: ['ref', 'name', 'email', 'quantity', 'at', 'paidCount', 'clientRef'],
   results: ['matchId', 'sets', 'winner', 'at'],
   payments: ['key', 'paid', 'at'],
   log: ['at', 'action', 'detail']
@@ -500,6 +500,21 @@ function sendMail_(mail) {
 /* Script properties REGISTER_OPEN / ORDERS_OPEN: set to "false" to close a
    flow (the site then reads "nog niet open"); anything else, or unset, is
    open. Read at runtime, so flipping them needs NO redeploy. */
+/* Idempotency: a retried submit carries the same clientRef, and the reply is
+   the ORIGINAL result — never a second row or a second mail. Apps Script's
+   response redirect is measurably flaky (~1 in 10 lost), so the client retries;
+   this is what makes that safe. */
+function cleanToken_(v) {
+  return String(v == null ? '' : v).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+}
+function replay_(rows, token) {
+  if (!token) return null;
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i].clientRef || '') === token) return rows[i];
+  }
+  return null;
+}
+
 function flagOpen_(key) {
   return String(props_().getProperty(key) || '').trim().toLowerCase() !== 'false';
 }
@@ -556,6 +571,7 @@ function cleanEntry_(body, paid) {
   var entry = {
     ref: '',
     teamId: null,
+    clientRef: cleanToken_(body.clientRef),
     teamName: clean_(body.teamName, 40),
     player1: clean_(body.player1, 60),
     player2: clean_(body.player2, 60),
@@ -578,6 +594,7 @@ function cleanOrder_(body, paidCount) {
   var qty = Number(body.quantity);
   var order = {
     ref: '',
+    clientRef: cleanToken_(body.clientRef),
     name: clean_(body.name, 60),
     email: cleanEmail_(body.email),
     quantity: qty,
@@ -599,6 +616,8 @@ function actRegister_(body) {
   var mail = null;
   var res = withLock_(function () {
     var regs = registrations_();
+    var seen = replay_(regs, entry.clientRef);
+    if (seen) return { ok: true, reference: seen.ref, teamId: seen.teamId, amount: TEAM_PRICE };
     var free = freeSlots_(regs);
     if (!free.length) return fail_('full');
     if (overLimit_(regs, entry.email)) return fail_('too-many');
@@ -624,6 +643,8 @@ function actOrder_(body) {
   var mail = null;
   var res = withLock_(function () {
     var rows = orders_();
+    var seen = replay_(rows, order.clientRef);
+    if (seen) return { ok: true, reference: seen.ref, amount: Number(seen.quantity) * TICKET_PRICE };
     if (overLimit_(rows, order.email)) return fail_('too-many');
 
     order.ref = nextRef_('TKT', rows);
@@ -738,6 +759,8 @@ function actAdmin_(body) {
     if (!newReg) return fail_('bad-request');
     return withLock_(function () {
       var regs = registrations_();
+      var seen = replay_(regs, newReg.clientRef);
+      if (seen) return { ok: true, reference: seen.ref, teamId: seen.teamId };
       var free = freeSlots_(regs);
       if (!free.length) return fail_('full');
       newReg.teamId = free[0];
@@ -768,6 +791,8 @@ function actAdmin_(body) {
     if (!newOrder) return fail_('bad-request');
     return withLock_(function () {
       var rows = orders_();
+      var seen = replay_(rows, newOrder.clientRef);
+      if (seen) return { ok: true, reference: seen.ref };
       newOrder.ref = nextRef_('TKT', rows);
       append_('orders', newOrder);
       log_('addOrder', newOrder.ref + ' x' + newOrder.quantity);

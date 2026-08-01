@@ -75,7 +75,16 @@ The live overlay the public site polls. **Public-safe fields only.**
   "counts":  { "registrations": 14, "slots": 16 } }
 ```
 
-### POST `{ action:"register", teamName, player1, player2, email, phone }`
+All four write actions (`register`, `order`, admin `addRegistration`/`addOrder`)
+accept an optional **`clientRef`** (token, `[A-Za-z0-9_-]` max 40). A request whose
+`clientRef` matches a stored row is answered with THAT row's original result — no
+second row, no second mail. This is what makes client retries safe: Apps Script's
+response redirect measurably loses ~1 in 10 answers, so `ChampLive.post(…,
+{retries: 2})` retries with the same token after a 25s timeout per attempt.
+(Sheet note: `clientRef` is appended as the LAST column of `registrations` and
+`orders`, so existing sheets keep working — only their header label is missing.)
+
+### POST `{ action:"register", teamName, player1, player2, email, phone, clientRef? }`
 Validation mirrors `site/js/register.js` scrub rules (max lengths 60/60/160/40, same
 character policy). On success: stores entry, assigns next open team slot, sends the
 confirmation email (Dutch, includes payment instructions — see EMAIL below), returns

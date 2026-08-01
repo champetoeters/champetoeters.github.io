@@ -272,20 +272,30 @@ window.Sections.tickets = (() => {
       placeOrder();
     });
 
+    /* One idempotency token per order: kept across retries so a lost answer
+       can never order twice; a new order (after success) gets a new token. */
+    let orderToken = null;
+
     /* The server owns the price and the reference; the page only says how many. */
     async function placeOrder() {
       busy = true;
+      if (!orderToken) {
+        orderToken = (window.ChampLive && window.ChampLive.token)
+          ? window.ChampLive.token()
+          : 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+      }
       notice('');
       setView('processing');
       say(COPY.sending);
 
       try {
         const body = await window.ChampLive.post({
-          action:   'order',
-          name:     nameEl.value.trim(),
-          email:    emailEl.value.trim(),
-          quantity: qty
-        });
+          action:    'order',
+          clientRef: orderToken,
+          name:      nameEl.value.trim(),
+          email:     emailEl.value.trim(),
+          quantity:  qty
+        }, { retries: 2 });
         busy = false;
         if (body && body.ok) { showPay(body); return; }
         setView('form');
@@ -309,6 +319,7 @@ window.Sections.tickets = (() => {
     let paidAmount = 0;
 
     function showPay(body) {
+      orderToken = null;   /* this order is in; the next one is its own */
       /* The mededeling is the BUYER'S NAME — that is how the organisers match
          a transfer to an order. The server's TKT-nn stays internal. */
       const mededeling = nameEl.value.trim();

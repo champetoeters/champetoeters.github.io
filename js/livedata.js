@@ -102,7 +102,34 @@
      text/plain keeps it a simple request: Apps Script cannot answer a CORS
      preflight, so no other header may ever be added here. */
 
-  function post(payload) {
+  /* Apps Script's response redirect measurably loses ~1 answer in 10, and a
+     lost answer used to hang the page on "Versturen" forever. So: a 25s
+     timeout per attempt, and (for callers that ask) automatic retries. A retry
+     is only SAFE because register/order/add* carry a clientRef the backend
+     replays instead of re-executing — never a duplicate row or mail. */
+  var POST_TIMEOUT = 25000;
+
+  function attempt(base, body) {
+    var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = ctl && setTimeout(function () { ctl.abort(); }, POST_TIMEOUT);
+    return fetch(base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: body,
+      redirect: 'follow',
+      cache: 'no-store',
+      signal: ctl ? ctl.signal : undefined
+    })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var j = JSON.parse(t);
+        if (!j || typeof j !== 'object') throw new Error('shape');
+        return j;
+      })
+      .finally(function () { if (timer) clearTimeout(timer); });
+  }
+
+  function post(payload, opts) {
     var base = endpoint();
     if (!base) return Promise.resolve({ ok: false, error: 'network' });
 
@@ -110,21 +137,16 @@
     try { body = JSON.stringify(payload || {}); }
     catch (e) { return Promise.resolve({ ok: false, error: 'bad-request' }); }
 
+    var retries = (opts && opts.retries) | 0;
     try {
-      return fetch(base, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: body,
-        redirect: 'follow',
-        cache: 'no-store'
-      })
-        .then(function (r) { return r.text(); })
-        .then(function (t) {
-          var j = JSON.parse(t);
-          if (!j || typeof j !== 'object') throw new Error('shape');
-          return j;
-        })
-        .catch(function () { return { ok: false, error: 'network' }; });
+      var go = function (left) {
+        return attempt(base, body).catch(function () {
+          if (left <= 0) return { ok: false, error: 'network' };
+          return new Promise(function (done) { setTimeout(done, 1200); })
+            .then(function () { return go(left - 1); });
+        });
+      };
+      return go(retries);
     } catch (e) {
       return Promise.resolve({ ok: false, error: 'network' });
     }
@@ -166,11 +188,22 @@
     });
   }
 
+  /* A fresh idempotency token for a submit session (see post()). */
+  function token() {
+    try {
+      if (root.crypto && typeof root.crypto.randomUUID === 'function') {
+        return root.crypto.randomUUID();
+      }
+    } catch (e) { /* fall through */ }
+    return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  }
+
   root.ChampLive = {
     state: state,
     refresh: refresh,
     nowMinutes: nowMinutes,
     post: post,
+    token: token,
     mergedTeams: mergedTeams
   };
 })(typeof window !== 'undefined' ? window : globalThis);

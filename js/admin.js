@@ -133,18 +133,18 @@
 
   /* ----------------------------------------------------------------- backend */
 
-  function post(payload) {
+  function post(payload, opts) {
     if (S.demo) return Promise.resolve({ ok: true });
     var live = window.ChampLive;
     if (!live || typeof live.post !== 'function') return Promise.resolve({ ok: false, error: 'server' });
-    return live.post(payload).then(function (r) { return r || { ok: false, error: 'server' }; },
+    return live.post(payload, opts).then(function (r) { return r || { ok: false, error: 'server' }; },
       function () { return { ok: false, error: 'server' }; });
   }
 
-  function admin(op, extra) {
+  function admin(op, extra, opts) {
     var body = { action: 'admin', password: S.pw, op: op };
     if (extra) Object.keys(extra).forEach(function (k) { body[k] = extra[k]; });
-    return post(body);
+    return post(body, opts);
   }
 
   /* One write, one revert. The UI is already updated when this runs.
@@ -472,9 +472,12 @@
   }
 
   function blankForm(kind) {
+    var tok = (window.ChampLive && window.ChampLive.token)
+      ? window.ChampLive.token()
+      : 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
     return kind === 'team'
-      ? { kind: 'team', teamName: '', player1: '', player2: '', email: '', phone: '', paid: false, err: '' }
-      : { kind: 'order', name: '', email: '', quantity: '1', paidCount: '0', err: '' };
+      ? { kind: 'team', clientRef: tok, teamName: '', player1: '', player2: '', email: '', phone: '', paid: false, err: '' }
+      : { kind: 'order', clientRef: tok, name: '', email: '', quantity: '1', paidCount: '0', err: '' };
   }
 
   /* The form re-renders whenever its list does (a payment tick elsewhere, a
@@ -555,6 +558,7 @@
   function addTeam() {
     var raw = readForm();
     var f = {
+      clientRef: String(raw.clientRef || ''),
       teamName: scrub(raw.teamName, 40),
       player1: scrub(raw.player1, 60), player2: scrub(raw.player2, 60),
       email: scrubEmail(raw.email), phone: scrub(raw.phone, 40), paid: !!raw.paid
@@ -562,7 +566,7 @@
     var err = teamError(f);
     if (err) { formError(err); return; }
     formBusy(true);
-    admin('addRegistration', f).then(function (r) {
+    admin('addRegistration', f, { retries: 2 }).then(function (r) {
       formBusy(false);
       if (r && r.ok) {
         S.registrations.push({
@@ -587,6 +591,7 @@
   function addOrder() {
     var raw = readForm();
     var f = {
+      clientRef: String(raw.clientRef || ''),
       name: scrub(raw.name, 60), email: scrubEmail(raw.email),
       quantity: num(raw.quantity), paidCount: num(raw.paidCount) || 0
     };
@@ -594,7 +599,7 @@
     if (err) { formError(err); return; }
     f.paidCount = Math.max(0, Math.min(f.quantity, f.paidCount));
     formBusy(true);
-    admin('addOrder', f).then(function (r) {
+    admin('addOrder', f, { retries: 2 }).then(function (r) {
       formBusy(false);
       if (r && r.ok) {
         S.orders.push({

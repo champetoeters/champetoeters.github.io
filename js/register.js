@@ -437,7 +437,21 @@ window.Sections.register = {
        ==================================================================== */
 
     /* Exactly what the server will store, computed the way the server does. */
+    /* One idempotency token per submitted entry: kept across retries (manual
+       or automatic) so a lost answer can never register the team twice; a NEW
+       entry after a success gets a new token. */
+    let clientRef = null;
+    const tokenOf = () => {
+      if (!clientRef) {
+        clientRef = (window.ChampLive && window.ChampLive.token)
+          ? window.ChampLive.token()
+          : 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+      }
+      return clientRef;
+    };
+
     const payload = () => ({
+      clientRef: tokenOf(),
       teamName: scrub(byId('team-name').value, 40, true),
       player1: scrub(byId('p1-name').value, 60, true),
       player2: scrub(byId('p2-name').value, 60, true),
@@ -472,6 +486,7 @@ window.Sections.register = {
     let flowStarted = false;   /* past the form: a late count must not intrude */
 
     function showPay(body) {
+      clientRef = null;   /* this entry is in; the next one is its own */
       /* The mededeling is the TEAM NAME — that is how the organisers match a
          transfer to a team. The server's INS-nn stays internal bookkeeping. */
       const mededeling = payload().teamName;
@@ -580,7 +595,7 @@ window.Sections.register = {
 
       showProcessing();
       try {
-        const body = await window.ChampLive.post(Object.assign({ action: 'register' }, payload()));
+        const body = await window.ChampLive.post(Object.assign({ action: 'register' }, payload()), { retries: 2 });
         if (body && body.ok) {
           showPay(body);
           return;
