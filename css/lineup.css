@@ -69,6 +69,14 @@
   z-index: -2;
   pointer-events: none;
   background:
+    /* Top dissolve: the hero ends on rgb(12 19 47) (measured, both viewports);
+       the sky fades in from that exact tone so the section boundary is a blend,
+       not a line — no extra spacing, the fade lives inside the sky's own top. */
+    linear-gradient(180deg, rgb(10 17 45) 0, rgb(10 17 45 / .55) 110px, rgb(10 17 45 / 0) 290px),
+    /* Bottom dissolve: the bill hands over to the schedule on rgb(20 30 62) —
+       the same tone .tt-plate starts from, so the boundary is a blend at any
+       viewport instead of a measured-once colour match. */
+    linear-gradient(0deg, rgb(20 30 62) 0, rgb(20 30 62 / .6) 120px, rgb(20 30 62 / 0) 280px),
     radial-gradient(120% 30% at 78% -8%, rgb(124 153 182 / .22), rgb(124 153 182 / 0) 62%),
     radial-gradient(100% 24% at 6% 6%,   rgb(58 90 151 / .30),  rgb(58 90 151 / 0) 66%),
     /* one very broad wash, wider than the whole bill, so it cannot fall off
@@ -84,6 +92,13 @@
   z-index: -1;
   pointer-events: none;
   opacity: .34;
+  /* The grain fades in over the same ramp as the sky's top dissolve — a
+     texture that switches on at the section edge reads as a seam even when
+     the colours match. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 290px,
+                                      #000 calc(100% - 240px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 290px,
+              #000 calc(100% - 240px), transparent 100%);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }

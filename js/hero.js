@@ -61,20 +61,27 @@ window.Sections.hero = {
       const team = ((data && data.tickets) || []).find((t) => t && t.id === "team");
       if (team && typeof team.remaining === "number") open = team.remaining;
     }
-    if (open != null) renderSlots(open, places);
-
-    /* The live count. ChampLive is absent on the standalone preview page, and
-       state() resolves {} when there is no backend and no demo clock — in both
-       cases the static figure above simply stands. */
+    /* The live count. When a live source exists the line stays EMPTY until it
+       answers — painting the static "Nog 2" first and flipping to "Volzet" a
+       beat later reads as a glitch (client). Without a live source (preview,
+       unwired build) the static figure is all there is, so it paints at once. */
     const live = window.ChampLive;
-    if (live && typeof live.state === "function") {
+    const cfg = window.CHAMP_CONFIG || {};
+    const hasLiveSource = !!(live && typeof live.state === "function" &&
+                             (cfg.apiEndpoint || cfg.demoNow));
+    if (open != null && !hasLiveSource) renderSlots(open, places);
+
+    if (hasLiveSource) {
       try {
         Promise.resolve(live.state()).then((state) => {
           const c = (state && state.counts) || null;
-          if (!c || typeof c.slots !== "number" || typeof c.registrations !== "number") return;
-          renderSlots(Math.max(0, c.slots - c.registrations), c.slots);
-        }, () => {});
-      } catch (e) { /* the hero never depends on the live layer */ }
+          if (c && typeof c.slots === "number" && typeof c.registrations === "number") {
+            renderSlots(Math.max(0, c.slots - c.registrations), c.slots);
+          } else if (open != null) {
+            renderSlots(open, places);   /* unusable answer → static after all */
+          }
+        }, () => { if (open != null) renderSlots(open, places); });
+      } catch (e) { if (open != null) renderSlots(open, places); }
     }
 
     /* ---- 2. Fit the wordmark ------------------------------------------

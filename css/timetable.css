@@ -28,7 +28,7 @@
      so the ramp into the DJ bill lives entirely in empty space: the sticky
      venue panel is contained by .tt-body and therefore stops exactly where
      the ramp starts. Keep the two in step — it is a real coupling. */
-  --tt-tail: clamp(132px, 14vw, 210px);
+  --tt-tail: clamp(72px, 8vw, 116px);   /* the footer sits close under the sheet (client) */
 
   /* How far BEFORE the end of the schedule the sticky venue panel lets go.
      A sticky box is constrained by its containing block minus its own
@@ -54,14 +54,14 @@
    a lift that carries the hero's last light a little way into the sheet and
    dies out before the first match, not the near-black band it had to be when
    the DJ bill's dark tail was above it. */
-/* Top: the sheet now follows the BILL, whose night band ends on rgb(30 38 74)
-   (measured off rendered pixels, desktop and mobile). The plate starts on that
-   exact tone and lets go over its height, so the section boundary has no step. */
+/* Top: the sheet follows the BILL, which dissolves its own bottom to
+   rgb(20 30 62) (.ln__sky). The plate starts on that same handoff tone and
+   lets go over its height, so the boundary is a blend, not a line. */
 .tt-plate {
   position: absolute; inset: 0 0 auto; z-index: 0;
   height: clamp(220px, 30vw, 380px);
   pointer-events: none;
-  background-image: linear-gradient(180deg, rgb(30 38 74) 0%, rgb(30 38 74 / .45) 45%, rgb(30 38 74 / 0) 100%);
+  background-image: linear-gradient(180deg, rgb(20 30 62) 0%, rgb(20 30 62 / .45) 45%, rgb(20 30 62 / 0) 100%);
 }
 
 /* Bottom: the sheet is now the LAST section, so the tail ramps to the footer's

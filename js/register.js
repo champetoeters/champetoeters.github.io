@@ -162,7 +162,12 @@ window.Sections.register = {
         l.textContent = remaining === 1 ? 'plaats' : 'plaatsen';
       }
     }
-    paintCounts();
+    /* With a live backend the count stays blank until the state answers —
+       painting the static "Nog 2" and flipping it to "Volzet" a beat later
+       reads as a glitch (client). Unwired builds paint the static figure. */
+    const countIsLive = !!(CFG.apiEndpoint && window.ChampLive &&
+                           typeof window.ChampLive.state === 'function');
+    if (!countIsLive) paintCounts();
 
     /* =====================================================================
        VIEWS — one screen each. data-state drives what the section shows
@@ -232,10 +237,13 @@ window.Sections.register = {
        whose event is full may not keep promising "Nog 2 plaatsen". And a draw
        that is genuinely full does not get a form at all: only a live API can
        tell us that, which is why this lives here and not next to the probe. */
-    if (CFG.apiEndpoint && window.ChampLive && typeof window.ChampLive.state === 'function') {
+    if (countIsLive) {
       window.ChampLive.state().then(st => {
         const c = st && st.counts;
-        if (!c || typeof c.registrations !== 'number' || typeof c.slots !== 'number') return;
+        if (!c || typeof c.registrations !== 'number' || typeof c.slots !== 'number') {
+          paintCounts();               /* unusable answer → static after all */
+          return;
+        }
         remaining = Math.max(0, c.slots - c.registrations);
         paintCounts();
         if (remaining === 0) showFullPanel(c.slots, false);
