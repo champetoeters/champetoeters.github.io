@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- The crest's crown, as the site's mark. Navy tile so it reads on any tab bar. -->
+  <rect width="64" height="64" rx="14" fill="#0D1637"/>
+  <g transform="translate(8 15)" fill="#F4F7FB">
+    <circle cx="5.5" cy="7" r="2.9"/>
+    <circle cx="24" cy="3.4" r="3.4"/>
+    <circle cx="42.5" cy="7" r="2.9"/>
+    <path d="M4.2 11.2 L12.4 22.6 L24 8.6 L35.6 22.6 L43.8 11.2 L43.8 25.4 Q24 21.4 4.2 25.4 Z"/>
+    <rect x="3" y="27.4" width="42" height="4.6" rx="2.3"/>
+  </g>
+</svg>
