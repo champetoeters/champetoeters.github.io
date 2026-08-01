@@ -209,7 +209,14 @@ window.Sections.register = {
     let closedTxt = 'Inschrijvingen nog niet open';
 
     function paintButton() {
-      submitBtn.textContent = isLive ? 'Schrijf ons team in · ' + FEE_TXT : closedTxt;
+      /* Before the probe answers, a LIVE build says nothing committal: the
+         action label, disabled — so the text never flips "niet open" → open
+         (client: that jump reads as a glitch). An unwired build has no probe
+         worth waiting for and prints closed at once. */
+      const pending = !settled && !!CFG.apiEndpoint;
+      submitBtn.textContent = pending
+        ? 'Schrijf ons team in'
+        : isLive ? 'Schrijf ons team in · ' + FEE_TXT : closedTxt;
 
       /* A form that cannot be sent must not look like it can: the accent comes
          off the button and the fields go quiet with it, so nobody fills in four
@@ -219,7 +226,8 @@ window.Sections.register = {
       const off = settled && !isLive;
       submitBtn.classList.toggle('glass-btn--primary', !off);
       submitBtn.classList.toggle('is-off', off);
-      submitBtn.disabled = off;
+      submitBtn.classList.toggle('is-wait', pending);
+      submitBtn.disabled = off || pending;
       form.classList.toggle('is-closed', off);
       root.querySelectorAll('.reg-input').forEach(el => { el.disabled = off; });
     }

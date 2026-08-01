@@ -524,3 +524,7 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
   .tk-spin__ring, .tk-spin__ball { animation: none; }
   .tk-spin__ball::after { top: calc(50% - 5.5px); left: -5px; }
 }
+
+/* Waiting for the health probe — see register.css: label stays the action,
+   dimmed and inert, so the text never flips from "niet open" to open. */
+.tk-buy .is-wait { opacity: .65; pointer-events: none; }

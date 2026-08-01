@@ -153,10 +153,14 @@ window.Sections.tickets = (() => {
     /* Closed is the default and the safe direction: a button that cannot take
        an order must not carry a price or look like it can — .is-off takes the
        amount off it (tickets.css §3). */
-    function setSalesOpen(next) {
+    function setSalesOpen(next, pending) {
+      /* pending = a LIVE build waiting for the health probe: the action label,
+         disabled, no price — the text never flips "niet open" → open (client:
+         that jump reads as a glitch). Closed is only ever printed as an answer. */
       salesOpen = next;
-      payLabel.textContent = next ? COPY.buy : COPY.off;
-      payBtn.classList.toggle('is-off', !next);
+      payLabel.textContent = (next || pending) ? COPY.buy : COPY.off;
+      payBtn.classList.toggle('is-off', !next && !pending);
+      payBtn.classList.toggle('is-wait', !!pending);
       if (next) payBtn.removeAttribute('aria-disabled');
       else payBtn.setAttribute('aria-disabled', 'true');
       paint();
@@ -351,7 +355,7 @@ window.Sections.tickets = (() => {
        Closed until the API says otherwise, so an unreachable or unconfigured
        API can only ever withhold an order, never invent one. */
 
-    setSalesOpen(false);
+    setSalesOpen(false, !!cfg().apiEndpoint);
 
     const params = new URLSearchParams(location.search);
 

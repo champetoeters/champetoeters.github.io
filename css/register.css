@@ -552,3 +552,7 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
 }
 .reg-full__home:hover { color: var(--ball); }
 .reg-full__home:focus-visible { outline: 2px solid var(--ball); outline-offset: 3px; border-radius: 3px; }
+
+/* Waiting for the health probe: the action label, dimmed and inert — the text
+   never flips from "niet open" to open (that jump read as a glitch). */
+.reg-btn.is-wait { opacity: .65; pointer-events: none; }
