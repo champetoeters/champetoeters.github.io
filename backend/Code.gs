@@ -92,6 +92,15 @@ var COLUMNS = {
   log: ['at', 'action', 'detail']
 };
 
+/* Run this ONCE from the editor after pasting a new version: it is the only
+   function without a trailing underscore besides doGet/doPost (underscored
+   functions are hidden from the Run menu), so it is the button that triggers
+   Google's authorization dialog for every permission the script needs — and
+   it immediately performs a real state push as the test. */
+function authorize() {
+  publishState_();
+}
+
 /* ------------------------------------------------------------------ entry */
 
 function doGet(e) {
