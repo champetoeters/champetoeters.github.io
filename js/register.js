@@ -87,10 +87,9 @@ window.Sections.register = {
     await regNeed('config.js');
     const CFG = window.CHAMP_CONFIG || {};
 
-    /* The payment panel is always needed; the encoder only when there is an
-       account to encode, and the live module only when there is an API. */
+    /* The payment panel is always needed; the live module only when there is
+       an API. */
     const deps = [regNeed('payinfo.js')];
-    if (CFG.payment && CFG.payment.iban) deps.push(regNeed('../vendor/qrcode.js'));
     if (CFG.apiEndpoint) deps.push(regNeed('livedata.js'));
     await Promise.all(deps);
 

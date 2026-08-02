@@ -4,7 +4,7 @@
  * Four views, each fitting one phone screen:
  *   how many + naam + e-mail
  *     → POST { action:'order', … } (ChampLive, backend/API.md)
- *     → payment panel (js/payinfo.js: bedrag, IBAN, mededeling, EPC QR)
+ *     → payment panel (js/payinfo.js: bedrag, IBAN, mededeling)
  *     → gereserveerd + terug naar de startpagina.
  *
  * Liveness is decided by the API, never by a flag in the page (BRIEF §0.13):
@@ -90,10 +90,9 @@ window.Sections.tickets = (() => {
   async function init(root, data) {
     await need('config.js');
 
-    /* The payment panel is always needed; the encoder only when there is an
-       account to encode, and the live module only when there is an API. */
+    /* The payment panel is always needed; the live module only when there is
+       an API. */
     const deps = [need('payinfo.js')];
-    if (cfg().payment && cfg().payment.iban) deps.push(need('../vendor/qrcode.js'));
     if (cfg().apiEndpoint) deps.push(need('livedata.js'));
     await Promise.all(deps);
 

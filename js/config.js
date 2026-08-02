@@ -20,9 +20,9 @@ window.CHAMP_CONFIG = {
 
   apiEndpoint: "https://script.google.com/macros/s/AKfycbwP7UgY4GRaunT597IgpGot0suHRIVg_ZTLyaMBBu5BqYb8R0zBBM-X5RroC0H9pZHs/exec",
 
-  /* Manual payments: bank transfer or at the event. The IBAN also drives the
-     scannable EPC QR on the payment panel; leave it empty until it is known
-     and the QR shows a tidy "volgt nog" placeholder instead. */
+  /* Manual payments: bank transfer or at the event. The IBAN fills the payment
+     panel (with a copy button); leave it empty until it is known and the panel
+     says the rekeningnummer follows per mail instead. */
   payment: {
     iban: "BE37 9731 8485 2328",
     holder: "Champetoeters",

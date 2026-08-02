@@ -177,18 +177,6 @@ defaults `BE00 0000 0000 0000` / `Champetoeters`). If `PAY_IBAN` unset, the emai
 No Reply-To header: replies go to the sending account (the event's own address).
 Include contact line + venue/date footer.
 
-## EPC QR (client-side, `site/js/payinfo.js`)
-
-Payment pages render an EPC069-12 "SEPA credit transfer" QR (scannable by Belgian
-banking apps) when `CHAMP_CONFIG.payment.iban` is set:
-
-```
-BCD\n002\n1\nSCT\n{BIC or empty}\n{holder}\n{IBAN no spaces}\nEUR{amount, always two dot decimals: EUR50.00}\n\n\n{reference}\nBetaling {reference}
-```
-
-Encoder: `site/vendor/qrcode.js` (qrcode-generator, MIT — already vendored).
-No IBAN configured → show a tidy placeholder tile ("QR volgt") instead; never a broken QR.
-
 ## Demo / verification seam
 
 `CHAMP_CONFIG.demoNow = "18:45"` → every "now" computation on the site pretends it is
