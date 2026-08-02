@@ -1,115 +1,16 @@
 <!doctype html>
-<html lang="nl" class="has-glass-filters">
+<!-- The page moved to /tickets/ (clean URL). This stub keeps every link that was
+     shared while it lived at /tickets.html working. -->
+<html lang="nl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0D1637">
-<title>Tickets · CHAMPETOETERS</title>
-<meta name="description" content="Open air ticket voor CHAMPETOETERS &amp; FRIENDS. TC Leiemeers, Kuurne, zaterdag 5 september 2026, van 14:00 tot 02:00.">
-<meta property="og:title" content="Open air ticket · CHAMPETOETERS">
-<meta property="og:description" content="Alle wedstrijden en alle dj's, tot 02:00. €12.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://champetoeters.github.io/tickets.html">
-<meta property="og:site_name" content="CHAMPETOETERS &amp; FRIENDS">
-<meta property="og:locale" content="nl_BE">
-<meta property="og:image" content="https://champetoeters.github.io/og.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=1785666770">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1785666770">
-<link rel="stylesheet" href="css/tokens.css?v=1785666770">
-<link rel="stylesheet" href="css/base.css?v=1785666770">
-<link rel="stylesheet" href="css/glass.css?v=1785666770">
-<link rel="stylesheet" href="css/shell.css?v=1785666770">
-<link rel="stylesheet" href="css/payinfo.css?v=1785666770">
-<link rel="stylesheet" href="css/tickets.css?v=1785666770">
+<title>CHAMPETOETERS</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://champetoeters.github.io/tickets/">
+<meta http-equiv="refresh" content="0; url=/tickets/">
+<script>location.replace("/tickets/" + location.search + location.hash);</script>
 </head>
 <body>
-<svg class="glass-defs" aria-hidden="true" focusable="false" width="0" height="0"
-     style="position:absolute;width:0;height:0;overflow:hidden">
-  <!-- ⚠️ INERT, BUT KEEP IT. glass.css no longer references these filters (the
-       lens went with the photographic ground), yet this block is the master
-       copy that tools/injectdefs.py propagates into every page, and it is the
-       only shape a working lens may take. Two measured Chromium facts:
-         1. a filter referenced from ANY other document — data: URI, base64 or
-            a separate .svg — is a SILENT no-op in filter and backdrop-filter,
-            so the defs must be same-document, a child of <body>;
-         2. a filter whose map comes from <feImage> is tainted and Chromium
-            then silently drops feDisplacementMap, so the map has to be built
-            from primitives, as below.
-       `class="has-glass-filters"` on <html> is the switch. -->
-
-  <!-- REFRACTION — one displacement pass. -->
-  <filter id="gl-refract" x="0%" y="0%" width="100%" height="100%"
-          color-interpolation-filters="sRGB" primitiveUnits="userSpaceOnUse">
-    <!-- The map: a blurred flood plateau, central-differenced in x and y. The
-         derivative of a plateau is zero across the flat middle and a smooth
-         signed bump at each border — i.e. a surface normal. Absolute px, so
-         the bevel is the same width on a 300px chip and a 1200px panel. -->
-    <feFlood flood-color="#fff" flood-opacity="1" result="plate"/>
-    <feGaussianBlur in="plate" stdDeviation="6" result="b"/>
-    <feOffset in="b" dx="8"  dy="0"  result="xp"/>
-    <feOffset in="b" dx="-8" dy="0"  result="xm"/>
-    <feOffset in="b" dx="0"  dy="8"  result="yp"/>
-    <feOffset in="b" dx="0"  dy="-8" result="ym"/>
-    <feComposite in="xp" in2="xm" operator="arithmetic" k2="0.5" k3="-0.5" k4="0.5" result="ax"/>
-    <feComposite in="yp" in2="ym" operator="arithmetic" k2="0.5" k3="-0.5" k4="0.5" result="ay"/>
-    <feColorMatrix in="ax" result="nx" type="matrix"
-                   values="0 0 0 1 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1"/>
-    <feColorMatrix in="ay" result="ny" type="matrix"
-                   values="0 0 0 0 0  0 0 0 1 0  0 0 0 0 0  0 0 0 0 1"/>
-    <feComposite in="nx" in2="ny" operator="arithmetic" k2="1" k3="1" result="n"/>
-    <feGaussianBlur in="SourceGraphic" stdDeviation="1.1" result="src"/>
-    <feDisplacementMap in="src" in2="n" scale="26"
-                       xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-
-  <!-- DISPERSION — the same map sampled twice, red further out than blue-green,
-       screened back together. Focal surfaces only. -->
-  <filter id="gl-disperse" x="0%" y="0%" width="100%" height="100%"
-          color-interpolation-filters="sRGB" primitiveUnits="userSpaceOnUse">
-    <feFlood flood-color="#fff" flood-opacity="1" result="plate"/>
-    <feGaussianBlur in="plate" stdDeviation="6" result="b"/>
-    <feOffset in="b" dx="8"  dy="0"  result="xp"/>
-    <feOffset in="b" dx="-8" dy="0"  result="xm"/>
-    <feOffset in="b" dx="0"  dy="8"  result="yp"/>
-    <feOffset in="b" dx="0"  dy="-8" result="ym"/>
-    <feComposite in="xp" in2="xm" operator="arithmetic" k2="0.5" k3="-0.5" k4="0.5" result="ax"/>
-    <feComposite in="yp" in2="ym" operator="arithmetic" k2="0.5" k3="-0.5" k4="0.5" result="ay"/>
-    <feColorMatrix in="ax" result="nx" type="matrix"
-                   values="0 0 0 1 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1"/>
-    <feColorMatrix in="ay" result="ny" type="matrix"
-                   values="0 0 0 0 0  0 0 0 1 0  0 0 0 0 0  0 0 0 0 1"/>
-    <feComposite in="nx" in2="ny" operator="arithmetic" k2="1" k3="1" result="n"/>
-    <feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="src"/>
-    <feDisplacementMap in="src" in2="n" scale="31"
-                       xChannelSelector="R" yChannelSelector="G" result="dr"/>
-    <feDisplacementMap in="src" in2="n" scale="25"
-                       xChannelSelector="R" yChannelSelector="G" result="db"/>
-    <feColorMatrix in="dr" result="cr" type="matrix"
-                   values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
-    <feColorMatrix in="db" result="cb" type="matrix"
-                   values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
-    <feBlend in="cr" in2="cb" mode="screen"/>
-  </filter>
-</svg>
-  <a class="skip-link" href="#main">Naar de inhoud</a>
-  <header class="page-head">
-    <a class="page-back" href="index.html">
-      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M10 13 5 8l5-5" stroke="currentColor" stroke-width="1.6"
-              stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Terug
-    </a>
-    <span class="page-head__mark">Champetoeters &amp; Friends</span>
-  </header>
-  <div id="app" data-sections="tickets" aria-busy="true">
-    <main id="main"></main>
-  </div>
-  <!-- Integration seam. Must load BEFORE app.js so sections can read it. -->
-  <script src="js/config.js?v=1785666770"></script>
-  <script type="module" src="js/app.js?v=1785666770"></script>
+<p><a href="/tickets/">Verder naar de pagina</a></p>
 </body>
 </html>

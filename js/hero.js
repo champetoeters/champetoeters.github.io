@@ -57,14 +57,14 @@ window.Sections.hero = {
            air ticket — takes its place, and the alt line goes (it would now
            repeat the button). Same sentence as the register volzet panel. */
         if (cta) {
-          cta.setAttribute("href", "tickets.html");
+          cta.setAttribute("href", "/tickets/");
           cta.textContent = "Kom supporteren: open air ticket";
         }
         if (alt) alt.hidden = true;
         return;
       }
       if (cta) {
-        cta.setAttribute("href", "register.html");
+        cta.setAttribute("href", "/register/");
         cta.textContent = "Schrijf je team in";
       }
       if (alt) alt.hidden = false;

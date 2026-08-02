@@ -1,31 +1,30 @@
 <!doctype html>
-<html lang="nl" class="has-glass-filters page-landing">
+<html lang="nl" class="has-glass-filters">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0D1637">
-<title>CHAMPETOETERS</title>
-<meta name="description" content="CHAMPETOETERS &amp; FRIENDS. Open air en padel op TC Leiemeers in Kuurne. Zaterdag 5 september 2026, van 14:00 tot 02:00.">
-<meta property="og:title" content="CHAMPETOETERS &amp; FRIENDS · Open air en padel">
-<meta property="og:description" content="TC Leiemeers, Kuurne · zaterdag 5 september 2026 · 14:00 → 02:00">
+<title>Tickets · CHAMPETOETERS</title>
+<meta name="description" content="Open air ticket voor CHAMPETOETERS &amp; FRIENDS. TC Leiemeers, Kuurne, zaterdag 5 september 2026, van 14:00 tot 02:00.">
+<meta property="og:title" content="Open air ticket · CHAMPETOETERS">
+<meta property="og:description" content="Alle wedstrijden en alle dj's, tot 02:00. €12.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://champetoeters.github.io/">
+<meta property="og:url" content="https://champetoeters.github.io/tickets/">
+<link rel="canonical" href="https://champetoeters.github.io/tickets/">
 <meta property="og:site_name" content="CHAMPETOETERS &amp; FRIENDS">
 <meta property="og:locale" content="nl_BE">
 <meta property="og:image" content="https://champetoeters.github.io/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=1785667122">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1785667122">
-<link rel="stylesheet" href="css/tokens.css?v=1785667122">
-<link rel="stylesheet" href="css/base.css?v=1785667122">
-<link rel="stylesheet" href="css/glass.css?v=1785667122">
-<link rel="stylesheet" href="css/shell.css?v=1785667122">
-<link rel="stylesheet" href="css/hero.css?v=1785667122">
-<link rel="stylesheet" href="css/lineup.css?v=1785667122">
-<link rel="stylesheet" href="css/timetable.css?v=1785667122">
-<link rel="stylesheet" href="css/courts3d.css?v=1785667122">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg?v=1785667122">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png?v=1785667122">
+<link rel="stylesheet" href="../css/tokens.css?v=1785667122">
+<link rel="stylesheet" href="../css/base.css?v=1785667122">
+<link rel="stylesheet" href="../css/glass.css?v=1785667122">
+<link rel="stylesheet" href="../css/shell.css?v=1785667122">
+<link rel="stylesheet" href="../css/payinfo.css?v=1785667122">
+<link rel="stylesheet" href="../css/tickets.css?v=1785667122">
 </head>
 <body>
 <svg class="glass-defs" aria-hidden="true" focusable="false" width="0" height="0"
@@ -97,47 +96,21 @@
   </filter>
 </svg>
   <a class="skip-link" href="#main">Naar de inhoud</a>
-  <!-- Music first, padel after (client): hero → the bill → the sheet, and the
-       page settles into the night on the way down. -->
-  <div id="app" data-sections="hero,lineup,timetable" aria-busy="true">
+  <header class="page-head">
+    <a class="page-back" href="/">
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M10 13 5 8l5-5" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Terug
+    </a>
+    <span class="page-head__mark">Champetoeters &amp; Friends</span>
+  </header>
+  <div id="app" data-sections="tickets" aria-busy="true">
     <main id="main"></main>
   </div>
-
-  <!-- Where it is and who to ask. One quiet line: the address appeared nowhere
-       else on the site, and a visitor deciding to come needs it. Values match
-       data/event.json; the address is the club's real one. -->
-  <footer class="site-foot">
-    <i class="u-grain" aria-hidden="true"></i>
-    <p class="site-foot__line">
-      <span>TC Leiemeers</span>
-      <span class="site-foot__sep" aria-hidden="true">&middot;</span>
-      <span>Luitenant-Generaal G&eacute;rardstraat 62, 8520 Kuurne</span>
-      <span class="site-foot__sep" aria-hidden="true">&middot;</span>
-      <a href="mailto:padel@tcleiemeers.be" data-foot-mail>padel@tcleiemeers.be</a>
-    </p>
-    <p class="site-foot__credit">
-      Site door
-      <a href="https://www.linkedin.com/in/thibaud-despriet-38551425a/"
-         rel="author noopener" target="_blank">Thibaud Despriet</a>
-    </p>
-  </footer>
-
   <!-- Integration seam. Must load BEFORE app.js so sections can read it. -->
-  <script src="js/config.js?v=1785667122"></script>
-  <script>
-    /* The contact address has one home: config.js. The markup above carries the
-       same value so the line is never empty if this never runs. */
-    (function () {
-      var a = document.querySelector('[data-foot-mail]');
-      var mail = (window.CHAMP_CONFIG || {}).contactEmail;
-      if (a && mail) { a.textContent = mail; a.href = 'mailto:' + mail; }
-    })();
-  </script>
-  <!-- Live layer: the bracket resolver and the state/clock helper. Classic
-       scripts, so they run before the deferred module below — both the
-       timetable and the lineup read them during init. -->
-  <script src="js/bracket.js?v=1785667122"></script>
-  <script src="js/livedata.js?v=1785667122"></script>
-  <script type="module" src="js/app.js?v=1785667122"></script>
+  <script src="../js/config.js?v=1785667122"></script>
+  <script type="module" src="../js/app.js?v=1785667122"></script>
 </body>
 </html>

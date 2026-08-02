@@ -8,11 +8,16 @@
 
 const DATA_FILES = ['event', 'teams', 'courts', 'djs', 'schedule', 'tickets', 'clubs'];
 
+/* Everything this loader fetches resolves against THIS FILE's URL, never the
+   page's: pages live at /, /register/ and /tickets/ (clean URLs), and a
+   page-relative "data/…" would break the moment the page sits in a folder. */
+const asset = rel => new URL('../' + rel, import.meta.url).href;
+
 const Data = {};
 
 async function loadData() {
   const results = await Promise.all(
-    DATA_FILES.map(n => fetch(`data/${n}.json`).then(r => {
+    DATA_FILES.map(n => fetch(asset(`data/${n}.json`)).then(r => {
       if (!r.ok) throw new Error(`data/${n}.json → ${r.status}`);
       return r.json();
     }))
@@ -25,7 +30,7 @@ function loadScript(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[data-src="${src}"]`)) return resolve();
     const s = document.createElement('script');
-    s.src = src;
+    s.src = asset(src);
     s.async = false;
     s.dataset.src = src;
     s.onload = resolve;
@@ -42,7 +47,7 @@ const SECTION_DEPS = {
 };
 
 async function loadSection(name, mount) {
-  const res = await fetch(`sections/${name}.html`);
+  const res = await fetch(asset(`sections/${name}.html`));
   if (!res.ok) throw new Error(`sections/${name}.html → ${res.status}`);
   const tpl = document.createElement('template');
   tpl.innerHTML = (await res.text()).trim();
