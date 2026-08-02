@@ -64,7 +64,11 @@ var OPEN_SLOTS = ['t09', 't10', 't11', 't12', 't13', 't14', 't15', 't16'];
    same address may not pile up rows, and a whole day cannot be flooded (the
    MailApp quota is about 100 mails a day). */
 var MAX_PER_EMAIL = 3;
-var MAX_PER_DAY = 40;              /* stays under the ~100/day MailApp quota */
+/* Anti-spam for the Sheet, NOT a sales limit (client decision). Mail beyond
+   Google's ~100/day quota is best-effort: the order still succeeds and the
+   confirmation screen carries every payment detail; only the mail is lost
+   (logged as mail-failed). */
+var MAX_PER_DAY = 120;
 var STATE_CACHE_KEY = 'state-v1';
 var STATE_CACHE_TTL = 60;
 
@@ -636,6 +640,12 @@ function buildState_() {
   var regs = registrations_();
   return {
     ok: true,
+    /* The open/closed flags ride along so the pages can answer "is this open?"
+       from the static file too — no per-visitor call to this script. The
+       flags are re-published on every mutation; after flipping REGISTER_OPEN /
+       ORDERS_OPEN in Script properties, run authorize() once to push them. */
+    register: flagOpen_('REGISTER_OPEN') && freeSlots_(regs).length > 0,
+    orders: flagOpen_('ORDERS_OPEN'),
     results: results_(),
     teams: regs.filter(function (r) { return !!r.teamId; }).map(function (r) {
       return {

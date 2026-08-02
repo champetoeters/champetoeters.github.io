@@ -43,14 +43,31 @@ window.CHAMP_CONFIG.health = (() => {
   let probe = null;
   return () => {
     if (!probe) {
-      const base = window.CHAMP_CONFIG.apiEndpoint;
+      const cfg = window.CHAMP_CONFIG;
+      const base = cfg.apiEndpoint;
+      const stat = String(cfg.stateUrl || "").trim();
+      const viaApi = () =>
+        fetch(base + (base.indexOf("?") === -1 ? "?" : "&") + "action=health",
+              { cache: "no-store", redirect: "follow" })
+          .then(r => (r.ok ? r.json() : {}))
+          .then(h => ({ register: !!h.register, orders: !!h.orders }))
+          .catch(() => ({ register: false, orders: false }));
+      /* Static-first: the published state carries the open/closed flags, so
+         opening the register/tickets page costs the backend nothing. A file
+         without the flags (older backend) falls back to the script. The
+         backend stays the judge on every submit, so a stale flag can only
+         mis-DISPLAY for a few minutes, never mis-ACCEPT. */
       probe = !base
         ? Promise.resolve({ register: false, orders: false })
-        : fetch(base + (base.indexOf("?") === -1 ? "?" : "&") + "action=health",
-                { cache: "no-store", redirect: "follow" })
-            .then(r => (r.ok ? r.json() : {}))
-            .then(h => ({ register: !!h.register, orders: !!h.orders }))
-            .catch(() => ({ register: false, orders: false }));
+        : !stat
+          ? viaApi()
+          : fetch(stat + (stat.indexOf("?") === -1 ? "?" : "&") +
+                  "b=" + Math.floor(Date.now() / 60000), { cache: "no-store" })
+              .then(r => (r.ok ? r.json() : {}))
+              .then(j => (j && typeof j.register === "boolean" && typeof j.orders === "boolean")
+                ? { register: j.register, orders: j.orders }
+                : viaApi())
+              .catch(viaApi);
     }
     return probe;
   };

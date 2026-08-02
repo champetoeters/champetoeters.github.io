@@ -28,7 +28,7 @@ runtime, so any crowd can watch. A failed/empty static read falls back to
   `{ "ok": false, "error": "<code>" }`. Error codes: `bad-request`, `unauthorized`,
   `full`, `not-found`, `too-many`, `closed`, `server`.
 - `too-many` = an abuse cap was hit on a public write (`register` / `order`):
-  max 3 rows per e-mail address per tab (lowercased, +tag stripped), max 40 rows per tab per calendar day.
+  max 3 rows per e-mail address per tab (lowercased, +tag stripped), max 120 rows per tab per calendar day (anti-spam, not a sales limit; mail past Google's ~100/day is best-effort).
   Both are protections for the Sheet and the mail quota, not user-facing states;
   the client may show the generic "probeer opnieuw" failure.
 - All server responses include no secrets. The public actions never return emails,
@@ -62,7 +62,8 @@ runtime, so any crowd can watch. A failed/empty static read falls back to
 Script properties `REGISTER_OPEN` / `ORDERS_OPEN` (dev: env vars): set to
 `false` to close a flow — health reports it closed and the public write answers
 `{ok:false,error:"closed"}`. Unset or anything else = open. Read at runtime:
-flipping them needs no redeploy.
+flipping them needs no redeploy — but run `authorize()` once after flipping so
+the static state.json republished on GitHub carries the new flags.
 
 ### GET `?action=health`
 → `{ ok:true, register:true, orders:true }` (flags flip when the event is full/closed).
@@ -72,6 +73,8 @@ flipping them needs no redeploy.
 The live overlay the public site polls. **Public-safe fields only.**
 ```jsonc
 { "ok": true,
+  "register": true, "orders": true,   // open/closed — pages read health from
+                                      // the static file, no per-visitor call
   "results": { "m01": { "sets": [[6,3],[6,4]], "winner": "A" }, … },
   "teams":   [ { "teamId": "t15", "name": "De Cavaliers",
                  "players": ["Anna Peeters","Tom Claes"] }, … ],
