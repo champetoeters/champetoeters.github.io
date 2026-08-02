@@ -44,7 +44,7 @@
       <!-- Wanneer en waar. Venue is just "Leiemeers": the crest one line above
            already carries "Kuurne". -->
       <p class="hero__stamp">
-        <span class="hero__stamp-i">5 sept 2026</span>
+        <span class="hero__stamp-i">za 5 sept 2026</span>
         <span class="hero__stamp-i">Leiemeers</span>
         <span class="hero__stamp-b u-tabular">14:00 <span class="hero__arrow" aria-hidden="true">&#8594;</span> 02:00</span>
       </p>
@@ -59,17 +59,21 @@
       <!-- One line, then one primary action (BRIEF §0 rule 2). Both hrefs are
            real pages, not anchors. -->
       <div class="hero__body">
-        <p class="hero__pitch">Openlucht en padel.</p>
+        <!-- "Open air", not "openlucht": the ticket two lines down uses the
+             product's name, and two words for the same thing in one viewport
+             reads as two things. -->
+        <p class="hero__pitch">Open air en padel.</p>
 
         <a class="glass-btn glass-btn--primary hero__cta" href="register.html">
           Schrijf je team in
         </a>
 
+        <!-- Ships EMPTY: hero.js paints the figure — static (event.json) on an
+             unwired build, live otherwise. A hardcoded "Nog 2" painting first
+             and flipping to the real count a beat later reads as a glitch. -->
         <p class="hero__slots">
           <span class="hero__dot" aria-hidden="true"></span>
-          <span data-hero="slots-line">Nog
-            <b class="u-tabular" data-hero="slots">2</b> van de
-            <span class="u-tabular" data-hero="teams-total">16</span> plaatsen</span>
+          <span data-hero="slots-line"></span>
         </p>
 
         <p class="hero__alt">

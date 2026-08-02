@@ -632,6 +632,10 @@
   background: var(--hb-ball);
   box-shadow: 0 0 0 4px rgb(198 220 99 / .13);
 }
+/* The line ships empty and hero.js writes the count once it is known — until
+   then the whole caption hides, or the dot would sit there pointing at
+   nothing. Engines without :has() show a lone dot for a beat: harmless. */
+.hero__slots:has([data-hero="slots-line"]:empty) { visibility: hidden; }
 
 /* The demoted ticket route: a text link, deliberately not a button. */
 .hero__alt {

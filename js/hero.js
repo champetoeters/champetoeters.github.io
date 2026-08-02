@@ -43,11 +43,31 @@ window.Sections.hero = {
        never promise a place the registration page has already sold. */
 
     const slotsLine = byKey("slots-line");
+    const cta = $(".hero__cta");
+    const alt = $(".hero__alt");
 
     function renderSlots(open, total) {
       if (!slotsLine || !(open >= 0) || !(total > 0)) return;
       slotsLine.textContent = "";
-      if (open === 0) { slotsLine.textContent = "Volzet"; return; }
+      if (open === 0) {
+        slotsLine.textContent = "Volzet";
+        /* The big green button must lead somewhere that can still say yes: a
+           "Schrijf je team in" that lands on the volzet panel wastes the
+           page's highest-demand tap. The one thing still possible — the open
+           air ticket — takes its place, and the alt line goes (it would now
+           repeat the button). Same sentence as the register volzet panel. */
+        if (cta) {
+          cta.setAttribute("href", "tickets.html");
+          cta.textContent = "Kom supporteren: open air ticket";
+        }
+        if (alt) alt.hidden = true;
+        return;
+      }
+      if (cta) {
+        cta.setAttribute("href", "register.html");
+        cta.textContent = "Schrijf je team in";
+      }
+      if (alt) alt.hidden = false;
       slotsLine.insertAdjacentHTML("afterbegin",
         'Nog <b class="u-tabular" data-hero="slots">' + Math.round(open) +
         '</b> van de <span class="u-tabular" data-hero="teams-total">' +
