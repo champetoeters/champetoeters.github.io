@@ -89,6 +89,11 @@ accept an optional **`clientRef`** (token, `[A-Za-z0-9_-]` max 40). A request wh
 second row, no second mail. This is what makes client retries safe: Apps Script's
 response redirect measurably loses ~1 in 10 answers, so `ChampLive.post(…,
 {retries: 2})` retries with the same token after a 25s timeout per attempt.
+The pages also keep the token in **sessionStorage** together with a fingerprint
+of the typed fields, so a reload during "Versturen…" followed by resubmitting
+the SAME entry reuses the token (replay, no duplicate) — while different
+fields mint a fresh one (never answered with someone else's confirmation).
+The stored token is cleared on success.
 (Sheet note: `clientRef` is appended as the LAST column of `registrations` and
 `orders`, so existing sheets keep working — only their header label is missing.)
 
@@ -96,14 +101,18 @@ response redirect measurably loses ~1 in 10 answers, so `ChampLive.post(…,
 Validation mirrors `site/js/register.js` scrub rules (max lengths 60/60/160/40, same
 character policy). On success: stores entry, assigns next open team slot, sends the
 confirmation email (Dutch, includes payment instructions — see EMAIL below), returns
-`{ ok:true, reference:"INS-07", teamId:"t15", amount:50 }`.
+`{ ok:true, reference:"INS-07", teamId:"t15", amount:50, mailed:true }`.
+**`mailed`** reports whether the confirmation mail actually left (false = quota/
+error; the entry stands, and the client switches the confirmation copy so the
+page never claims a mail that died). A clientRef REPLAY answers without
+`mailed` — treat absent as sent.
 If no slots left → `{ ok:false, error:"full" }`. Past the abuse caps →
 `{ ok:false, error:"too-many" }`.
 
 ### POST `{ action:"order", name, email, quantity }`
 quantity integer 1..8. Sends confirmation email. Returns
-`{ ok:true, reference:"TKT-12", amount: quantity*12 }`. Past the abuse caps →
-`{ ok:false, error:"too-many" }`.
+`{ ok:true, reference:"TKT-12", amount: quantity*12, mailed:true }` (`mailed`:
+see register). Past the abuse caps → `{ ok:false, error:"too-many" }`.
 
 ## Admin actions — all POST `{ action:"admin", password, op, ... }`
 

@@ -568,6 +568,9 @@ function escHtml_(s) {
 
 /* A mail that bounces (quota, bad address) must not lose the entry: the row is
    already written and the failure is logged. */
+/* Returns whether the mail actually left: the response carries it as `mailed`
+   so the confirmation screen never claims a mail that died on the quota. The
+   entry itself stands either way — the screen shows every payment detail. */
 function sendMail_(mail) {
   try {
     /* No replyTo: replies go to the account this script runs under — the
@@ -579,8 +582,10 @@ function sendMail_(mail) {
       body: mail.lines.join('\n'),
       htmlBody: '<p>' + mail.lines.map(escHtml_).join('<br>') + '</p>'
     });
+    return true;
   } catch (err) {
     log_('mail-failed', mail.to + ': ' + (err && err.message ? err.message : err));
+    return false;
   }
 }
 
@@ -727,7 +732,10 @@ function actRegister_(body) {
     return { ok: true, reference: entry.ref, teamId: entry.teamId, amount: TEAM_PRICE };
   });
 
-  if (mail) sendMail_(mail);
+  /* A replay answers WITHOUT `mailed` (the attempt belonged to the original
+     call); the client treats absent as sent — only an explicit false switches
+     the confirmation copy. */
+  if (mail) res.mailed = sendMail_(mail);
   return res;
 }
 
@@ -751,7 +759,7 @@ function actOrder_(body) {
     return { ok: true, reference: order.ref, amount: order.quantity * TICKET_PRICE };
   });
 
-  if (mail) sendMail_(mail);
+  if (mail) res.mailed = sendMail_(mail);   /* see actRegister_ */
   return res;
 }
 

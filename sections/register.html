@@ -155,7 +155,9 @@
           </p>
           <h2 class="reg-done__title" tabindex="-1" data-reg="done-title">Jullie zijn ingeschreven</h2>
           <p class="reg-done__lead" data-reg="done-lead"></p>
-          <p class="reg-done__lead">We hebben je een bevestiging gemaild. Daarin staat alles nog eens.</p>
+          <!-- register.js rewrites this when the backend says the mail did NOT
+               leave (mailed:false) — the page never claims a mail that died. -->
+          <p class="reg-done__lead" data-reg="done-mail">We hebben je een bevestiging gemaild. Daarin staat alles nog eens.</p>
           <!-- The payment details survive the payment view: bedrag · rekening ·
                mededeling, written by register.js via PayInfo.recap(). -->
           <p class="reg-done__pay" data-reg="done-pay"></p>

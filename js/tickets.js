@@ -273,17 +273,34 @@ window.Sections.tickets = (() => {
     });
 
     /* One idempotency token per order: kept across retries so a lost answer
-       can never order twice; a new order (after success) gets a new token. */
+       can never order twice; a new order (after success) gets a new token.
+       It also survives a RELOAD (sessionStorage) — reused only when the
+       retyped order MATCHES the fingerprint it was stored with, so a reload
+       during "Versturen…" plus the same resubmit can never order twice, and
+       a genuinely different order still gets its own token (see register.js). */
+    const TOK_KEY = 'champ.tkt.token';
+    const fingerprintOf = () =>
+      [nameEl.value.trim(), emailEl.value.trim(), qty].join('');
     let orderToken = null;
 
     /* The server owns the price and the reference; the page only says how many. */
     async function placeOrder() {
       busy = true;
+      const fp = fingerprintOf();
+      if (!orderToken) {
+        try {
+          const kept = JSON.parse(window.sessionStorage.getItem(TOK_KEY) || 'null');
+          if (kept && kept.t && kept.f === fp) orderToken = String(kept.t);
+        } catch (e) { /* storage blocked → in-memory only */ }
+      }
       if (!orderToken) {
         orderToken = (window.ChampLive && window.ChampLive.token)
           ? window.ChampLive.token()
           : 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
       }
+      try {
+        window.sessionStorage.setItem(TOK_KEY, JSON.stringify({ t: orderToken, f: fp }));
+      } catch (e) { /* noop */ }
       notice('');
       setView('processing');
       say(COPY.sending);
@@ -317,9 +334,12 @@ window.Sections.tickets = (() => {
     /* What the server charged, so the confirmation can still print it once the
        payment panel is gone. */
     let paidAmount = 0;
+    let mailedOk = true;   /* only an explicit mailed:false switches copy */
 
     function showPay(body) {
       orderToken = null;   /* this order is in; the next one is its own */
+      try { window.sessionStorage.removeItem(TOK_KEY); } catch (e) { /* noop */ }
+      mailedOk = !(body && body.mailed === false);
       /* The mededeling is the BUYER'S NAME — that is how the organisers match
          a transfer to an order. The server's TKT-nn stays internal. */
       const mededeling = nameEl.value.trim();
@@ -345,6 +365,14 @@ window.Sections.tickets = (() => {
       const recap = $('#tk-done-recap');
       recap.textContent = qty + ' ' + units(qty) + '.';
 
+      /* The mail sentence must be true: when the backend said the mail did
+         not leave, say so — everything needed is on this screen anyway. */
+      const mailEl = $('#tk-done-mail');
+      if (mailEl && !mailedOk) {
+        mailEl.textContent = 'De bevestigingsmail kon niet verstuurd worden. ' +
+          'Hieronder staat alles wat je nodig hebt. Betaald = binnen.';
+      }
+
       /* The payment view is gone; its three facts are not. One line: bedrag ·
          rekening · mededeling (payinfo.js owns the wording). */
       const payLine = $('#tk-done-pay');
@@ -359,7 +387,9 @@ window.Sections.tickets = (() => {
 
       const title = $('#tk-done-title');
       if (!frozen) title.focus();
-      say('Je tickets zijn gereserveerd. Bevestiging in je mailbox.');
+      say(mailedOk
+        ? 'Je tickets zijn gereserveerd. Bevestiging in je mailbox.'
+        : 'Je tickets zijn gereserveerd. De bevestigingsmail kon niet verstuurd worden.');
     }
 
     /* ---- 8. boot ----------------------------------------------------------

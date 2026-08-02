@@ -439,19 +439,50 @@ window.Sections.register = {
     /* Exactly what the server will store, computed the way the server does. */
     /* One idempotency token per submitted entry: kept across retries (manual
        or automatic) so a lost answer can never register the team twice; a NEW
-       entry after a success gets a new token. */
+       entry after a success gets a new token.
+
+       The token also survives a RELOAD (sessionStorage): reloading during
+       "Versturen…" and submitting the same entry again used to mint a fresh
+       token — and if the first attempt had landed with its answer lost, that
+       was a duplicate team. The stored token is only reused when the retyped
+       fields MATCH the fingerprint it was stored with: a genuinely different
+       entry must never be answered with someone else's confirmation. */
+    const TOK_KEY = 'champ.reg.token';
+    const fingerprintOf = () => [
+      scrub(byId('team-name').value, 40, true),
+      scrub(byId('p1-name').value, 60, true),
+      scrub(byId('p2-name').value, 60, true),
+      scrubEmail(byId('reg-email').value),
+      scrub(byId('reg-tel').value, 40, true)
+    ].join('');
     let clientRef = null;
     const tokenOf = () => {
+      const fp = fingerprintOf();
+      if (!clientRef) {
+        try {
+          const kept = JSON.parse(window.sessionStorage.getItem(TOK_KEY) || 'null');
+          if (kept && kept.t && kept.f === fp) clientRef = String(kept.t);
+        } catch (e) { /* storage blocked → in-memory only */ }
+      }
       if (!clientRef) {
         clientRef = (window.ChampLive && window.ChampLive.token)
           ? window.ChampLive.token()
           : 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
       }
+      try {
+        window.sessionStorage.setItem(TOK_KEY, JSON.stringify({ t: clientRef, f: fp }));
+      } catch (e) { /* noop */ }
       return clientRef;
     };
+    const dropToken = () => {
+      clientRef = null;
+      try { window.sessionStorage.removeItem(TOK_KEY); } catch (e) { /* noop */ }
+    };
 
+    /* No clientRef here: the token joins the request at the post site only —
+       showPay/showDone also read these fields, and reading must never mint
+       or store a token (dropToken() has just cleared it). */
     const payload = () => ({
-      clientRef: tokenOf(),
       teamName: scrub(byId('team-name').value, 40, true),
       player1: scrub(byId('p1-name').value, 60, true),
       player2: scrub(byId('p2-name').value, 60, true),
@@ -484,9 +515,11 @@ window.Sections.register = {
        after the payment panel is gone. */
     let payAmount = FEE;
     let flowStarted = false;   /* past the form: a late count must not intrude */
+    let mailedOk = true;       /* only an explicit mailed:false switches copy */
 
     function showPay(body) {
-      clientRef = null;   /* this entry is in; the next one is its own */
+      dropToken();   /* this entry is in; the next one is its own */
+      mailedOk = !(body && body.mailed === false);
       /* The mededeling is the TEAM NAME — that is how the organisers match a
          transfer to a team. The server's INS-nn stays internal bookkeeping. */
       const mededeling = payload().teamName;
@@ -524,6 +557,14 @@ window.Sections.register = {
 
       ref('done-lead').innerHTML = esc(who) + '.';
 
+      /* The mail sentence must be true: when the backend said the mail did
+         not leave, say so — everything needed is on this screen anyway. */
+      const mailEl = ref('done-mail');
+      if (mailEl && !mailedOk) {
+        mailEl.textContent = 'De bevestigingsmail kon niet verstuurd worden. ' +
+          'Hieronder staat alles wat je nodig hebt.';
+      }
+
       /* The payment view is gone; its three facts are not. One line: bedrag ·
          rekening · mededeling (payinfo.js owns the wording). */
       const payEl = ref('done-pay');
@@ -536,7 +577,9 @@ window.Sections.register = {
       ref('done-contact').textContent = contactLine();
 
       ref('done-title').focus();
-      speakStatus('Jullie zijn ingeschreven. We hebben je een bevestiging gemaild.');
+      speakStatus(mailedOk
+        ? 'Jullie zijn ingeschreven. We hebben je een bevestiging gemaild.'
+        : 'Jullie zijn ingeschreven. De bevestigingsmail kon niet verstuurd worden.');
     }
 
     /* ---- volzet: one panel INSTEAD of the form ---------------------------
@@ -595,7 +638,8 @@ window.Sections.register = {
 
       showProcessing();
       try {
-        const body = await window.ChampLive.post(Object.assign({ action: 'register' }, payload()), { retries: 2 });
+        const body = await window.ChampLive.post(
+          Object.assign({ action: 'register', clientRef: tokenOf() }, payload()), { retries: 2 });
         if (body && body.ok) {
           showPay(body);
           return;

@@ -113,7 +113,9 @@
           </p>
           <h2 class="tk-done__title" tabindex="-1" id="tk-done-title">Je tickets zijn gereserveerd</h2>
           <p class="tk-done__lead" id="tk-done-recap"></p>
-          <p class="tk-done__lead">Bevestiging in je mailbox. Betaald&nbsp;=&nbsp;binnen.</p>
+          <!-- tickets.js rewrites this when the backend says the mail did NOT
+               leave (mailed:false) — the page never claims a mail that died. -->
+          <p class="tk-done__lead" id="tk-done-mail">Bevestiging in je mailbox. Betaald&nbsp;=&nbsp;binnen.</p>
           <!-- The payment details survive the payment view: bedrag · rekening ·
                mededeling, written by tickets.js via PayInfo.recap(). -->
           <p class="tk-done__pay" id="tk-done-pay"></p>
