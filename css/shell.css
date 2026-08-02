@@ -121,6 +121,13 @@ body::after {
    the sections above it: without it the flat band is the seam, even when the
    colour matches. */
 
+/* Sections arrive over the network, and until they do the page is an empty
+   <main> with the footer hugging the top — reading as "the site is only a
+   footer". Keep the footer out of the story until app.js flips aria-busy off
+   at the end of boot. (If the data load itself dies, boot bails with aria-busy
+   still true: the error line shows, the footer stays out of the wreckage.) */
+#app[aria-busy="true"] ~ .site-foot { display: none; }
+
 .site-foot {
   position: relative;
   z-index: 1;
@@ -145,14 +152,8 @@ body::after {
   color: rgba(244, 247, 251, .34);
   text-align: center;
 }
-.site-foot__credit a {
-  color: rgba(244, 247, 251, .5);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(244, 247, 251, .22);
-}
-.site-foot__credit a:hover,
-.site-foot__credit a:focus-visible { color: rgba(244, 247, 251, .8); }
-
+/* The credit link takes the shared .site-foot a underline below — a bespoke
+   border-bottom here stacked on top of it and read as a double line. */
 
 .site-foot__line {
   position: relative;          /* over the grain, never under it */
