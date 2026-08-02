@@ -70,10 +70,14 @@
         <p class="tk-err tk-notice" id="tk-notice" hidden></p>
 
         <!-- The one action. Label, amount and closed state are written by
-             tickets.js once ?action=health has said whether sales are open. -->
-        <button type="button" class="glass-btn glass-btn--primary tk-pay is-off"
+             tickets.js once the health probe has said whether sales are open.
+             Ships in the WAITING state (action label, dimmed): the fragment
+             paints before js/tickets.js has loaded, and "nog niet open"
+             flashing first read as a glitch — closed is only ever printed
+             as an answer. -->
+        <button type="button" class="glass-btn glass-btn--primary tk-pay is-wait"
                 id="tk-pay" aria-disabled="true">
-          <span class="tk-pay__label" id="tk-pay-label">Ticketverkoop nog niet open</span>
+          <span class="tk-pay__label" id="tk-pay-label">Tickets reserveren</span>
           <span class="tk-pay__dot" aria-hidden="true">·</span>
           <span class="tk-pay__amt u-tabular" id="tk-pay-amt">€12</span>
         </button>

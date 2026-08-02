@@ -92,8 +92,12 @@
             </div>
           </div>
 
-          <button type="submit" class="glass-btn glass-btn--primary reg-btn"
-                  data-reg="submit">Inschrijvingen nog niet open</button>
+          <!-- Ships in the WAITING state (action label, dimmed, disabled): the
+               fragment paints before js/register.js has loaded, and "nog niet
+               open" flashing first read as a glitch. register.js repaints the
+               real answer — closed is only ever printed as an answer. -->
+          <button type="submit" class="glass-btn glass-btn--primary reg-btn is-wait"
+                  data-reg="submit" disabled>Schrijf ons team in</button>
 
           <div class="reg-processing" data-reg="processing" hidden>
             <span class="champ-bubbles" aria-hidden="true"><i></i><i></i><i></i></span>
