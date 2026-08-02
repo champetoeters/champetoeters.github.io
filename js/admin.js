@@ -155,7 +155,10 @@
      answered 'not-found' has already happened, so reverting would resurrect a
      row that is gone. */
   function write(op, extra, revert, okMsg, alsoOk) {
-    admin(op, extra).then(function (r) {
+    /* Same retries as the add-forms: Apps Script loses ~1 answer in 10, and
+       every op here survives a replay (sets are idempotent; a delete answering
+       not-found is exactly the alsoOk case below). */
+    admin(op, extra, { retries: 2 }).then(function (r) {
       if (r && (r.ok || (alsoOk && r.error === alsoOk))) { toast(okMsg || 'Bewaard', 'ok'); return; }
       revert();
       if (r && r.error === 'unauthorized') { expire(); return; }
