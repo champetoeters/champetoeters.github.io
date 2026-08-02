@@ -662,8 +662,9 @@
       var p = payOf(t);
       var has = (t.players || []).length > 0;
       if (p.paid) paid++;
-      var meta = ['Groep ' + (t.group || '?')];
-      if (p.ref) meta.push(p.ref);
+      /* No group letter, no INS ref: the organiser thinks in names, and the
+         bookkeeping ids live in the Sheet when they are ever needed. */
+      var meta = [];
       /* The team name is the row; the players become its detail line. */
       var teamLabel = (typeof t.name === 'string' && t.name.trim()) ? t.name.trim() : '';
       if (has && teamLabel) meta.push(pairFull(t.players));
@@ -735,7 +736,7 @@
 
     var rows = S.orders.map(function (o) {
       var q = +o.quantity || 0, pc = Math.max(0, Math.min(q, +o.paidCount || 0));
-      var meta = [o.ref, euro(q * TICKET_PRICE)];
+      var meta = [euro(q * TICKET_PRICE)];   /* the TKT ref stays in the Sheet */
       var d = shortDate(o.at);
       if (d) meta.push(d);
       return '<div class="ad-item"><div class="ad-r"><div class="ad-o">' +
