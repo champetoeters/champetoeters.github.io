@@ -57,8 +57,9 @@ var MAX_QTY = 8;
 /* teams.json (site/data/teams.json) is the source of truth for the draw; Apps
    Script cannot read it, so the two numbers it needs live here. Keep in step:
    TOTAL_SLOTS = teams.length, OPEN_SLOTS = the ids with confirmed:false. */
-var TOTAL_SLOTS = 16;
-var OPEN_SLOTS = ['t09', 't10', 't11', 't12', 't13', 't14', 't15', 't16'];
+var TOTAL_SLOTS = 32;
+var OPEN_SLOTS = ['t17', 't18', 't19', 't20', 't21', 't22', 't23', 't24',
+                  't25', 't26', 't27', 't28', 't29', 't30', 't31', 't32'];
 
 /* register/order are unauthenticated and send mail, so they are capped: the
    same address may not pile up rows, and a whole day cannot be flooded (the

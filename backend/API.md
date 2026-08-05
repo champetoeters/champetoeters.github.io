@@ -67,7 +67,7 @@ the static state.json republished on GitHub carries the new flags.
 
 ### GET `?action=health`
 → `{ ok:true, register:true, orders:true }` (flags flip when the event is full/closed).
-`register:false` when 16 slots are taken.
+`register:false` when all 32 slots are taken (`TOTAL_SLOTS` in Code.gs).
 
 ### GET `?action=state`
 The live overlay the public site polls. **Public-safe fields only.**
@@ -179,7 +179,7 @@ Include contact line + venue/date footer.
 
 ## Demo / verification seam
 
-`CHAMP_CONFIG.demoNow = "18:45"` → every "now" computation on the site pretends it is
-18:45 on event day. Empty string → real clock. Production cleanup = empty it.
+`CHAMP_CONFIG.demoNow = "19:25"` → every "now" computation on the site pretends it is
+19:25 on event day. Empty string → real clock. Production cleanup = empty it.
 `site/data/demo-state.json` = the same shape as `?action=state`'s payload, used as
 fallback when `apiEndpoint` is empty, so the static site still shows the halfway story.

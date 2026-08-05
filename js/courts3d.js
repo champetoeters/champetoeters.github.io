@@ -2,17 +2,20 @@
    CHAMPETOETERS — 3D padel courts · TC Leiemeers, Kuurne
 
    Geometry comes from site/data/venue.json (OSM-derived). Court 2 really does
-   sit ~90 deg to Courts 1 and 3 — do not "tidy" them into a row.
+   sit ~90 deg to Courts 1 and 3 — do not "tidy" them into a row. Courts 4 and 5
+   really are 130 m west, across Bondgenotenlaan and INDOORS, which is why the
+   resting shot frames the whole site and not just the outdoor cluster.
 
    The playing surface is drawn, not photographed: this module requests no
    image asset of any kind. Neighbouring tennis courts and the clubhouse are
-   deliberately not built (BRIEF §0).
+   deliberately not built (BRIEF §0) — the one exception is the hall around
+   Courts 4 and 5, without which they read as courts in a field. See `buildHalls`.
 
    Public API (BRIEF §7):
      window.Courts3D.mount(canvasEl, { venue, teams, courtNames })
        courtNames: { 'court-1': 'Baan 1', … } from courts.json — optional, but
        the venue numbering is NOT the display numbering, so pass it.
-     window.Courts3D.setActiveCourt('court-1'|'court-2'|'court-3'|null)
+     window.Courts3D.setActiveCourt('court-1'…'court-5'|null)
      window.Courts3D.setMatch(courtId, matchData)
      window.Courts3D.pause() / resume() / destroy()
    ============================================================================= */
@@ -100,8 +103,14 @@
     courts: [
       { id: 'court-1', name: 'Court 1', surface: 'blue', center: [-5.54, -2.47], yaw: -1.8582 },
       { id: 'court-2', name: 'Court 2', surface: 'blue', center: [5.2, 11.73], yaw: 2.8434 },
-      { id: 'court-3', name: 'Court 3', surface: 'green', center: [5.8, -5.69], yaw: 1.2592 }
-    ]
+      { id: 'court-3', name: 'Court 3', surface: 'green', center: [5.8, -5.69], yaw: 1.2592 },
+      { id: 'court-4', name: 'Court 4', surface: 'blue', center: [-133.58, 42.24], yaw: -0.4119, indoor: true },
+      { id: 'court-5', name: 'Court 5', surface: 'blue', center: [-127.56, 56.0], yaw: -0.4119, indoor: true }
+    ],
+    halls: [{
+      name: 'Indoorhal Bondgenotenlaan', height: 8, courts: ['court-4', 'court-5'],
+      points: [[-136.23, 69.3], [-111.92, 58.68], [-124.91, 28.94], [-149.22, 39.56], [-136.23, 69.3]]
+    }]
   };
 
   /* ======================================================== canvas textures */
@@ -530,24 +539,36 @@
     return [sx / cs.length, sz / cs.length];
   }
 
-  /* Where the name goes: alongside the courts, but not behind them. Start at
-     the closest point of the road, slide along it past the far end of the
-     courts' own footprint, and set the plate down there. Toward +x, which is
-     screen-right for the resting camera (it sits to the south-west) — the
-     other way runs out of frame. Derived, so it follows the data. */
+  /* Where the name goes: in the GAP between the indoor and outdoor clusters —
+     dead centre of the resting frame, on the one stretch of road nothing ever
+     stands in front of, so the plate is whole and readable (client ask). With
+     a single cluster (no indoor courts) there is no gap: fall back to sliding
+     the plate along the road just past the courts' own footprint. */
   function roadLabelAt(venue, rd) {
-    var pts = rd.points, ctr = courtsCentre(venue), total = roadLength(pts);
-    var s0 = roadAnchor(pts, ctr[0], ctr[1]);
-    var p = alongRoad(pts, s0);
-    if (!p) return s0;
-    var dir = p.tx > 0 ? 1 : -1, past = 0;
-    ((venue && venue.courts) || []).forEach(function (c) {
-      courtCorners(c).forEach(function (q) {
-        var t = ((q[0] - p.x) * p.tx + (q[1] - p.z) * p.tz) * dir;
-        if (t > past) past = t;
-      });
+    var pts = rd.points, total = roadLength(pts);
+    var cs = (venue && venue.courts) || [];
+    var xi = 0, zi = 0, ni = 0, xo = 0, zo = 0, no = 0;
+    cs.forEach(function (c) {
+      if (c.indoor) { xi += c.center[0]; zi += c.center[1]; ni++; }
+      else { xo += c.center[0]; zo += c.center[1]; no++; }
     });
-    var s = s0 + dir * (past + 5.0 + ROAD_LBL_M / 2);
+    var s;
+    if (ni && no) {
+      s = roadAnchor(pts, (xi / ni + xo / no) / 2, (zi / ni + zo / no) / 2);
+    } else {
+      var ctr = courtsCentre(venue);
+      var s0 = roadAnchor(pts, ctr[0], ctr[1]);
+      var p = alongRoad(pts, s0);
+      if (!p) return s0;
+      var dir = p.tx > 0 ? 1 : -1, past = 0;
+      cs.forEach(function (c) {
+        courtCorners(c).forEach(function (q) {
+          var t = ((q[0] - p.x) * p.tx + (q[1] - p.z) * p.tz) * dir;
+          if (t > past) past = t;
+        });
+      });
+      s = s0 + dir * (past + 5.0 + ROAD_LBL_M / 2);
+    }
     return clamp(s, ROAD_LBL_M / 2, Math.max(ROAD_LBL_M / 2, total - 1));
   }
 
@@ -822,6 +843,84 @@
      The client asked for them out (BRIEF §0) — deleted, not hidden, and not a
      toggle. The data stays because it is the OSM record of the site. */
 
+  /* ================================================================== halls
+     Baan 4 and Baan 5 are INDOORS, in the hall across Bondgenotenlaan. Nothing
+     else on this site is built (see the note above) and this is not that
+     decision reopening: without SOME marker those two courts read as standing
+     in a field, which is worse than wrong — it is confusing.
+
+     The marker is a flat floor slab in the building's footprint, NOT walls.
+     Walls were tried, open-topped with the far side culled, and the client
+     killed them for two reasons that are really one reason: an 8 m wall
+     in front of a 10 m-deep bay hides most of the near court at any sane
+     elevation, and one-side-culled walls read as "transparent from the inside"
+     the moment the camera crosses them in a fly-in. A pale slab under the pair
+     says "different ground, one building" without ever standing between the
+     camera and a court, and it frees the indoor fly-in to use the same low
+     dropped eye as the outdoor courts. */
+
+  var HALL_FLOOR = 0x5b6785;
+
+  /* The resting vantage, FIXED by the client (2026-08-05 evening): from the
+     south, square to Bondgenotenlaan, so the street runs level across the frame
+     behind the site. Derived, not tuned: the road's chord past the site runs
+     (31.4,-26.8) → (-111.1,16.2), its south-pointing normal is (0.289, 0.957),
+     and the camera sits along (sin az, cos az) — az = atan2(0.289, 0.957).
+     An aspect-driven azimuth solver used to live here; it filled the panel
+     better but pointed wherever it liked, and the client chose the view. */
+  var REST_AZ = 0.293;
+
+  function hallList(venue) {
+    return ((venue && venue.halls) || []).filter(function (h) {
+      return h && h.points && h.points.length > 2;
+    });
+  }
+
+  /* Signed area tells us the winding the data happens to have; the shell is
+     emitted with a known one so BackSide means "far wall" and not "near wall".
+     venue.json is generated, but it is generated from a polygon whose direction
+     is nobody's contract. */
+  function ringOf(h) {
+    var p = h.points.slice();
+    if (p.length > 1 && p[0][0] === p[p.length - 1][0] && p[0][1] === p[p.length - 1][1]) p.pop();
+    var a = 0;
+    for (var i = 0; i < p.length; i++) {
+      var q = p[(i + 1) % p.length];
+      a += p[i][0] * q[1] - q[0] * p[i][1];
+    }
+    return a < 0 ? p.reverse() : p;
+  }
+
+  function buildHalls(THREE, venue, film) {
+    var halls = hallList(venue);
+    if (!halls.length) return null;
+
+    var G = new THREE.Group();
+    halls.forEach(function (h) {
+      var ring = ringOf(h);
+      var shape = new THREE.Shape(ring.map(function (p) {
+        return new THREE.Vector2(p[0], p[1]);
+      }));
+      var g = new THREE.ShapeGeometry(shape);
+      /* Shape lives in xy; lay it flat so shape-y becomes world z. */
+      g.rotateX(Math.PI / 2);
+      g.computeBoundingSphere();
+      /* Same contract as the road it sits beside: unlit, no depth, ordered.
+         -8 puts it above the tarmac (-9) and below every court slab, and the
+         two never overlap the road ribbon in plan, so nothing can z-fight. */
+      var mesh = new THREE.Mesh(g, applyFilm(new THREE.MeshBasicMaterial({
+        color: HALL_FLOOR, side: THREE.DoubleSide,
+        depthWrite: false, depthTest: false
+      }), film));
+      mesh.position.y = Y_ROAD;
+      mesh.renderOrder = -8;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      G.add(mesh);
+    });
+    return G;
+  }
+
   /* ================================================================= labels */
 
   function roundRect(x, a, b, w, h, r) {
@@ -835,6 +934,10 @@
   }
 
   var LBL_W = 720, LBL_H = 310;
+  /* The card's width in METRES, used when the framing is wide enough that a
+     fixed pixel size would swamp the courts. A shade over one court's length, so
+     a resting card reads as belonging to the court under it. */
+  var LBL_M = 26;
   var FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
 
   /* ------------------------------------------------------------ Dutch copy */
@@ -970,12 +1073,16 @@
 
   /* =============================================================== fallback */
 
-  function courtCorners(c) {
+  /* Corners of the 20x10 playing area; `pad` inflates all four sides — pass
+     the apron overhang (1.2 m) when the shot must CONTAIN the court rather
+     than crop into it, because the built group is wider than the court. */
+  function courtCorners(c, pad) {
+    var hl = 10 + (pad || 0), hw = 5 + (pad || 0);
     var d = [Math.cos(c.yaw), Math.sin(c.yaw)], p = [-d[1], d[0]], out = [];
     [[1, 1], [1, -1], [-1, -1], [-1, 1]].forEach(function (s) {
       out.push([
-        c.center[0] + d[0] * 10 * s[0] + p[0] * 5 * s[1],
-        c.center[1] + d[1] * 10 * s[0] + p[1] * 5 * s[1]
+        c.center[0] + d[0] * hl * s[0] + p[0] * hw * s[1],
+        c.center[1] + d[1] * hl * s[0] + p[1] * hw * s[1]
       ]);
     });
     return out;
@@ -1134,8 +1241,20 @@
     var scene = new THREE.Scene();
     this.scene = scene;
     /* Pushed out past the courts: haze over a ~60 m site washed ground, courts
-       and steel into one mid-blue band. It only softens the far tarmac now. */
-    scene.fog = new THREE.Fog(0x1c2c55, 190, 780);
+       and steel into one mid-blue band. It only softens the far tarmac now.
+
+       ⚠ Scaled to the site, not typed. The two indoor courts put the far corner
+       ~150 m from the near one, so the wide shot sits far enough back that the
+       old fixed 190 m near plane started INSIDE the site and fogged Baan 4 and
+       5 into the background. The numbers below are the old 190/780 expressed as
+       multiples of the bounding radius the three outdoor courts had (~26 m), so
+       the outdoor-only framing is unchanged to the metre.
+
+       The far plane is capped under the camera's own far plane (1100 m): the
+       tarmac is a 4000 m quad, so the fog has to have finished washing it out
+       BEFORE the clip, or the wide shot shows the edge of the world. */
+    var sb = this._bounds();
+    scene.fog = new THREE.Fog(0x1c2c55, sb.r * 7.88, Math.min(sb.r * 32.35, 1000));
 
     var film = this.film = {
       uRes: { value: new THREE.Vector2(2, 2) },
@@ -1144,7 +1263,13 @@
     };
 
     /* --- one strong, low sun ------------------------------------------- */
-    var sunAz = 2.30, sunEl = 0.62;
+    /* The sun rides the resting vantage: it was composed at 2.30 against the
+       old -0.62 rest azimuth — 2.92 rad around from the camera, low and almost
+       opposite, so the courts rim-light and the net shadows fall toward the
+       viewer. When the rest view became the fixed south vantage (REST_AZ) the
+       sun kept that same 2.92 offset; a sun left at 2.30 lit the new shot flat
+       from the side. */
+    var sunAz = REST_AZ + 2.92, sunEl = 0.62;
     var sunDir = new THREE.Vector3(
       Math.cos(sunEl) * Math.sin(sunAz),
       Math.sin(sunEl),
@@ -1159,9 +1284,16 @@
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
     var sc = key.shadow.camera;
-    /* Tight on the courts: they fit inside a 23 m radius of the light target,
-       +6 m for the longest thing the low sun throws. 2048 texels over 64 m is
-       3.1 cm each. */
+    /* Tight on the OUTDOOR courts: they fit inside a 23 m radius of the light
+       target, +6 m for the longest thing the low sun throws. 2048 texels over
+       64 m is 3.1 cm each.
+
+       Deliberately NOT widened to take in Baan 4 and 5. Stretching this box
+       over the whole 160 m site would put 2048 texels across 200 m — 10 cm each,
+       four times coarser, and the net shadows on the outdoor courts (the only
+       shadows in the scene, and the ones actually in shot) would go to mush. The
+       indoor pair is under a roof in real life; casting sun onto it would be the
+       wrong picture anyway. buildHalls takes the hall out of the rig too. */
     sc.left = -32; sc.right = 32; sc.top = 32; sc.bottom = -32;
     sc.near = 50; sc.far = 260;
     sc.updateProjectionMatrix();
@@ -1214,18 +1346,28 @@
     var roads = buildRoads(THREE, this.venue, film);
     if (roads) scene.add(roads);
 
+    /* --- the indoor hall -------------------------------------------------- */
+    /* After the road, before the courts: the two courts it contains have to
+       draw over their own floor, and the shell is opaque. */
+    var halls = buildHalls(THREE, this.venue, film);
+    if (halls) scene.add(halls);
+
     /* --- shared materials ------------------------------------------------ */
     var sunXZ = new THREE.Vector2(sunDir.x, sunDir.z).normalize();
     var ballShadowLen = clamp(0.150 / Math.tan(sunEl), 0.18, 0.7);
 
-    /* One surface texture for all three courts; Court 3's deeper shade is a
+    /* One surface texture for all five courts; Court 3's deeper shade is a
        material tint. The stored base colour survives the active/dim animation. */
     var courtTex = makeCourtTexture(THREE);
     var courtMats = this.venue.courts.map(function (c) {
       var m = applyFilm(new THREE.MeshLambertMaterial({
         map: courtTex, color: 0xffffff
       }), film);
-      m.userData.base = new THREE.Color(c.surface === 'green' ? 0xc4d0e8 : 0xffffff);
+      /* Indoors is a cooler, flatter light than a low September sun, and the two
+         courts inside the hall would otherwise be the brightest things in the
+         frame while sitting in a shell that casts no light. */
+      m.userData.base = new THREE.Color(
+        c.indoor ? 0x9fb0cf : c.surface === 'green' ? 0xc4d0e8 : 0xffffff);
       return m;
     });
     var glassMats = this.venue.courts.map(function () {
@@ -1294,10 +1436,47 @@
       var g = buildCourtGroup(THREE, def, i, shared);
       scene.add(g);
       self.courtGroups.push(g);
-      self.courtState.push({ def: def, a: 0, target: 0 });
+      self.courtState.push({ def: def, a: 0, target: 0,
+        az: wrapPi(Math.atan2(Math.cos(def.yaw), Math.sin(def.yaw)) + 0.9) });
+    });
+    /* The indoor bays share one hall and sit 10.9 m apart, so the fly-in has to
+       pick which SIDE of the hall to stand on: approached from its own side the
+       active bay lands foreshortened at the bottom edge while its dimmed
+       neighbour fills the middle of the frame — the shot reads as being about
+       the wrong court. So an indoor fly-in stands across the sibling bay: the
+       dim one becomes the foreground and the lit subject holds the centre.
+       Outdoor courts have no sibling in the shot and keep the one composed
+       azimuth. */
+    this.courtState.forEach(function (st) {
+      if (!st.def.indoor) return;
+      var sib = null;
+      self.courtState.forEach(function (o) {
+        if (o.def.indoor && o.def.id !== st.def.id) sib = o.def;
+      });
+      if (!sib) return;
+      var dx = st.def.center[0] - sib.center[0];
+      var dz = st.def.center[1] - sib.center[1];
+      if (Math.sin(st.az) * dx + Math.cos(st.az) * dz > 0) st.az = wrapPi(st.az + Math.PI);
     });
 
-    /* --- labels ----------------------------------------------------------- */
+    /* --- labels -----------------------------------------------------------
+       Each card gets its OWN resting height, stepped in the order the courts are
+       listed. The courts are 10–15 m apart and a resting card is wider than that
+       once the whole site is in frame, so at one common height the three outdoor
+       cards printed on top of each other and so did the indoor pair. Stepping
+       them separates the cards vertically on screen, without moving a card off
+       the court it names.
+
+       The indoor pair steps DOWN the listed order, not up: from the fixed south
+       vantage Baan 4 is the far bay, and a farther base already projects higher
+       on screen — giving the near bay the taller lift walked the two cards back
+       into each other. The step order encodes the view; if REST_AZ ever crosses
+       the road to the north side, flip it with it. */
+    var lifts = {};
+    var nOut = 0, nIn = 0;
+    this.venue.courts.forEach(function (c) {
+      lifts[c.id] = c.indoor ? 5.4 + (1 - nIn++) * 3.6 : 5.4 + (nOut++) * 3.6;
+    });
     this.labels = this.venue.courts.map(function (def) {
       var c = cv(LBL_W, LBL_H);
       drawLabel(c, def, null, false, self.courtNames);
@@ -1312,7 +1491,8 @@
       m.renderOrder = 20;
       m.frustumCulled = false;
       scene.add(m);
-      return { canvas: c, tex: tex, mesh: m, def: def, drawnActive: false };
+      return { canvas: c, tex: tex, mesh: m, def: def, lift: lifts[def.id],
+               drawnActive: false };
     });
 
     /* --- camera ------------------------------------------------------------ */
@@ -1330,13 +1510,27 @@
         });
       });
       self.fitOne.push(own);
-      self.fitAll = self.fitAll.concat(own);
+      /* The whole-site shot must CONTAIN the courts, aprons included; the
+         fly-in (fitOne) keeps the bare corners — cropping into the apron and
+         fence tops is that shot's look. */
+      courtCorners(c, 1.2).forEach(function (p) {
+        [0, 4.6].forEach(function (y) {
+          self.fitAll.push(p[0], y, p[1]);
+        });
+      });
     });
+    /* The hall floor is part of the resting shot, so it is part of the fit —
+       at ground level only, since the slab has no height. Only the courts get
+       a fitOne — flying to a hall is not something anything asks for. */
+    hallList(this.venue).forEach(function (h) {
+      h.points.forEach(function (p) { self.fitAll.push(p[0], 0, p[1]); });
+    });
+
     this.focus = new THREE.Vector3(b.cx, 1.2, b.cz);
     /* near is as far out as the closest fly-in allows: depth precision goes
        straight into how well the court deck separates from the tarmac. */
     this.camera = new THREE.PerspectiveCamera(40, 1, 6, 1100);
-    this.baseAz = -0.62;
+    this.baseAz = this._restAzimuth();
     this.az = this.baseAz;
     this.el = 0.72;
     this.dist = 120;
@@ -1392,18 +1586,39 @@
     return need * margin;
   };
 
-  Engine.prototype._bounds = function () {
-    var minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9, all = [];
+  /* Every point the resting shot has to contain: the court corners, plus the
+     hall footprint. The hall is not decoration around Baan 4 and 5 — it is
+     bigger than they are, and leaving it out of the fit cropped its near corner
+     off the bottom of the panel. */
+  Engine.prototype._sitePoints = function () {
+    var all = [];
     this.venue.courts.forEach(function (c) {
-      courtCorners(c).forEach(function (p) {
-        all.push(p);
-        minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
-        minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]);
-      });
+      courtCorners(c).forEach(function (p) { all.push(p); });
+    });
+    hallList(this.venue).forEach(function (h) {
+      h.points.forEach(function (p) { all.push([p[0], p[1]]); });
+    });
+    return all;
+  };
+
+  Engine.prototype._bounds = function () {
+    var all = this._sitePoints();
+    var minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+    all.forEach(function (p) {
+      minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
+      minZ = Math.min(minZ, p[1]); maxZ = Math.max(maxZ, p[1]);
     });
     var cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2, r = 0;
     all.forEach(function (p) { r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz)); });
     return { cx: cx, cz: cz, r: r + 5 };
+  };
+
+  /* Resting azimuth: the fixed south view (see REST_AZ). Still a method and
+     still called per resize, because it USED to be an aspect-driven solve and
+     the call sites are the contract; if a future panel needs a solved azimuth
+     again, this is where it goes back in. */
+  Engine.prototype._restAzimuth = function () {
+    return REST_AZ;
   };
 
   /* -------------------------------------------------------------- sizing   */
@@ -1425,6 +1640,8 @@
     /* Lower than a plan view on purpose: from higher up you look down INTO the
        boxes and read open trays. */
     this.baseEl = this.portrait ? 0.64 : 0.62;
+    /* After the aspect, the fov and baseEl: the azimuth search reads all three. */
+    this.baseAz = this._restAzimuth();
     this.dirty = true;
     /* Until the first frame is on screen the camera has never been solved for
        the real aspect ratio — `_init` may well have run while the panel was
@@ -1511,10 +1728,15 @@
     }
     if (best && best.a > 0.001) {
       var k = best.a, def = best.def;
-      var cAz = wrapPi(Math.atan2(Math.cos(def.yaw), Math.sin(def.yaw)) + 0.9);
+      var cAz = best.az;   /* composed per court at init — indoor bays flip
+                              across the hall, see the courtState block */
       fx += (def.center[0] - bb.cx) * k;
       fz += (def.center[1] - bb.cz) * k;
       tAz = this.baseAz + wrapPi(cAz - this.baseAz) * k;
+      /* The eye DROPS into the enclosure — that low angle is the shot, it puts
+         the glass and the fence between you and the court. Indoors too, now
+         that the hall is a floor slab instead of walls: there is nothing left
+         to see over. */
       tEl = baseEl - 0.16 * k;
     }
 
@@ -1529,15 +1751,34 @@
        Also near the closest the scene can be framed and still hold the mobile
        budget: the court surfaces are the largest lit, textured,
        shadow-receiving thing in the frame, so cost scales with how much of the
-       screen they cover. */
-    var margin = this.portrait ? 0.88 : 0.89;
+       screen they cover.
+
+       ⚠ That crop only works while the subject is ONE cluster, where what falls
+       off the edge is fence top. Framing the whole site it was cutting Baan 1 and
+       Baan 4 in half, because at the edges of a wide frame there is nothing but
+       court. So `wide` closes the crop as the framed radius grows: unchanged up
+       to a 30 m radius (the outdoor cluster on its own, the shot the client
+       signed off), fully contained past 50 m — the whole-site radius since the
+       hall moved to its display position. The single-court fly-in keeps the
+       tight crop: nothing about it changed.
+
+       The whole-site fit is solved at the WOBBLED azimuth, not the target: in
+       the wide strip the camera rests ~50 m from a 90 m site, and there the
+       ±0.085 rad idle swing moves a far corner several metres — more than any
+       sane fixed margin. Solving against the swung camera makes containment
+       exact by construction; the wobble is a 48-second drift, well inside what
+       the distance damping tracks, and the ceiling stays a real margin. */
+    var tight = this.portrait ? 0.88 : 0.89;
+    var wide = clamp((bb.r - 30) / 20, 0, 1);
+    var margin = tight + (1.04 - tight) * wide;
     var elNow = clamp(tEl, 0.13, 1.32);
-    var dAll = this._fitDistance(this.fitAll, bb.cx, 1.2, bb.cz, tAz, elNow, margin);
+    var dAll = this._fitDistance(this.fitAll, bb.cx, 1.2, bb.cz,
+      tAz + wobble, clamp(elNow + wobbleY, 0.13, 1.32), margin);
     var dNeed = dAll;
     if (best && best.a > 0.001) {
       var oi = this.courtState.indexOf(best);
       var dOne = this._fitDistance(this.fitOne[oi], best.def.center[0], 1.6,
-        best.def.center[1], tAz, elNow, margin + 0.06);
+        best.def.center[1], tAz, elNow, tight + 0.06);
       dNeed = dAll + (dOne - dAll) * best.a;
     }
 
@@ -1558,8 +1799,21 @@
     );
     this.camera.lookAt(this.focus);
 
-    /* ---- labels: constant on-screen size, billboarded ---- */
-    var targetPx = this.w < 520 ? 268 : 344;
+    /* ---- labels: billboarded, sized between world and screen ----
+       A card pinned to a constant PIXEL size was right while the whole scene was
+       one 50 m cluster. It does not survive framing the whole site: at the
+       resting distance a 20 m court is ~35 px wide in the timetable's panel, and
+       five 344 px name plates over it covered the courts completely and each
+       other besides.
+
+       So the card is a fixed WORLD width — LBL_M metres, a little over one court
+       — clamped into a pixel band. Zoomed onto one court the world size exceeds
+       the ceiling and it pins to exactly the old 268/344 px, so the active state
+       is unchanged to the pixel. Pulled back to the whole site it rides the
+       floor instead and reads as a marker on a site plan, which is what the shot
+       has become. */
+    var maxPx = this.w < 520 ? 268 : 344;
+    var minPx = this.w < 520 ? 92 : 116;
     this.camera.updateMatrixWorld();
     for (i = 0; i < this.labels.length; i++) {
       var L = this.labels[i], cs = this.courtState[i];
@@ -1573,22 +1827,26 @@
       var kL = 0.80 + 0.20 * cs.a;
       L.mesh.position.set(
         L.def.center[0],
-        5.4 + cs.a * 4.2 + this.courtGroups[i].position.y,
+        L.lift + cs.a * 4.2 + this.courtGroups[i].position.y,
         L.def.center[1]
       );
+      /* Distance decides the pixel size, and the pixel size decides the clamp
+         that keeps the card in frame — so measure the distance first. */
+      var d = this._tmpV.copy(L.mesh.position).sub(this.camera.position).length();
+      var px = clamp(LBL_M / (this.pxToWorldAt1 * Math.max(d, 1)), minPx, maxPx);
+
       /* Keep the card inside the frame: when a court goes active the camera
          pushes in AND the card rises, which on a phone-width panel walked it
-         off the top edge. The card is drawn at a fixed pixel size, so its
-         half-height in clip space does not depend on distance. */
-      var halfNdc = targetPx * kL * (LBL_H / LBL_W) / this.h;
+         off the top edge. */
+      var halfNdc = px * kL * (LBL_H / LBL_W) / this.h;
       var pv = this._tmpP.copy(L.mesh.position).project(this.camera);
       var limY = 1 - halfNdc - 0.03;
       if (pv.y > limY) {
         pv.y = limY;
         L.mesh.position.copy(pv.unproject(this.camera));
+        d = this._tmpV.copy(L.mesh.position).sub(this.camera.position).length();
       }
-      var d = this._tmpV.copy(L.mesh.position).sub(this.camera.position).length();
-      var sc2 = targetPx * this.pxToWorldAt1 * d * kL;
+      var sc2 = px * this.pxToWorldAt1 * d * kL;
       L.mesh.scale.set(sc2, sc2 * (LBL_H / LBL_W), 1);
       L.mesh.quaternion.copy(this.camera.quaternion);
       var op = 0.82 + 0.18 * cs.a - this.anyActive * (1 - cs.a) * 0.62;

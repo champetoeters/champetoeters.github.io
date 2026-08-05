@@ -32,11 +32,12 @@
     sf: 'Halve finales',
     final: 'FINALE'
   };
+  /* Same map as timetable.js: eight groups, winners only — no runners-up. */
   var KO = {
-    QF1A: 'Winnaar Groep A', QF1B: 'Tweede Groep B',
-    QF2A: 'Winnaar Groep B', QF2B: 'Tweede Groep A',
-    QF3A: 'Winnaar Groep C', QF3B: 'Tweede Groep D',
-    QF4A: 'Winnaar Groep D', QF4B: 'Tweede Groep C',
+    QF1A: 'Winnaar Groep A', QF1B: 'Winnaar Groep B',
+    QF2A: 'Winnaar Groep C', QF2B: 'Winnaar Groep D',
+    QF3A: 'Winnaar Groep E', QF3B: 'Winnaar Groep F',
+    QF4A: 'Winnaar Groep G', QF4B: 'Winnaar Groep H',
     SF1A: 'Winnaar Kwartfinale 1', SF1B: 'Winnaar Kwartfinale 2',
     SF2A: 'Winnaar Kwartfinale 3', SF2B: 'Winnaar Kwartfinale 4',
     FA: 'Winnaar Halve finale 1', FB: 'Winnaar Halve finale 2'
@@ -683,7 +684,7 @@
         ' aria-label="Betaald: ' + esc(name) + '">' +
         '<span class="ad-check" aria-hidden="true"></span>' +
         '</label>' +
-        /* Only a registration is ours to delete; t01–t14 are pre-entered. */
+        /* Only a registration is ours to delete; t01–t16 are pre-entered. */
         (p.ref ? delBtn('team', p.ref, 'Inschrijving ' + name + ' verwijderen') : '') +
         '</div>' + (p.ref && S.ask === p.ref ? askHtml('team', p.ref) : '') + '</div>';
     }).join('');
@@ -1015,37 +1016,53 @@
   /* ------------------------------------------------------- screenshot fixture
      ?state=demo only. Never reachable from the UI, never posted anywhere. */
 
+  /* Reads the schedule it has already loaded rather than listing match ids.
+     A typed list went stale the moment the draw grew from 4 groups on 3 courts
+     to 8 groups on 5 courts: every id past m24 changed meaning, and the fixture
+     went on "working" while depicting a tournament that no longer existed.
+     The story matches tools/fixtures/demo-full-state.json — every group match
+     played, three quarter-finals in, the fourth still on court. */
   function demoData() {
-    var scores = [
-      'm01 6-3 6-4', 'm02 4-6 6-2 10-8', 'm03 6-1 6-4', 'm04 7-5 3-6 10-6',
-      'm05 6-2 6-2', 'm06 6-4 4-6 10-7', 'm07 6-0 6-3', 'm08 3-6 6-4 10-5',
-      'm09 6-4 6-4', 'm10 6-3 5-7 10-8', 'm11 6-2 7-5', 'm12 6-4 6-1',
-      'm13 4-6 6-3 10-4', 'm14 6-2 6-3', 'm15 6-4 6-2', 'm16 7-6 6-4',
-      'm17 6-1 6-2', 'm18 4-6 6-4 10-6', 'm19 6-3 6-3', 'm20 6-2 4-6 10-3',
-      'm21 6-4 7-5', 'm22 6-3 6-2', 'm23 5-7 6-3 10-7', 'm24 6-2 6-4',
-      'm25 6-4 3-6 10-8', 'm26 6-2 6-3', 'm27 7-5 6-4'
+    var SETS = [
+      [[6, 3], [6, 4]], [[4, 6], [6, 2], [10, 8]], [[6, 1], [6, 4]],
+      [[7, 5], [3, 6], [10, 6]], [[6, 2], [6, 2]], [[6, 4], [4, 6], [10, 7]],
+      [[6, 0], [6, 3]], [[3, 6], [6, 4], [10, 5]], [[6, 4], [6, 4]],
+      [[6, 3], [5, 7], [10, 8]], [[6, 2], [7, 5]], [[7, 6], [6, 4]]
     ];
-    var results = {};
-    scores.forEach(function (line) {
-      var p = line.split(' ');
-      var sets = p.slice(1).map(function (s) {
-        var g = s.split('-');
-        return [+g[0], +g[1]];
-      });
-      var wi = winnerIndex(sets);
-      results[p[0]] = { sets: sets, winner: wi === 1 ? 'B' : 'A' };
+    var ms = (S.schedule && S.schedule.matches) || [];
+    var qfSeen = 0, results = {};
+    ms.forEach(function (m, i) {
+      if (m.round === 'group') {
+        /* nothing */
+      } else if (m.round === 'qf' && qfSeen < 3) {
+        qfSeen++;
+      } else {
+        return;                      /* 4th QF on court, semis and finale to come */
+      }
+      var sets = SETS[i % SETS.length];
+      results[m.id] = { sets: sets, winner: winnerIndex(sets) === 1 ? 'B' : 'A' };
     });
 
+    /* Every other pre-entered team has paid, so the list opens with work in it.
+       Derived from the teams actually in the draw — a typed id list outlived the
+       slots it named. */
     var paid = {};
-    ['t01', 't02', 't03', 't05', 't06', 't08', 't09', 't11', 't13'].forEach(function (k) { paid[k] = true; });
+    (S.teams || []).filter(function (t) { return t.confirmed; })
+      .forEach(function (t, i) { if (i % 2 === 0) paid[t.id] = true; });
+
+    /* Against the FIRST unsold place, whichever that is. Pinning it to an id
+       put a registration on a slot that had since been pre-entered. */
+    var firstOpen = (S.teams || []).filter(function (t) {
+      return !t.confirmed;
+    })[0];
 
     return {
       results: results,
       teamPaid: paid,
-      registrations: [{
-        ref: 'INS-01', teamId: 't15', player1: 'Anna Peeters', player2: 'Tom Claes',
+      registrations: firstOpen ? [{
+        ref: 'INS-01', teamId: firstOpen.id, player1: 'Anna Peeters', player2: 'Tom Claes',
         email: 'anna@example.be', phone: '0470 00 00 00', at: '2026-08-04T10:12:00Z', paid: false
-      }],
+      }] : [],
       orders: [
         { ref: 'TKT-01', name: 'Lien Vanhee', email: 'lien@example.be', quantity: 4, at: '2026-08-02T18:20:00Z', paidCount: 2 },
         { ref: 'TKT-02', name: 'Bram Dewulf', email: 'bram@example.be', quantity: 2, at: '2026-08-06T09:05:00Z', paidCount: 0 },

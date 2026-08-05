@@ -2,19 +2,41 @@
   {
     "id": "court-3",
     "name": "Baan 1",
+    "short": "B1",
     "sub": "'t Kanaal",
-    "showcourt": false
+    "showcourt": false,
+    "indoor": false
   },
   {
     "id": "court-1",
     "name": "Baan 2",
+    "short": "B2",
     "sub": "De Leie",
-    "showcourt": false
+    "showcourt": false,
+    "indoor": false
   },
   {
     "id": "court-2",
     "name": "Baan 3",
+    "short": "B3",
     "sub": "De Meers",
-    "showcourt": true
+    "showcourt": true,
+    "indoor": false
+  },
+  {
+    "id": "court-4",
+    "name": "Baan 4",
+    "short": "B4",
+    "sub": null,
+    "showcourt": false,
+    "indoor": true
+  },
+  {
+    "id": "court-5",
+    "name": "Baan 5",
+    "short": "B5",
+    "sub": null,
+    "showcourt": false,
+    "indoor": true
   }
 ]

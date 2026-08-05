@@ -19,9 +19,9 @@
     "price": 50,
     "currency": "EUR",
     "unit": "per team",
-    "places": 16,
-    "confirmed": 8,
-    "open": 8,
+    "places": 32,
+    "confirmed": 16,
+    "open": 16,
     "includes": [
       "Twee spelers",
       "Minstens drie wedstrijden",
@@ -29,9 +29,9 @@
     ]
   },
   "stats": {
-    "teams": 16,
-    "courts": 3,
+    "teams": 32,
+    "courts": 5,
     "djs": 5,
-    "matches": 31
+    "matches": 55
   }
 }

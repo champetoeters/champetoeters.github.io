@@ -7,7 +7,7 @@
     "lat": 50.8468068,
     "lon": 3.2878178
   },
-  "attribution": "Court geometry derived from OpenStreetMap (ODbL)",
+  "attribution": "Court geometry derived from OpenStreetMap (ODbL); indoor courts from client annotation",
   "frame": "+x east, +y up, -z north; units = metres",
   "courts": [
     {
@@ -24,7 +24,8 @@
       "yaw": -1.8582,
       "yawDeg": -106.5,
       "osmLength": 19.51,
-      "osmWidth": 10.09
+      "osmWidth": 10.09,
+      "indoor": false
     },
     {
       "id": "court-2",
@@ -40,7 +41,8 @@
       "yaw": 2.8434,
       "yawDeg": 162.9,
       "osmLength": 22.21,
-      "osmWidth": 10.74
+      "osmWidth": 10.74,
+      "indoor": false
     },
     {
       "id": "court-3",
@@ -56,7 +58,93 @@
       "yaw": 1.2592,
       "yawDeg": 72.1,
       "osmLength": 19.63,
-      "osmWidth": 10.05
+      "osmWidth": 10.05,
+      "indoor": false
+    },
+    {
+      "id": "court-4",
+      "name": "Court 4",
+      "sub": null,
+      "surface": "blue",
+      "indoor": true,
+      "center": [
+        -53.46,
+        14.83
+      ],
+      "length": 20.0,
+      "width": 10.0,
+      "yaw": -0.4119,
+      "yawDeg": -23.6,
+      "bay": [
+        28.6,
+        10.9
+      ],
+      "source": "client annotation on satellite imagery, 2026-08-05",
+      "note": "display position: pulled toward the outdoor cluster for a joint frame; surveyed centre (-130.57, 49.12)"
+    },
+    {
+      "id": "court-5",
+      "name": "Court 5",
+      "sub": null,
+      "surface": "blue",
+      "indoor": true,
+      "center": [
+        -49.1,
+        24.81
+      ],
+      "length": 20.0,
+      "width": 10.0,
+      "yaw": -0.4119,
+      "yawDeg": -23.6,
+      "bay": [
+        28.6,
+        10.9
+      ],
+      "source": "client annotation on satellite imagery, 2026-08-05",
+      "note": "display position: pulled toward the outdoor cluster for a joint frame; surveyed centre (-130.57, 49.12)"
+    }
+  ],
+  "halls": [
+    {
+      "name": "Indoorhal Bondgenotenlaan",
+      "height": 8.0,
+      "yaw": -0.4119,
+      "courts": [
+        "court-4",
+        "court-5"
+      ],
+      "points": [
+        [
+          -69.43,
+          14.0
+        ],
+        [
+          -37.36,
+          -0.01
+        ],
+        [
+          -31.51,
+          13.37
+        ],
+        [
+          -37.38,
+          15.93
+        ],
+        [
+          -33.13,
+          25.64
+        ],
+        [
+          -59.34,
+          37.09
+        ],
+        [
+          -69.43,
+          14.0
+        ]
+      ],
+      "source": "client annotation on satellite imagery, 2026-08-05",
+      "note": "display position: pulled toward the outdoor cluster for a joint frame; surveyed centre (-130.57, 49.12)"
     }
   ],
   "context": [
@@ -646,8 +734,12 @@
   "roads": [
     {
       "name": "Bondgenotenlaan",
-      "width": 3.5,
+      "width": 5.5,
       "points": [
+        [
+          150.0,
+          12.6
+        ],
         [
           53.7,
           -23.4
@@ -671,8 +763,13 @@
         [
           -111.1,
           16.2
+        ],
+        [
+          -260.0,
+          64.0
         ]
-      ]
+      ],
+      "note": "ends extrapolated and width exaggerated for display: the modeled road must never stop inside the frame, and at true width it was a hairline"
     }
   ]
 }

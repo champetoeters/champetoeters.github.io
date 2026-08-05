@@ -12,20 +12,28 @@
 (function (root) {
   'use strict';
 
-  /* Draw, fixed by the schedule: which group place fills which QF seat. */
+  /* Draw, fixed by the schedule: which group place fills which QF seat.
+     Eight groups, eight winners, eight seats — the second index is 0 for every
+     one of them. No runner-up advances: on five courts the day only holds a
+     4+2+1 knockout, so finishing second in your group is the end of it. (With
+     four groups it used to be winner + runner-up; the [g, place] shape is kept
+     so a future draw can seat a second place again without new code.) */
   var GROUP_SLOT = {
-    QF1A: ['A', 0], QF1B: ['B', 1],   /* m25 */
-    QF2A: ['B', 0], QF2B: ['A', 1],   /* m26 */
-    QF3A: ['C', 0], QF3B: ['D', 1],   /* m27 */
-    QF4A: ['D', 0], QF4B: ['C', 1]    /* m28 */
+    QF1A: ['A', 0], QF1B: ['B', 0],   /* m49 */
+    QF2A: ['C', 0], QF2B: ['D', 0],   /* m50 */
+    QF3A: ['E', 0], QF3B: ['F', 0],   /* m51 */
+    QF4A: ['G', 0], QF4B: ['H', 0]    /* m52 */
   };
 
   /* Slots filled by the winner of an earlier match. Listed in dependency
-     order: the finale's sources are resolved before it is read. */
+     order: the finale's sources are resolved before it is read.
+     ⚠ These are match ids from schedule.json — 48 group matches come first, so
+     they shift whenever the draw size changes. tools/gendata.py prints the
+     count; tools/bracket.test.mjs fails loudly if they drift. */
   var WINNER_SLOT = {
-    SF1A: 'm25', SF1B: 'm26',
-    SF2A: 'm27', SF2B: 'm28',
-    FA: 'm29', FB: 'm30'
+    SF1A: 'm49', SF1B: 'm50',
+    SF2A: 'm51', SF2B: 'm52',
+    FA: 'm53', FB: 'm54'
   };
 
   var SLOT_NAMES = Object.keys(GROUP_SLOT).concat(Object.keys(WINNER_SLOT));

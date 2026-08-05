@@ -3,8 +3,8 @@
   "results": {},
   "teams": [],
   "counts": {
-    "registrations": 8,
-    "slots": 16
+    "registrations": 16,
+    "slots": 32
   },
   "adminDemo": {
     "orders": [
@@ -35,13 +35,21 @@
     ],
     "teamPaid": {
       "t01": true,
-      "t02": true,
+      "t02": false,
       "t03": true,
-      "t04": true,
+      "t04": false,
       "t05": true,
       "t06": false,
-      "t07": false,
-      "t08": false
+      "t07": true,
+      "t08": false,
+      "t09": true,
+      "t10": false,
+      "t11": true,
+      "t12": false,
+      "t13": true,
+      "t14": false,
+      "t15": true,
+      "t16": false
     },
     "registrations": []
   }

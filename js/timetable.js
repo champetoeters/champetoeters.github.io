@@ -4,7 +4,7 @@
    One job (BRIEF §0): let someone find out WHEN and WHERE they play. A row is
    time · baan · names and nothing else; the sheet is padel only, 14:00 → 20:30,
    broken by nothing but the four phase headings. Exactly one control exists,
-   and only on mobile: the court switcher, because three columns do not fit
+   and only on mobile: the court switcher, because five columns do not fit
    390px.
 
    All visible copy is Dutch and is written here or in the fragment. The data
@@ -58,19 +58,22 @@ window.Sections = window.Sections || {};
 
   /* Knockout ids never resolve to a team. Spelled out so a placeholder reads as
      a real, understandable entry rather than a code. */
+  /* Must agree with GROUP_SLOT in bracket.js: eight groups, eight winners, no
+     runners-up. A seat labelled "Tweede Groep …" that the bracket never fills
+     would sit there unresolved all evening. */
   var KO = {
-    QF1A: 'Winnaar Groep A',      QF1B: 'Tweede Groep B',
-    QF2A: 'Winnaar Groep B',      QF2B: 'Tweede Groep A',
-    QF3A: 'Winnaar Groep C',      QF3B: 'Tweede Groep D',
-    QF4A: 'Winnaar Groep D',      QF4B: 'Tweede Groep C',
+    QF1A: 'Winnaar Groep A',      QF1B: 'Winnaar Groep B',
+    QF2A: 'Winnaar Groep C',      QF2B: 'Winnaar Groep D',
+    QF3A: 'Winnaar Groep E',      QF3B: 'Winnaar Groep F',
+    QF4A: 'Winnaar Groep G',      QF4B: 'Winnaar Groep H',
     SF1A: 'Winnaar Kwartfinale 1', SF1B: 'Winnaar Kwartfinale 2',
     SF2A: 'Winnaar Kwartfinale 3', SF2B: 'Winnaar Kwartfinale 4',
     FA:   'Winnaar Halve finale 1', FB:   'Winnaar Halve finale 2'
   };
 
   /* One heading per phase, keyed on m.round — NOT on m.roundLabel. The schedule
-     interleaves the four groups, so the labels cycle A,D,C,B down the sheet and
-     keying on them emits eight false phase boundaries. Never printed on a row. */
+     interleaves the eight groups, so the labels cycle down the sheet and keying
+     on them emits dozens of false phase boundaries. Never printed on a row. */
   var PHASE = {
     group: 'Groepswedstrijden',
     qf: 'Kwartfinales',
@@ -160,7 +163,14 @@ window.Sections = window.Sections || {};
      Flat plan drawn from venue.json — sits behind the canvas and keeps the
      hover feedback meaningful if the 3D never arrives. */
 
-  function buildPlan(venue) {
+  /* The plan is drawn in venue metres, y flipped so north is up, and the
+     viewBox is the site's own extent — which the two indoor courts stretched
+     from ~50 m across to ~170 m. It still fits, because the panel scales it, but
+     the hall outline has to be in it: without the shell the pair reads as two
+     courts adrift in the corner, and the whole point of the plan is that it says
+     where things are. The `pad` is what keeps the 20 m courts from touching the
+     edge; it is in metres, like everything else here. */
+  function buildPlan(venue, names) {
     if (!venue || !venue.courts) return '';
     var pts = [], shapes = [];
     venue.courts.forEach(function (c) {
@@ -170,10 +180,25 @@ window.Sections = window.Sections || {};
         var x = cx + d[0] * co - d[1] * s, y = cy + d[0] * s + d[1] * co;
         corner.push([x, -y]); pts.push([x, -y]);
       });
+      /* The number the CLUB uses, not the venue index. venue.json is numbered as
+         OSM found the courts and the club renumbered them — court-1 is Baan 2 —
+         so printing i+1 put a "1" on the court this very table calls Baan 2.
+         Falls back to the index only if no display name was passed. */
+      var nm = names && names[c.id];
+      var dig = nm && /(\d+)/.exec(nm);
       shapes.push({
-        id: c.id, corner: corner, c: [cx, -cy],
+        id: c.id, corner: corner, c: [cx, -cy], num: dig ? dig[1] : null,
         net: [[cx + W * s, -(cy - W * co)], [cx - W * s, -(cy + W * co)]]
       });
+    });
+
+    var halls = ((venue.halls) || []).filter(function (h) {
+      return h && h.points && h.points.length > 2;
+    }).map(function (h) {
+      return h.points.map(function (p) {
+        pts.push([p[0], -p[1]]);
+        return p[0].toFixed(2) + ',' + (-p[1]).toFixed(2);
+      }).join(' ');
     });
 
     var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
@@ -181,20 +206,26 @@ window.Sections = window.Sections || {};
     var x0 = Math.min.apply(null, xs) - pad, x1 = Math.max.apply(null, xs) + pad;
     var y0 = Math.min.apply(null, ys) - pad, y1 = Math.max.apply(null, ys) + pad;
 
+    /* Behind the courts, so a hover highlight always wins over the shell. */
+    var hg = halls.map(function (poly) {
+      return '<polygon class="pl-hall" points="' + poly + '"/>';
+    }).join('');
+
     var g = shapes.map(function (s, i) {
       var poly = s.corner.map(function (p) { return p[0].toFixed(2) + ',' + p[1].toFixed(2); }).join(' ');
       return '<g class="pl-court" data-court="' + esc(s.id) + '">' +
         '<polygon class="pl-face" points="' + poly + '"/>' +
         '<line class="pl-net" x1="' + s.net[0][0].toFixed(2) + '" y1="' + s.net[0][1].toFixed(2) +
         '" x2="' + s.net[1][0].toFixed(2) + '" y2="' + s.net[1][1].toFixed(2) + '"/>' +
-        '<text class="pl-num" x="' + s.c[0].toFixed(2) + '" y="' + s.c[1].toFixed(2) + '">' + (i + 1) + '</text>' +
+        '<text class="pl-num" x="' + s.c[0].toFixed(2) + '" y="' + s.c[1].toFixed(2) + '">' +
+        esc(s.num || (i + 1)) + '</text>' +
         '</g>';
     }).join('');
 
     return '<svg class="pl" viewBox="' + x0.toFixed(2) + ' ' + y0.toFixed(2) + ' ' +
       (x1 - x0).toFixed(2) + ' ' + (y1 - y0).toFixed(2) +
       '" preserveAspectRatio="xMidYMid meet" role="img" aria-hidden="true" focusable="false">' +
-      g + '</svg>';
+      hg + g + '</svg>';
   }
 
   /* ===================================================================== */
@@ -236,12 +267,19 @@ window.Sections = window.Sections || {};
     var elPlan = $('[data-tt-plan]'), elCanvas = $('[data-tt-canvas]');
     if (!elTbody) return;
 
-    /* ---- the one control: mobile court switcher -------------------------- */
+    /* ---- the one control: mobile court switcher --------------------------
+       Six segments across 390px, so the visible label is the short form from
+       courts.json ("B1") and the full name goes in aria-label — a screen reader
+       hears "Baan 1", never "B1". Falls back to the full name if a court has no
+       `short`, which then simply wraps rather than disappearing. */
     elSwitch.innerHTML =
-      '<button type="button" class="tt-seg" data-v="all" aria-pressed="true">Alle banen</button>' +
+      '<button type="button" class="tt-seg" data-v="all" aria-pressed="true"' +
+      ' aria-label="Alle banen">Alle</button>' +
       courts.map(function (c) {
-        return '<button type="button" class="tt-seg" data-v="' + esc(c.id) + '" aria-pressed="false">' +
-          esc(courtName[c.id]) + '</button>';
+        var full = courtName[c.id];
+        return '<button type="button" class="tt-seg" data-v="' + esc(c.id) + '"' +
+          ' aria-pressed="false" aria-label="' + esc(full) + '">' +
+          esc(c.short || full) + '</button>';
       }).join('');
 
     /* ---- table head: the court name, nothing else ------------------------ */
@@ -435,7 +473,7 @@ window.Sections = window.Sections || {};
       });
     }
 
-    /* Resting state: the wide shot of all three courts, nothing selected.
+    /* Resting state: the wide shot of all five courts, nothing selected.
        Choosing one court on mobile is the exception — the switcher said "just
        this one", so the 3D frames it with whatever is on it now or next. */
     var shown = 'all';
@@ -504,7 +542,7 @@ window.Sections = window.Sections || {};
     });
 
     /* ---- one tab stop for the whole sheet --------------------------------
-       31 rows are 31 buttons, and the button only exists to light up the 3D —
+       55 rows are 55 buttons, and the button only exists to light up the 3D —
        tabbing through all of them to reach the DJ bill is a poor trade. So the
        grid is one stop and the arrow keys move inside it, as a draw sheet
        should. `rover` survives a repaint because it is keyed on the match id. */
@@ -518,7 +556,7 @@ window.Sections = window.Sections || {};
       buttons.forEach(function (b) { b.tabIndex = b === at ? 0 : -1; });
     }
 
-    /* ---- court switcher (mobile only; desktop shows all three) ----------- */
+    /* ---- court switcher (mobile only; desktop shows all five) ------------ */
     function applyCourt() {
       buttons.forEach(function (b) {
         var off = shown !== 'all' && b.dataset.court !== shown;
@@ -656,7 +694,10 @@ window.Sections = window.Sections || {};
       .then(function (res) { return res.ok ? res.json() : null; })
       .catch(function () { return null; })
       .then(function (venue) {
-        if (venue && elPlan) { elPlan.innerHTML = buildPlan(venue); planNode = elPlan; }
+        if (venue && elPlan) {
+          elPlan.innerHTML = buildPlan(venue, courtName);
+          planNode = elPlan;
+        }
         /* courtNames: venue.json numbers the courts as OSM found them, which
            is not how the club names them. The plates must read what this
            table reads. */

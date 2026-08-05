@@ -45,7 +45,7 @@
   },
   {
     "id": "t05",
-    "group": "A",
+    "group": "E",
     "confirmed": true,
     "name": "De Kurkentrekkers",
     "players": [
@@ -56,7 +56,7 @@
   },
   {
     "id": "t06",
-    "group": "B",
+    "group": "F",
     "confirmed": true,
     "name": "Bandeja Boys",
     "players": [
@@ -67,7 +67,7 @@
   },
   {
     "id": "t07",
-    "group": "C",
+    "group": "G",
     "confirmed": true,
     "name": "De Netvliegers",
     "players": [
@@ -78,7 +78,7 @@
   },
   {
     "id": "t08",
-    "group": "D",
+    "group": "H",
     "confirmed": true,
     "name": "Kuurnse Knallers",
     "players": [
@@ -90,57 +90,217 @@
   {
     "id": "t09",
     "group": "A",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Toeterpompen",
+    "players": [
+      "Lars Goossens",
+      "Juliette Mertens"
+    ],
+    "club": "TC Leiemeers"
   },
   {
     "id": "t10",
     "group": "B",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Bierpalmen",
+    "players": [
+      "Ruben Leclercq",
+      "Sofie Vanhoutte"
+    ],
+    "club": "Padel Kortrijk"
   },
   {
     "id": "t11",
     "group": "C",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Toeters & Ballen",
+    "players": [
+      "Mathis Claes",
+      "Noor Wouters"
+    ],
+    "club": "Harelbeke Padel"
   },
   {
     "id": "t12",
     "group": "D",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Leieleeuwen",
+    "players": [
+      "Elias Dubois",
+      "Marie Depuydt"
+    ],
+    "club": "Deerlijk PC"
   },
   {
     "id": "t13",
-    "group": "A",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "group": "E",
+    "confirmed": true,
+    "name": "Padel Patatjes",
+    "players": [
+      "Thibault Maes",
+      "Anouk Verhoeven"
+    ],
+    "club": "Waregem Padel"
   },
   {
     "id": "t14",
-    "group": "B",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "group": "F",
+    "confirmed": true,
+    "name": "De Buitenspelers",
+    "players": [
+      "Matteo Willems",
+      "Julie De Ridder"
+    ],
+    "club": "Izegem Racket"
   },
   {
     "id": "t15",
-    "group": "C",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "group": "G",
+    "confirmed": true,
+    "name": "De Glazen Muur",
+    "players": [
+      "Lucas Boonen",
+      "Fleur Vanden Bossche"
+    ],
+    "club": "Menen Padel"
   },
   {
     "id": "t16",
+    "group": "H",
+    "confirmed": true,
+    "name": "Kuurnse Kadees",
+    "players": [
+      "Seppe Deprez",
+      "Lotte Van Acker"
+    ],
+    "club": "TC Leiemeers"
+  },
+  {
+    "id": "t17",
+    "group": "A",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t18",
+    "group": "B",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t19",
+    "group": "C",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t20",
     "group": "D",
     "confirmed": false,
     "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t21",
+    "group": "E",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t22",
+    "group": "F",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t23",
+    "group": "G",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t24",
+    "group": "H",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t25",
+    "group": "A",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t26",
+    "group": "B",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t27",
+    "group": "C",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t28",
+    "group": "D",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t29",
+    "group": "E",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t30",
+    "group": "F",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t31",
+    "group": "G",
+    "confirmed": false,
+    "players": [],
+    "club": null,
+    "label": "Vrije plaats"
+  },
+  {
+    "id": "t32",
+    "group": "H",
+    "confirmed": false,
+    "players": [],
+    "club": null,
     "label": "Vrije plaats"
   }
 ]

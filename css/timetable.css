@@ -30,14 +30,11 @@
      the ramp starts. Keep the two in step — it is a real coupling. */
   --tt-tail: clamp(72px, 8vw, 116px);   /* the footer sits close under the sheet (client) */
 
-  /* How far BEFORE the end of the schedule the sticky venue panel lets go.
-     A sticky box is constrained by its containing block minus its own
-     margins, so a bottom margin on the panel — cancelled again on the
-     schedule so the layout does not move (see the mobile block) — buys an
-     early release without adding a pixel of empty page. That is what keeps
-     the 3D from still being frozen at the top of the phone while the DJ bill
-     is already on screen. */
-  --tt-release: clamp(150px, 20vh, 240px);
+  /* How far BEFORE the end of the schedule the sticky venue panel lets go —
+     set on .tt-body with the rest of the layout (a sticky box is constrained
+     by its containing block minus its own margins; the bottom margin on the
+     panel is cancelled again on the schedule, buying an early release without
+     adding a pixel of empty page). */
 
   position: relative;
   isolation: isolate;
@@ -104,36 +101,85 @@
   font-size: clamp(1.3rem, 4.4vw, 2.6rem); letter-spacing: .07em;
 }
 
-/* ------------------------------------------------------------ body grid */
+/* ------------------------------------------------------------ body layout */
 
-/* Column ceiling is measured: the longest tie ("Vanden Berghe & De Smet" vs
-   "Depuydt & De Ridder") must not wrap. Wider venue column and the schedule
-   starts breaking over two lines. */
+/* ONE layout at every width: the venue panel is a full-width landscape strip
+   pinned above the schedule, and the schedule scrolls under it. It was a
+   portrait side column on desktop until the resting 3D became the fixed
+   south view (courts3d.js REST_AZ) — that shot is a wide horizontal band, and
+   in a 292px portrait column it floated tiny between two slabs of empty
+   tarmac. The client called it: same panel-on-top arrangement as the phone,
+   landscape at every size.
+
+   Side effect worth knowing: the five schedule columns now get the whole
+   1180px container instead of sharing it with the panel, so the 1200px agenda
+   breakpoint (below) is comfortably safe rather than exactly measured.
+
+   Flex, not grid: a sticky grid item is trapped in its own grid area and has
+   nothing to travel through. A flex item's containing block is the flex
+   container, so the panel pins for the length of .tt-body and releases at
+   the end of the section on its own. */
 .tt-body {
-  display: grid;
-  gap: 20px clamp(24px, 2.6vw, 40px);
-  grid-template-columns: minmax(0, 1fr) clamp(300px, 28vw, 405px);
-  grid-template-areas: "grid venue";
-  align-items: start;
+  --tt-3d-h: clamp(240px, 34vh, 320px);
+  /* Enough lead that the panel is already moving before the DJ bill can
+     appear at the bottom of the screen: panel height + lead + tail must
+     clear the viewport. Measured at 390x844. */
+  --tt-release: clamp(300px, 40vh, 380px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
 }
 .tt-body > * { min-width: 0; }
-/* The margin costs no layout here: the grid row is sized by the schedule
-   column, which is far taller than the panel. It only shortens the sticky
-   travel, so the panel is already on its way out before the bill arrives. */
-.tt-venue    { grid-area: venue; position: sticky; top: var(--tt-stick, 24px);
-               margin-bottom: var(--tt-release); }
-.tt-gridwrap { grid-area: grid; min-width: 0; }
-.tt-switch   { display: none; }        /* desktop shows all three courts */
+.tt-switch   { order: 1; display: none; }   /* desktop shows all five courts */
+.tt-venue {
+  order: 2;
+  position: sticky;
+  top: 0;
+  z-index: 4;                 /* the schedule AND its sticky headers pass behind */
+  /* Opaque and exactly as wide as the rows, so nothing can show beside it.
+     The padding is the clear margin above and below: without it a sliver of
+     a row rides along the panel's edge as it scrolls under. */
+  padding: 10px 0 12px;
+  background: #0D1637;
+  /* The early release (see --tt-release). The margin is taken straight back
+     off the schedule below it, so .tt-body is exactly as tall as before and
+     nothing on the page moves — only the sticky constraint rectangle gets
+     shorter. Both halves must always change together. */
+  margin-bottom: var(--tt-release);
+}
+.tt-gridwrap { order: 3; min-width: 0; margin-top: calc(-1 * var(--tt-release)); }
+/* A row leaving under the panel would otherwise be sliced mid-glyph. 18px
+   was shorter than one time heading, so a "16:00" was cut in half instead of
+   fading; 40px is longer than the tallest line in the sheet. Weighted so the
+   first half still hides the row and only the tail is see-through. */
+.tt-venue::after {
+  content: "";
+  position: absolute; inset: 100% 0 auto; height: 40px;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    #0D1637 0%, rgb(13 22 55 / .92) 30%, rgb(13 22 55 / .55) 62%, rgb(13 22 55 / 0) 100%);
+}
+/* Keyboard focus must keep the panel's full height clear of itself. */
+.tt-m,
+.tt-row { scroll-margin-top: calc(var(--tt-3d-h) + 34px); }
+/* A little more height on a desktop viewport — same landscape strip, room
+   for the labels to breathe. Complements the max-width:1200px agenda query. */
+@media (min-width: 1200.02px) {
+  .tt-body { --tt-3d-h: clamp(280px, 38vh, 420px); }
+}
 
 /* --------------------------------------------------------------- the grid */
 
 .tt-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
-.tt-col--time { width: 68px; }
+.tt-col--time { width: 58px; }
 
 /* Sticky court names — the sheet is tall. Never blurred, so a scroll-linked
    position is free (BRIEF §4.2/§4.4). */
 .tt-hcell {
-  position: sticky; top: 0; z-index: 3;
+  /* Under the venue panel, which is sticky above the table (z-index 4): the
+     headers pin against its bottom edge; 22px is the panel's own padding. */
+  position: sticky; top: calc(var(--tt-3d-h) + 22px); z-index: 3;
   padding: 14px 10px 12px;
   text-align: left;
   font-family: var(--tt-serif);
@@ -292,18 +338,13 @@
 
 /* --------------------------------------------------------- 3D / plan */
 
-/* Portrait (w/h < 1) keeps courts3d on its wide 50° lens, which keeps the
-   court plates inside the frame; at 1/1 it switches to 38° and clips them.
-   Desktop is sized in viewport height so no dead column is left beside the
-   schedule, capped so a very tall window is not all sky and tarmac. */
+/* One height rule at every width: the strip the sticky panel is allowed
+   (--tt-3d-h, set with the body layout above). ~287px at 390x844, so ~500px
+   of schedule stays in view under it. */
 .tt-venue__stage {
   position: relative; width: 100%;
-  /* Capped well under the viewport: at a full 100vh the scene sat in the top
-     half of the plate and the bottom third was empty tarmac, which is what
-     made the block read as running on past the end of the schedule and into
-     the bill below. */
-  height: min(calc(100vh - 2 * var(--tt-stick, 24px)), 560px);
-  min-height: 420px;
+  height: var(--tt-3d-h);
+  min-height: 0;
   border-radius: var(--r-xl, 26px); overflow: hidden;
   background: linear-gradient(180deg, #16265A, #0C142F);
   border: 1px solid rgb(var(--tt-haze) / .18);
@@ -317,14 +358,26 @@
 .tt-venue[data-mode="plan"] .tt-venue__canvas { opacity: 0; }
 
 .pl { width: 100%; height: 100%; }
+/* The indoor hall. Deliberately quieter than a court — it is the reason Baan 4
+   and 5 sit off on their own, not a thing you can pick. */
+.pl-hall {
+  fill: rgb(var(--tt-paper) / .05);
+  stroke: rgb(var(--tt-haze) / .3); stroke-width: .3;
+  stroke-dasharray: 3 2; vector-effect: non-scaling-stroke;
+}
 .pl-face {
   fill: rgb(58 90 151 / .4);
   stroke: rgb(var(--tt-haze) / .55); stroke-width: .34; vector-effect: non-scaling-stroke;
   transition: fill .18s ease, stroke .18s ease;
 }
 .pl-net { stroke: rgb(var(--tt-paper) / .4); stroke-width: .3; vector-effect: non-scaling-stroke; }
+/* Sized in viewBox units, i.e. METRES: 5.2 is a 5.2 m tall numeral, about half a
+   court's width, which is as large as it can be and still sit inside the court it
+   labels. It is small on screen now that the viewBox spans the whole 170 m site,
+   and it cannot be fixed by growing the glyph — this is the WebGL-failure
+   fallback, and its job is which-court-is-where, not legibility at a glance. */
 .pl-num {
-  font-family: var(--tt-serif); font-size: 4.4px; letter-spacing: .06em;
+  font-family: var(--tt-serif); font-size: 5.2px; letter-spacing: .06em;
   fill: rgb(var(--tt-paper) / .55); text-anchor: middle; dominant-baseline: central;
   transition: fill .18s ease;
 }
@@ -332,84 +385,36 @@
 .pl-court.is-active .pl-num { fill: rgb(var(--tt-ball)); }
 
 /* ======================================================================
-   MOBILE — 390px. The sheet becomes a time-first agenda: a time, then the
-   courts that have a match at that time. The ARIA roles in the markup keep
-   the table semantics through display:block.
+   NARROW — 390px up to 1200px. The sheet becomes a time-first agenda: a time,
+   then the courts that have a match at that time. The ARIA roles in the markup
+   keep the table semantics through display:block.
+
+   The threshold was 900px while there were three court columns. Five need
+   ~161px each to hold a team name on one line, and 5 x 161 + the time column +
+   the venue panel does not fit inside 1200px however the space is divided —
+   below that the grid was breaking names mid-word. So the agenda now covers the
+   whole band down from 1200, which includes a landscape iPad. Nothing in here
+   was written for 390px only; the panel geometry is in vh and the rows are a
+   plain list, so it stretches without a second set of tuning.
    ==================================================================== */
 
-@media (max-width: 900px) {
-  /* Map/list: the 3D pins to the top of the section and the schedule scrolls
-     under it, so it is neither a toll gate above the 14:00 row nor buried at
-     the bottom where the hover highlight lit a court nobody could see.
+@media (max-width: 1200px) {
+  /* The panel-above-the-schedule layout is now the DEFAULT at every width —
+     this block only swaps the five-column table for the time-first agenda
+     and shows the court switcher. */
 
-     Flex, not grid: a sticky grid item is trapped in its own grid area and has
-     nothing to travel through. A flex item's containing block is the flex
-     container, so the panel pins for the length of .tt-body and releases at
-     the end of the section on its own. */
-  .tt-body {
-    --tt-3d-h: clamp(240px, 34vh, 320px);
-    /* Enough lead that the panel is already moving before the DJ bill can
-       appear at the bottom of the screen: panel height + lead + tail must
-       clear the viewport. Measured at 390x844. */
-    --tt-release: clamp(300px, 40vh, 380px);
-    display: flex;
-    flex-direction: column;
-    /* Must be re-stated. align-items:start from the desktop grid rule is the
-       CROSS axis in a column flexbox: it shrink-wraps every item horizontally
-       and the panel, whose only width comes from width:100%, collapses to its
-       two borders. */
-    align-items: stretch;
-    gap: 14px;
-  }
-  .tt-switch   { order: 1; }
-  .tt-venue    { order: 2; }
-  .tt-gridwrap { order: 3; }
-
-  .tt-venue {
-    position: sticky;
-    top: 0;
-    z-index: 2;                 /* the schedule passes behind it, never through */
-    /* Opaque and exactly as wide as the rows, so nothing can show beside it.
-       The padding is the clear margin above and below: without it a sliver of
-       a row rides along the panel's edge as it scrolls under. */
-    padding: 10px 0 12px;
-    background: #0D1637;
-    margin-top: 0;
-    /* The early release (see --tt-release). The margin is taken straight back
-       off the schedule below it, so .tt-body is exactly as tall as before and
-       nothing on the page moves — only the sticky constraint rectangle gets
-       shorter. Both halves must always change together. */
-    margin-bottom: var(--tt-release);
-  }
-  .tt-gridwrap { margin-top: calc(-1 * var(--tt-release)); }
-  /* A row leaving under the panel would otherwise be sliced mid-glyph. 18px
-     was shorter than one time heading, so a "16:00" was cut in half instead of
-     fading; 40px is longer than the tallest line in the sheet. Weighted so the
-     first half still hides the row and only the tail is see-through. */
-  .tt-venue::after {
-    content: "";
-    position: absolute; inset: 100% 0 auto; height: 40px;
-    pointer-events: none;
-    background: linear-gradient(180deg,
-      #0D1637 0%, rgb(13 22 55 / .92) 30%, rgb(13 22 55 / .55) 62%, rgb(13 22 55 / 0) 100%);
-  }
-  /* ~287px at 390x844, so ~500px of schedule stays in view under it. */
-  .tt-venue__stage { height: var(--tt-3d-h); min-height: 0; aspect-ratio: auto; }
-
-  /* Nothing here scrolls programmatically, but keyboard focus does: anything
-     focusable keeps the panel's full height clear of itself. */
-  .tt-m,
-  .tt-row { scroll-margin-top: calc(var(--tt-3d-h) + 34px); }
-
-  /* the one control */
+  /* the one control — six segments now: Alle + five banen. Six full "Baan n"
+     labels do not fit 390px, so the buttons print courts.json's `short` ("B1")
+     and carry the full name in aria-label. Equal columns, so "Alle" gets the
+     same 1/6 as the rest and the pill stays a pill. */
   .tt-switch {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px;
     padding: 3px;
     border: 1px solid var(--tt-rule);
     border-radius: 999px;
   }
   .tt-seg {
-    min-height: 44px; padding: 6px 4px;
+    min-height: 44px; padding: 6px 2px;
     border: 0; border-radius: 999px; background: transparent;
     color: rgb(var(--tt-paper) / .8); cursor: pointer;
     font: 600 .8rem/1.2 var(--tt-sans); letter-spacing: .04em;
