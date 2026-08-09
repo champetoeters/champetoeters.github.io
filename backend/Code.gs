@@ -7,8 +7,8 @@
  *  3. Left rail → Project Settings → Script properties → Add script property,
  *     three times:
  *        ADMIN_PASSWORD  the password the organisers type in /admin/
- *        PAY_IBAN        optional — defaults to BE37 9731 8485 2328
- *        PAY_HOLDER      e.g. Champetoeters
+ *        PAY_IBAN        optional — defaults to IE75 SUMU 9903 6513 1743 98
+ *        PAY_HOLDER      the name on the account, e.g. Sebbe Benoit
  *     Optional: GITHUB_TOKEN — a fine-grained token (Contents: read/write on
  *     the champetoeters.github.io repo only). With it, every score/registration
  *     is pushed to GitHub as static state.json and visitors' phones read THAT,
@@ -116,7 +116,7 @@ var STATE_REPO = 'champetoeters/champetoeters.github.io';
 var STATE_BRANCH = 'state';
 var STATE_PATH = 'state.json';
 
-var CONTACT_EMAIL = 'padel@tcleiemeers.be';
+var CONTACT_EMAIL = 'event@champetoeters.be';
 var CONTACT_PHONE = '+32 476 95 35 33';
 var EVENT_NAME = 'CHAMPETOETERS & FRIENDS';
 var EVENT_WHEN = 'zaterdag 5 september 2026, 14:00 → 02:00';
@@ -612,8 +612,8 @@ function cleanResult_(sets, winner) {
 
 /* -------------------------------------------------------------------- mail */
 
-function payIban_() { return String(props_().getProperty('PAY_IBAN') || 'BE37 9731 8485 2328').trim(); }
-function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Champetoeters').trim(); }
+function payIban_() { return String(props_().getProperty('PAY_IBAN') || 'IE75 SUMU 9903 6513 1743 98').trim(); }
+function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Sebbe Benoit').trim(); }
 
 /* `mededeling` is optional. A team inschrijving has one (the team name); a
    ticket order has NONE — no buyer name is asked, and the internal TKT-nn is

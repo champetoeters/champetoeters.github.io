@@ -18,17 +18,17 @@ window.CHAMP_CONFIG = {
      apiEndpoint directly. */
   stateUrl: "https://raw.githubusercontent.com/champetoeters/champetoeters.github.io/state/state.json",
 
-  apiEndpoint: "https://script.google.com/macros/s/AKfycbwP7UgY4GRaunT597IgpGot0suHRIVg_ZTLyaMBBu5BqYb8R0zBBM-X5RroC0H9pZHs/exec",
+  apiEndpoint: "https://script.google.com/macros/s/AKfycbwPbYUoLCogNGAz3so-7ov6c-8gHe8G4enqG6_13sAq7LfV6B93bQy2xBy1boRYX7Of/exec",
 
   /* Manual payments: bank transfer or at the event. The IBAN fills the payment
      panel (with a copy button); leave it empty until it is known and the panel
      says the rekeningnummer follows per mail instead. */
   payment: {
-    iban: "BE37 9731 8485 2328",
-    holder: "Champetoeters",
+    iban: "IE75 SUMU 9903 6513 1743 98",
+    holder: "Sebbe Benoit",
   },
 
-  contactEmail: "padel@tcleiemeers.be",
+  contactEmail: "event@champetoeters.be",
   contactPhone: "+32 476 95 35 33",
 };
 
