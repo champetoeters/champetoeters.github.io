@@ -3,7 +3,7 @@
 One backend, two implementations with **identical behaviour**:
 
 - `backend/Code.gs` — Google Apps Script web app (production). Storage = Google Sheet,
-  email = MailApp, admin password = Script Properties key `ADMIN_PASSWORD`.
+  email = GmailApp, admin password = Script Properties key `ADMIN_PASSWORD`.
 - `tools/devserver.js` — Node dev stub (local testing). Storage = JSON file
   `server-data/state.json` (gitignored), email = appended to `server-data/outbox.jsonl`.
   Also serves `site/` on :8080 and exposes the API under the SAME origin at `/api`.
@@ -28,7 +28,7 @@ runtime, so any crowd can watch. A failed/empty static read falls back to
   `{ "ok": false, "error": "<code>" }`. Error codes: `bad-request`, `unauthorized`,
   `full`, `women-full`, `not-found`, `too-many`, `closed`, `server`.
 - `too-many` = an abuse cap was hit on a public write (`register` / `order`):
-  max 3 rows per e-mail address per tab (lowercased, +tag stripped), max 120 rows per tab per calendar day (anti-spam, not a sales limit; mail past Google's ~100/day is best-effort).
+  max 3 rows per e-mail address per tab (lowercased, +tag stripped), max 500 rows per tab per calendar day (anti-spam, not a sales limit; mail past the account's daily quota is best-effort).
   Both are protections for the Sheet and the mail quota, not user-facing states;
   the client may show the generic "probeer opnieuw" failure.
 - All server responses include no secrets. The public actions never return emails,
@@ -175,6 +175,7 @@ Password checked on every call against Script Property `ADMIN_PASSWORD`
 | `setTicketPaid` | `ref, seq, paid` | tick ONE named ticket in an order. `seq` is 1-based, as /admin/ lists them. Out of range → `{ok:false,error:"bad-request"}`; unknown ref → `not-found` |
 | `deleteOrder` | `ref` | remove the row → `{ok:true}`. Unknown ref → `{ok:false,error:"not-found"}` |
 | `resetAll` | – | wipe registrations, orders, results, payments (go-live cleanup) |
+| `mailQuota` | – | `{ok:true, remaining, sender}` — mail recipients LEFT today (not used; Apps Script exposes no used-counter) and the address that sends. GmailApp and MailApp share one allowance. 100/day = consumer **or Workspace still in trial**, 1500 = paid Workspace. The devserver twin answers with a stand-in 1500, since it sends nothing |
 
 The four add/delete ops are ordinary admin writes: password-checked, run inside the
 same lock as every other mutation, and drop the `?action=state` cache on success.
@@ -209,21 +210,25 @@ block. A register mail greets the players by name and carries a mededeling (the
 team name); an order mail greets nobody by name and carries NO mededeling — it
 lists the named tickets instead, and nobody is asked to type a reference:
 
-> Betalen kan op twee manieren:
-> • Overschrijving naar {IBAN} op naam van {HOLDER}[ met mededeling "{MEDEDELING}"].
+> Betalen doe je via overschrijving:
+> Naar {IBAN} op naam van {HOLDER}[ met mededeling "{MEDEDELING}"].
 
 {MEDEDELING} is the TEAM NAME for a register mail. An order mail has none, and
 the clause is left out entirely — the line ends after {HOLDER}.
-> • Of ter plaatse op het event (cash of Payconiq).
 > Nog niet betaald? Geen probleem — je plaats/tickets staan vast zodra we je
-> betaling ontvangen of je ter plaatse betaalt.
+> betaling ontvangen.
+
+Transfer is the ONLY payment route offered to a customer: no pay-at-the-event
+line anywhere in the mails or on the payment panel. (The organiser can still
+file a door sale as paid via `addOrder`/`setTicketPaid` — that is admin-side
+bookkeeping, not something the public copy advertises.)
 
 IBAN/HOLDER come from Script Properties `PAY_IBAN`, `PAY_HOLDER`. ⚠ Both have a
 HARDCODED fallback in `payIban_()` / `payHolder_()` (and the same in the dev stub):
 leaving the property **unset** does NOT disable the IBAN — it mails the fallback,
 which is the event's real account. Only an explicitly EMPTY `PAY_IBAN` produces the
-"Het rekeningnummer volgt nog — betalen kan ook ter plaatse." variant. Set both
-properties deliberately; do not rely on "unset" meaning "off".
+"Het rekeningnummer volgt nog." variant. Set both properties deliberately; do not
+rely on "unset" meaning "off".
 No Reply-To header: replies go to the sending account (the event's own address).
 Include contact line + venue/date footer.
 

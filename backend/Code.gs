@@ -105,13 +105,23 @@ var MAX_WOMEN_TEAMS = 6;
 
 /* register/order are unauthenticated and send mail, so they are capped: the
    same address may not pile up rows, and a whole day cannot be flooded (the
-   MailApp quota is about 100 mails a day). */
+   GmailApp quota is about 100 mails a day — measured 100 on this account
+   2026-08-09 via MailApp.getRemainingDailyQuota()). */
 var MAX_PER_EMAIL = 3;
-/* Anti-spam for the Sheet, NOT a sales limit (client decision). Mail beyond
-   Google's ~100/day quota is best-effort: the order still succeeds and the
-   confirmation screen carries every payment detail; only the mail is lost
-   (logged as mail-failed). */
-var MAX_PER_DAY = 120;
+/* Anti-spam for the Sheet, NOT a sales limit (client decision). Rows per tab
+   per calendar day, so it really only bounds ticket orders — registrations run
+   out of slots at TOTAL_SLOTS long before this. register/order are public and
+   unauthenticated and each row MAILS an address the caller chose, so removing
+   this ceiling would make the endpoint an open relay; MAX_PER_EMAIL does not
+   cover it (an attacker just varies the address). Raised 120 → 500 on
+   2026-08-09: 120 was picked to sit just above the then-assumed ~100/day mail
+   quota, and the paid Workspace tier lifted that to 1500, so the old number
+   only risked refusing a real buyer on launch night. A refusal answers
+   `too-many`, which tickets.js shows as its GENERIC failure — indistinguishable
+   from a network error, so the ceiling must stay clear of real volume. */
+var MAX_PER_DAY = 500;
+/* Log a warning once the day's mail allowance drops to this. */
+var MAIL_QUOTA_WARN = 20;
 var STATE_CACHE_KEY = 'state-v1';
 var STATE_CACHE_TTL = 60;
 
@@ -126,7 +136,6 @@ var STATE_BRANCH = 'state';
 var STATE_PATH = 'state.json';
 
 var CONTACT_EMAIL = 'event@champetoeters.be';
-var CONTACT_PHONE = '+32 476 95 35 33';
 var EVENT_NAME = 'CHAMPETOETERS & FRIENDS';
 var EVENT_WHEN = 'zaterdag 5 september 2026, 12:30 → 02:00';
 var EVENT_WHERE = 'TC Leiemeers, Luitenant-Generaal Gérardstraat 62, 8520 Kuurne';
@@ -649,21 +658,20 @@ function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Seb
 function paymentLines_(mededeling) {
   var iban = payIban_();
   var first = iban
-    ? '• Overschrijving naar ' + iban + ' op naam van ' + payHolder_() +
+    ? 'Naar ' + iban + ' op naam van ' + payHolder_() +
       (mededeling ? ' met mededeling "' + mededeling + '".' : '.')
-    : '• Het rekeningnummer volgt nog. Betalen kan ook ter plaatse.';
+    : 'Het rekeningnummer volgt nog. Je hoeft nu dus nog niets over te schrijven.';
   return [
-    'Betalen kan op twee manieren:',
+    'Betalen doe je via overschrijving:',
     first,
-    '• Of ter plaatse op het event (cash of Payconiq).',
     'Nog niet betaald? Geen probleem: je plaats/tickets staan vast zodra we je',
-    'betaling ontvangen of je ter plaatse betaalt.'
+    'betaling ontvangen.'
   ];
 }
 
 function footerLines_() {
   return [
-    'Vragen? Mail ' + CONTACT_EMAIL + ' of bel ' + CONTACT_PHONE + '.',
+    'Vragen? Mail ' + CONTACT_EMAIL + '.',
     '',
     EVENT_NAME + ' · ' + EVENT_WHEN,
     EVENT_WHERE
@@ -797,17 +805,43 @@ function escHtml_(s) {
 /* Returns whether the mail actually left: the response carries it as `mailed`
    so the confirmation screen never claims a mail that died on the quota. The
    entry itself stands either way — the screen shows every payment detail. */
+/* Run straight from the editor (Run ▸ mailQuota) to read the mail budget
+   without going through the web app. Same number as admin op "mailQuota".
+   NOTE what the reading means: Apps Script grants 100 recipients/day to
+   consumer accounts AND to Google Workspace accounts STILL IN TRIAL, and 1500
+   to a converted paid Workspace. So a reading at or under 100 on a paid plan
+   points at the subscription not having left trial, not at your usage. */
+function mailQuota() {
+  var left = MailApp.getRemainingDailyQuota();
+  Logger.log('sender:    ' + Session.getEffectiveUser().getEmail());
+  Logger.log('remaining: ' + left);
+  Logger.log(left > 100
+    ? 'cap is 1500 — paid Workspace, out of trial'
+    : 'cap is 100 unless mail already went out today — consumer or TRIAL Workspace');
+  return left;
+}
+
+/* GmailApp, NOT MailApp. MailApp's relay accepts a message from this account
+   and never transmits it: sendEmail returns without throwing, a copy is filed
+   back into the sender's own mailbox (Delivered-To: event@champetoeters.be on
+   a mail addressed to gmail.com), no bounce is raised, and the recipient — on
+   Gmail or anywhere else — gets nothing. GmailApp sends through the account's
+   own Gmail instead, the same path a hand-written mail takes, which arrives.
+   Verified 2026-08-09. Costs a broader OAuth scope: after pasting this, run
+   any function once in the editor to grant it, THEN redeploy. */
 function sendMail_(mail) {
   try {
     /* No replyTo: replies go to the account this script runs under — the
        event's own address. */
-    MailApp.sendEmail({
-      to: mail.to,
+    GmailApp.sendEmail(mail.to, mail.subject, mail.lines.join('\n'), {
       name: EVENT_NAME,
-      subject: mail.subject,
-      body: mail.lines.join('\n'),
       htmlBody: '<p>' + mail.lines.map(escHtml_).join('<br>') + '</p>'
     });
+    /* Early warning in the log tab: past the allowance every further
+       confirmation is lost (the row still stands, the screen still tells the
+       truth). Logged, not thrown — a low budget must never fail a booking. */
+    var left = MailApp.getRemainingDailyQuota();
+    if (left <= MAIL_QUOTA_WARN) log_('mail-quota-low', left + ' left today');
     return true;
   } catch (err) {
     log_('mail-failed', mail.to + ': ' + (err && err.message ? err.message : err));
@@ -1045,6 +1079,19 @@ function actAdmin_(body) {
   var op = String(body.op || '');
 
   if (op === 'login') return { ok: true };
+
+  /* Mail budget. GmailApp and MailApp draw on ONE shared daily allowance, so
+     MailApp.getRemainingDailyQuota() reports it even though we send with
+     GmailApp. `remaining` is what is LEFT today, not what was used — Apps
+     Script exposes no used-counter and no reset clock (it rolls over on a
+     rolling 24h, not at midnight). */
+  if (op === 'mailQuota') {
+    return {
+      ok: true,
+      remaining: MailApp.getRemainingDailyQuota(),
+      sender: Session.getEffectiveUser().getEmail()
+    };
+  }
 
   if (op === 'overview') {
     return {

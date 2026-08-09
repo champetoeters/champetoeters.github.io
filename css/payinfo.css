@@ -172,16 +172,6 @@
   color: var(--paper-mute);
 }
 
-/* ---- and you can just pay at the door ------------------------------------ */
-
-.pay__alt {
-  margin-top: clamp(16px, 2.4vw, 24px);
-  padding-top: clamp(12px, 1.8vw, 18px);
-  border-top: 1px solid rgb(var(--haze-rgb) / .18);
-  font-size: var(--fs-sm);
-  line-height: 1.5;
-  color: rgb(var(--paper-rgb) / .82);
-}
 
 .pay__sr {
   position: absolute;

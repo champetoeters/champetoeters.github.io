@@ -29,7 +29,7 @@ window.CHAMP_CONFIG = {
   },
 
   contactEmail: "event@champetoeters.be",
-  contactPhone: "+32 476 95 35 33",
+  contactPhone: "",
 };
 
 /* Resolves { register: bool, orders: bool } — false on any failure.

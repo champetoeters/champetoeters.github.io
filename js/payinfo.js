@@ -105,7 +105,6 @@
       '<div class="pay__body">' +
         '<div class="pay__rows">' + rows.join('') + '</div>' +
       '</div>' +
-      '<p class="pay__alt">Liever ter plaatse? Betalen kan ook aan de kassa op het event.</p>' +
       '<p class="pay__sr" role="status" aria-live="polite" data-pay="say"></p>';
 
     wireCopy(el, iban);
