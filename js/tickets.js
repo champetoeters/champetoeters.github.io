@@ -35,12 +35,8 @@ window.Sections.tickets = (() => {
   /* Every word the page says. Dutch, plain. */
   const COPY = {
     name:      'Open air ticket',
-    /* The client's own wording. It explains the one thing the four formulas
-       have in common (they are all the same entry ticket) and the one thing
-       that tells them apart at the door (the wristband). */
-    gets:      'Het toegangsticket kan je kopen met een welkomstdrankje. Je kiest het ' +
-               'type welkomstdrankje op basis van de beschikbare formules. Bij aankomst ' +
-               'ontvang je bovendien een polsbandje dat overeenkomt met de gekozen formule.',
+    /* No explainer under the title (client): the four priced formulas in the
+       picker say what the ticket is, and the paragraph only repeated them. */
     buy:       'Tickets reserveren',
     off:       'Ticketverkoop nog niet open',
     sending:   'Versturen…',
@@ -140,7 +136,6 @@ window.Sections.tickets = (() => {
     /* The exact same date-and-place line as the register page (client). */
     $('#tk-when').textContent =
       (event.dateDisplay || 'ZA 5 SEPT 2026') + ' · ' + (event.venue || 'TC Leiemeers');
-    $('#tk-gets').textContent = COPY.gets;
     const cheapest = TYPES.reduce((lo, t) => (lo === null || t.price < lo ? t.price : lo), null);
     root.querySelector('.tk__amt').textContent = String(cheapest === null ? '' : cheapest);
 
@@ -156,12 +151,14 @@ window.Sections.tickets = (() => {
        name sitting in the wrong <input>. Values are read back into the state on
        every input, so a rebuild never loses a keystroke. */
 
-    /* Price FIRST. The formulas are long enough to be clipped by a narrow
-       <select>, and a clipped price is the one part that must never be in
-       doubt — the name can lose its tail and still be recognisable. */
+    /* The client's full wording, price FIRST (client). Every option starts with
+       "Toegangsticket" on purpose — all four ARE the same entry ticket — so the
+       price is what tells them apart, and it leads for a second reason: these
+       are long enough to be clipped by a narrow <select>, and a clipped price
+       is the one part that must never be in doubt. */
     const optionsHtml = sel => TYPES.map(t =>
       '<option value="' + t.id + '"' + (t.id === sel ? ' selected' : '') + '>' +
-      EUR(t.price) + ' · ' + esc(t.short || t.name) + '</option>').join('');
+      EUR(t.price) + ' · ' + esc(t.name || t.short) + '</option>').join('');
 
     function esc(v) {
       return String(v == null ? '' : v)

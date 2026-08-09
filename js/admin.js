@@ -460,24 +460,25 @@
   /* Twin of TICKET_TYPES in backend/Code.gs — an order entered here is
      validated by exactly the same code as a public one. */
   var TICKET_TYPES = [['basis', 'Enkel toegang', 3],
-                      ['soda', 'Soda of pint', 5],
-                      ['cocktail', 'Cocktail of glas Champetoeter', 10],
-                      ['fles', 'Fles Champetoeter', 75]];
+                      ['soda', 'Soda/Pint', 5],
+                      ['cocktail', 'Cocktail/Glas Champetoeter', 10],
+                      ['fles', 'Fles Champetoeter', 79]];
   /* Twin of MAX_TICKETS in backend/Code.gs — a bigger basket is refused there
      as bad-request, so the form must not offer to build one. */
   var MAX_TICKETS = 25;
   function ticketSpec(type) {
     return TICKET_TYPES.filter(function (t) { return t[0] === type; })[0] || null;
   }
-  /* The picker shows the price; the rows show it in their own column. */
+  /* The picker shows the price FIRST — same order as the public picker
+     (js/tickets.js), where a clipped <option> must never cost the price. */
   var TICKET_OPTIONS = TICKET_TYPES.map(function (t) {
-    return [t[0], t[1] + ' — €' + t[2]];
+    return [t[0], '€' + t[2] + ' · ' + t[1]];
   });
-  var LEVELS = [['af-en-toe', 'Ik speel af en toe (P50/P100)'],
-                ['vaak', 'Ik speel vaak (P200/P300)'],
-                ['heel-vaak', 'Ik speel heel vaak (P400/P400)']];
+  var LEVELS = [['af-en-toe', 'Ik speel af en toe (Geen idee welke P/P50)'],
+                ['vaak', 'Ik speel vaak (P100/P200)'],
+                ['heel-vaak', 'Ik speel heel vaak (P300/P400)']];
 
-  /* "Vrouwenteam" → "Vrouwen", "Ik speel vaak (P200/P300)" → "P200/P300".
+  /* "Vrouwenteam" → "Vrouwen", "Ik speel vaak (P100/P200)" → "P100/P200".
      A row on a phone has no space for the sentence, and the ranking in the
      brackets is the part the organiser actually reads. */
   function shortType(v) { return String(v).replace(/team$/i, ''); }

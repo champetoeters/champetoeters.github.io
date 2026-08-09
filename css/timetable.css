@@ -1,6 +1,6 @@
 /* ============================================================================
    timetable.css — CHAMPETOETERS & FRIENDS
-   One job: who plays when and where. Padel only, 14:00 → 20:30.
+   One job: who plays when and where. Padel only, 12:30 → 20:00.
 
    Rules this file must keep (BRIEF §0):
      · no glass panes; one hairline per row; a row is time · baan · names
@@ -160,7 +160,20 @@
 /* A little more height on a desktop viewport — same landscape strip, room
    for the labels to breathe. Complements the max-width:1200px agenda query. */
 @media (min-width: 1200.02px) {
-  .tt-body { --tt-3d-h: clamp(280px, 38vh, 420px); }
+  .tt-body {
+    --tt-3d-h: clamp(280px, 38vh, 420px);
+    /* NO early release on desktop. The lead is a phone measurement (panel +
+       tail must clear 390x844 before the footer arrives), and desktop is the
+       one width where the court names exist: .tt-hcell pins against the
+       panel's bottom edge, but its sticky rectangle is the TABLE, which runs
+       on for the whole release. Release the panel early and the last screen
+       shows the panel sliding up away from a header row still nailed to
+       --tt-3d-h + 22px — the names hanging in open navy. With the lead at 0
+       the panel's rectangle ends where the table does and the two let go
+       together; the header slips behind the panel (z 3 under 4) as it goes,
+       exactly as the rows do. */
+    --tt-release: 0px;
+  }
 }
 
 /* --------------------------------------------------------------- the grid */

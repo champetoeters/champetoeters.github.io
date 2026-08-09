@@ -113,18 +113,6 @@
     0 8px 26px rgb(3 7 22 / .58);
 }
 
-/* What the fee buys — one line, written by register.js from event.json.
-   No max-width of its own: the sentence is ~77 characters and the narrow
-   container (760px) is the measure — a tighter cap forced a two-line wrap
-   on desktop where one line fits. */
-.reg__gets {
-  margin-top: clamp(8px, 1.2vw, 12px);
-  font-size: var(--fs-sm);
-  line-height: 1.5;
-  color: rgb(var(--paper-rgb) / .84);
-}
-.reg__gets:empty { display: none; }
-
 .reg__slots {
   display: flex;
   align-items: baseline;
@@ -516,7 +504,6 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
   }
   .reg__eyebrow { margin-bottom: 4px; }
   .reg__head { margin-bottom: 12px; }
-  .reg__gets { margin-top: 6px; font-size: .82rem; }
   .reg__slots { margin-top: 6px; }
   .reg-live { margin-bottom: 11px; }
   .reg-error { margin-top: 4px; font-size: .78rem; line-height: 1.35; }

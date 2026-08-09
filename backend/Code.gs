@@ -60,11 +60,11 @@ var TEAM_PRICE = 44;            // authoritative — an amount from the client i
    tools/bracket.test.mjs fails if the ids or the prices drift apart. */
 var TICKET_TYPES = {
   'basis': { label: 'Toegangsticket', short: 'Enkel toegang', price: 3 },
-  'soda': { label: 'Toegangsticket + soda of pint', short: 'Soda of pint', price: 5 },
-  'cocktail': { label: 'Toegangsticket + cocktail of glas Champetoeter (Pommery)',
-                short: 'Cocktail of glas Champetoeter', price: 10 },
-  'fles': { label: 'Toegangsticket + fles Champetoeter (Pommery)',
-            short: 'Fles Champetoeter', price: 75 }
+  'soda': { label: 'Toegangsticket + Soda/Pint', short: 'Soda/Pint', price: 5 },
+  'cocktail': { label: 'Toegangsticket + Cocktail/Glas Champetoeter (Pommery)',
+                short: 'Cocktail/Glas Champetoeter', price: 10 },
+  'fles': { label: 'Toegangsticket + Fles Champetoeter (Pommery)',
+            short: 'Fles Champetoeter', price: 79 }
 };
 
 /* Tickets in ONE order. Each one carries a person's name, so this is also how
@@ -89,10 +89,19 @@ var TEAM_TYPES = {
   'mannen': 'Mannenteam'
 };
 var LEVELS = {
-  'af-en-toe': 'Ik speel af en toe (P50/P100)',
-  'vaak': 'Ik speel vaak (P200/P300)',
-  'heel-vaak': 'Ik speel heel vaak (P400/P400)'
+  'af-en-toe': 'Ik speel af en toe (Geen idee welke P/P50)',
+  'vaak': 'Ik speel vaak (P100/P200)',
+  'heel-vaak': 'Ik speel heel vaak (P300/P400)'
 };
+
+/* At most this many women's teams in the draw (client). DELIBERATELY NOT
+   ADVERTISED: the form never names the cap and ?action=state never carries the
+   tally, so nobody can watch it fill. The 7th women's entry is refused at
+   submit with `women-full`, and register.js prints that under the team-type
+   field — the one place where it is actionable, because switching the answer
+   to Mannenteam is the way on. The cap is checked INSIDE withLock_, so two
+   simultaneous 6th entries cannot both slip through. */
+var MAX_WOMEN_TEAMS = 6;
 
 /* register/order are unauthenticated and send mail, so they are capped: the
    same address may not pile up rows, and a whole day cannot be flooded (the
@@ -119,8 +128,12 @@ var STATE_PATH = 'state.json';
 var CONTACT_EMAIL = 'event@champetoeters.be';
 var CONTACT_PHONE = '+32 476 95 35 33';
 var EVENT_NAME = 'CHAMPETOETERS & FRIENDS';
-var EVENT_WHEN = 'zaterdag 5 september 2026, 14:00 → 02:00';
+var EVENT_WHEN = 'zaterdag 5 september 2026, 12:30 → 02:00';
 var EVENT_WHERE = 'TC Leiemeers, Luitenant-Generaal Gérardstraat 62, 8520 Kuurne';
+/* Mails are plain text with a naive HTML twin (sendMail_), so links go in as
+   bare URLs — there is no anchor to hide them behind. */
+var INSTAGRAM_URL = 'https://www.instagram.com/champetoeters/';
+var TICKETS_URL = 'https://champetoeters.be/tickets/';
 
 var COLUMNS = {
   registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone',
@@ -494,6 +507,21 @@ function freeSlots_(regs) {
   return OPEN_SLOTS.filter(function (id) { return taken.indexOf(id) === -1; });
 }
 
+/* Rows already carry the LABEL ('Vrouwenteam'), not the form key — cleanEntry_
+   maps it through TEAM_TYPES before the row is written, and /admin/ writes the
+   same shape. Compare against the label, never against 'vrouwen'. */
+function countTeamType_(regs, label) {
+  var n = 0;
+  for (var i = 0; i < regs.length; i++) {
+    if (String(regs[i].teamType || '') === label) n++;
+  }
+  return n;
+}
+
+function womenFull_(regs) {
+  return countTeamType_(regs, TEAM_TYPES.vrouwen) >= MAX_WOMEN_TEAMS;
+}
+
 /* Same address piling up, or the whole tab flooded today. */
 /* One mailbox, one identity: lowercase and strip a +tag, so jan+2@ cannot
    sidestep the per-address cap. */
@@ -616,9 +644,8 @@ function payIban_() { return String(props_().getProperty('PAY_IBAN') || 'IE75 SU
 function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Sebbe Benoit').trim(); }
 
 /* `mededeling` is optional. A team inschrijving has one (the team name); a
-   ticket order has NONE — no buyer name is asked, and the internal TKT-nn is
-   not something a visitor should be asked to type (client, r11). The tickets
-   are listed by name in the mail above this, and that is the record. */
+   ticket order builds its own payment block (orderMail_) from the client's
+   template, so it never comes through here. */
 function paymentLines_(mededeling) {
   var iban = payIban_();
   var first = iban
@@ -643,24 +670,65 @@ function footerLines_() {
   ];
 }
 
+/* The client's mails greet by first name. A player field holds a full name, so
+   the first word is the closest thing to one; a single-word name is its own
+   first name, and an empty field falls back to the neutral greeting. */
+function firstName_(full) {
+  return String(full || '').trim().split(/\s+/)[0] || '';
+}
+
+/* Wording per the client's template (Mails champetoeters.pdf, p.2). The
+   payment block is NOT in that template but is kept: it is the only place a
+   team is told how to pay the €44. */
 function registerMail_(entry) {
   var who = [entry.player1, entry.player2].filter(Boolean).join(' & ');
+  var voornaam = firstName_(entry.player1);
   return {
     to: entry.email,
     subject: 'Inschrijving ontvangen · ' + EVENT_NAME,
     lines: [
-      'Hallo ' + who + ',',
+      voornaam ? 'Hallo ' + voornaam + ',' : 'Hallo,',
       '',
-      'Jullie inschrijving is binnen.',
-      'Team: ' + (entry.teamName || who) + ' (' + who + ')',
-      'Type: ' + entry.teamType,
-      'Niveau: ' + entry.level,
+      'Goed nieuws! Jouw inschrijving voor het padeltornooi van ' + EVENT_NAME + ' is',
+      'helemaal in orde. Zowel jij als je padelpartner zijn succesvol ingeschreven.',
+      'Jullie plek op het tornooi is dus officieel bevestigd! 🎾',
+      '',
+      'We kijken er alvast naar uit om jullie te verwelkomen.',
+      '',
+      'Als deelnemer krijg je sowieso:',
+      '  • een welkomstticket',
+      '  • padelballen',
+      '  • een gratis drankje',
+      '',
+      'Het speelschema en de praktische info ontvangen jullie later in een aparte mail.',
+      '',
+      'Wil je ondertussen niets missen? Volg ' + EVENT_NAME + ' op Instagram:',
+      INSTAGRAM_URL,
+      'Daar delen we als eerste alle updates en nieuwtjes rond het tornooi.',
+      '',
+      'Supporters zijn natuurlijk meer dan welkom! Willen vrienden, familie of andere',
+      'supporters erbij zijn? Zij kunnen hier hun toegangsticket kopen:',
+      TICKETS_URL,
+      '',
       'Inschrijvingsgeld: €' + TEAM_PRICE + ' per team.',
       ''
-    ].concat(paymentLines_(entry.teamName || who), [''], footerLines_())
+    ].concat(paymentLines_(entry.teamName || who), [
+      '',
+      'Bedankt voor jullie inschrijving. Wij hebben er alvast enorm veel zin in!',
+      '',
+      'Heb je in de tussentijd nog vragen? Laat gerust iets weten.',
+      '',
+      'Sportieve groeten,',
+      'Team ' + EVENT_NAME,
+      ''
+    ], footerLines_())
   };
 }
 
+/* Wording per the client's template (Mails champetoeters.pdf, p.1). That
+   template asks for the buyer's own name as mededeling, but no buyer name is
+   collected (client, r11) — the names ON the tickets are the only names an
+   order has, so those are what identifies the transfer. */
 function orderMail_(order) {
   var tickets = parseTickets_(order.tickets);
   /* One line per ticket, named: the buyer has to be able to check that the
@@ -668,6 +736,19 @@ function orderMail_(order) {
   var lines = tickets.map(function (t) {
     return '  · ' + t.holder + ' — ' + t.label + ' (€' + t.price + ')';
   });
+  var iban = payIban_();
+  var mededeling = tickets.map(function (t) { return t.holder; }).join(', ');
+  var pay = iban
+    ? [
+        'Om je bestelling definitief te bevestigen, vragen we je om het totaalbedrag van',
+        '€' + order.amount + ' over te schrijven op onderstaande rekening:',
+        '  IBAN: ' + iban + ' (' + payHolder_() + ')',
+        '  Bedrag: €' + order.amount,
+        '  Mededeling: ' + mededeling
+      ]
+    : [
+        'Het rekeningnummer volgt nog. Je hoeft nu dus nog niets over te schrijven.'
+      ];
   /* No name in the greeting: the only names in an order are the ones ON the
      tickets, and whoever ordered may be none of them. Greeting them by the
      first ticket holder would address the mail to the wrong person. */
@@ -677,18 +758,33 @@ function orderMail_(order) {
     lines: [
       'Hallo,',
       '',
-      (tickets.length === 1 ? 'Je ticket is' : 'Je ' + tickets.length + ' tickets zijn') +
-        ' gereserveerd.',
-      ''
+      'Bedankt voor je bestelling voor ' + EVENT_NAME + '! 🎉',
+      '',
+      'We hebben je bestelling goed ontvangen. Hieronder vind je een overzicht van je',
+      'aangekochte tickets.',
+      '',
+      'Jouw bestelling'
     ].concat(lines, [
       '',
-      'Totaal: €' + order.amount + '.',
-      'Aan de ingang krijg je per ticket een polsbandje dat bij de gekozen formule hoort.',
+      'Totaal te betalen: €' + order.amount,
+      '',
+      'Betaling'
+    ], pay, [
+      '',
+      'Zodra we je betaling hebben ontvangen, is je bestelling volledig in orde.',
+      '',
+      'Op de dag van het event ontvang je bij aankomst wat inbegrepen is in de door jou',
+      'gekozen formule. Hou deze bevestigingsmail daarom bij de hand.',
+      '',
+      'Wil je ondertussen niets missen? Volg ' + EVENT_NAME + ' op Instagram:',
+      INSTAGRAM_URL,
+      'Daar delen we alle updates en nieuwtjes rond het event.',
+      '',
+      'Bedankt voor je bestelling en tot dan! 🥂',
+      '',
+      'Team ' + EVENT_NAME,
       ''
-    ],
-    /* No mededeling: the named tickets listed above ARE what identifies this
-       order. Nothing else is asked of the person paying. */
-    paymentLines_(''), [''], footerLines_())
+    ], footerLines_())
   };
 }
 
@@ -894,6 +990,11 @@ function actRegister_(body) {
     if (seen) return { ok: true, reference: seen.ref, teamId: seen.teamId, amount: TEAM_PRICE };
     var free = freeSlots_(regs);
     if (!free.length) return fail_('full');
+    /* Before the e-mail cap, so a woman's team that is one too many hears the
+       reason it can act on rather than the generic retry message. */
+    if (entry.teamType === TEAM_TYPES.vrouwen && womenFull_(regs)) {
+      return fail_('women-full');
+    }
     if (overLimit_(regs, entry.email)) return fail_('too-many');
 
     entry.teamId = free[0];

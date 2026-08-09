@@ -137,40 +137,21 @@ window.Sections.register = {
       [DATE_TXT, (D.event && D.event.venue) || ''].filter(Boolean).join(' · ');
     ref('eyebrow').textContent = EYEBROW_TXT;
 
-    /* What the fee buys, in one line. The price comes from event.json; the three
-       things it includes are teamEntry.includes, said shorter than the data spells
-       them out (BRIEF §0 rule 6 — plain and short beats complete).
-       "vier" is not a rounding of the data: with 22 teams in poules of 6/6/5/5
-       every team plays 4 or 5 group matches, which is what event.json promises.
-       This line said "drie" and under-promised the one thing a paying team
-       cares about. Keep it in step with teamEntry.includes in event.json. */
-    ref('gets').textContent =
-      FEE_TXT + ' per team: twee spelers, minstens vier wedstrijden, open air voor beiden.';
+    /* No "what the fee buys" line under the title (client). FEE_TXT is still
+       read from event.json for the amount the payment panel and the button
+       quote — only the header sentence is gone. */
 
+    /* `remaining` is BOOKKEEPING ONLY — it is never painted (client: the running
+       count is gone, see sections/register.html). It survives because zero is
+       still what swaps the form for the volzet panel, and because a successful
+       entry has to decrement it so a second submit in the same session cannot
+       walk past the last slot. */
     let remaining = REMAINING;
 
-    function paintCounts() {
-      const p = ref('slots-pre');
-      const n = ref('slots-n');
-      const l = ref('slots-label');
-      if (remaining <= 0) {
-        p.hidden = true;
-        n.hidden = true;
-        l.textContent = 'Volzet';
-      } else {
-        p.hidden = false;
-        n.hidden = false;
-        p.textContent = 'Nog';
-        n.textContent = remaining;
-        l.textContent = remaining === 1 ? 'plaats' : 'plaatsen';
-      }
-    }
-    /* With a live backend the count stays blank until the state answers —
-       painting the static "Nog 2" and flipping it to "Volzet" a beat later
-       reads as a glitch (client). Unwired builds paint the static figure. */
+    /* Whether the state feed decides `remaining`, or the static build figure
+       stands in. Only the volzet swap reads it now. */
     const countIsLive = !!(CFG.apiEndpoint && window.ChampLive &&
                            typeof window.ChampLive.state === 'function');
-    if (!countIsLive) paintCounts();
 
     /* =====================================================================
        VIEWS — one screen each. data-state drives what the section shows
@@ -246,19 +227,16 @@ window.Sections.register = {
       .catch(() => { isLive = false; })
       .then(() => { settled = true; paintButton(); });
 
-    /* The place count must follow the live draw, not event.json — a build
-       whose event is full may not keep promising "Nog 2 plaatsen". And a draw
-       that is genuinely full does not get a form at all: only a live API can
-       tell us that, which is why this lives here and not next to the probe. */
+    /* Fullness must follow the live draw, not event.json — a build whose event
+       is full may not keep offering a form. Only a live API can tell us that,
+       which is why this lives here and not next to the probe. An unusable
+       answer leaves the static figure standing: the form stays up and the
+       backend refuses on submit, which is the safe direction. */
     if (countIsLive) {
       window.ChampLive.state().then(st => {
         const c = st && st.counts;
-        if (!c || typeof c.registrations !== 'number' || typeof c.slots !== 'number') {
-          paintCounts();               /* unusable answer → static after all */
-          return;
-        }
+        if (!c || typeof c.registrations !== 'number' || typeof c.slots !== 'number') return;
         remaining = Math.max(0, c.slots - c.registrations);
-        paintCounts();
         if (remaining === 0) showFullPanel(c.slots, false);
       });
     }
@@ -555,8 +533,10 @@ window.Sections.register = {
       if (panel && panel.title) panel.title.focus();
       speakStatus('Inschrijving ontvangen. Betalen: €' + amount + '.');
 
-      /* A place really was taken, so the count on screen moves with it. */
-      if (remaining > 0) { remaining -= 1; paintCounts(); }
+      /* A place really was taken. Nothing on screen shows it, but the tally has
+         to move or a second entry in the same session could walk past the last
+         slot before the state feed catches up. */
+      if (remaining > 0) remaining -= 1;
     }
 
     /* ---- view 3: confirmed ----------------------------------------------- */
@@ -597,6 +577,24 @@ window.Sections.register = {
         : 'Jullie zijn ingeschreven. De bevestigingsmail kon niet verstuurd worden.');
     }
 
+    /* ---- the women's cap is reached -------------------------------------
+       NOT the volzet panel: the draw is not full, only this one answer is
+       unavailable, and the form must stay up because changing the team type is
+       the way on. So it lands where the visitor can act on it — under the very
+       field that has to change — and behaves like any other field error: the
+       next change to that <select> clears it (the input handler revalidates
+       anything carrying aria-invalid).
+
+       The cap itself is never named. A visitor learns it exists only here, at
+       the moment it blocks them; nothing on the page counts down to it. */
+    function womenFull() {
+      const el = byId('reg-type');
+      const msg = 'Voor vrouwenteams zijn alle plaatsen bezet.';
+      setError(el, msg);
+      el.focus();
+      speakAlert(msg);
+    }
+
     /* ---- volzet: one panel INSTEAD of the form ---------------------------
        Reached two ways, and both mean the same thing: the live count said zero
        when the page opened, or the server refused the entry because the last
@@ -608,7 +606,6 @@ window.Sections.register = {
       if (flowStarted) return;   /* already registered: their own place stands */
 
       remaining = 0;
-      paintCounts();
       isLive = false;
       settled = true;
       closedTxt = 'Volzet';
@@ -664,6 +661,7 @@ window.Sections.register = {
         /* Every other code — bad-request, too-many, server — is one generic
            retry failure: none of them is a state a visitor can act on. */
         if (body && body.error === 'full') showFullPanel(null, true);
+        else if (body && body.error === 'women-full') womenFull();
         else notice('Versturen is niet gelukt. Probeer opnieuw' +
           (CFG.contactEmail ? ', of mail ' + CFG.contactEmail : '') + '.');
       } catch (err) {

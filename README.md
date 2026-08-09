@@ -1,6 +1,6 @@
 # CHAMPETOETERS & FRIENDS
 
-Open air en padel · TC Leiemeers, Kuurne · zaterdag 5 september 2026, 14:00 → 02:00.
+Open air en padel · TC Leiemeers, Kuurne · zaterdag 5 september 2026, 12:30 → 02:00.
 
 **Live site:** https://champetoeters.github.io
 

@@ -143,18 +143,6 @@
   margin-right: 8px;
 }
 
-/* One line, not a three-row perk list with three tick marks. Client: "trim
-   down the text, too much talk." */
-/* No 46ch cap any more: --tk-col is the measure, and it is the same measure the
-   panel underneath uses. */
-.tk__gets {
-  margin: 4px 0 0;
-  font-size: var(--fs-sm);
-  line-height: 1.45;
-  color: rgb(var(--paper-rgb) / .84);
-}
-.tk__gets:empty { display: none; }
-
 /* ONE SCREEN PER VIEW. Once the order exists, the payment panel and then the
    confirmation carry their own heading, so the sales header above them says
    nothing new and costs the height that keeps a view on one screen. The link to

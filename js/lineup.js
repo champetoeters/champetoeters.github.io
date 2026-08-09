@@ -21,7 +21,7 @@ window.Sections = window.Sections || {};
   /* Sets are never named (BRIEF §0, remark 6). There is no headliner on this
      bill and no genres — the client cut both. Every act renders identically. */
 
-  /* ---------- the night runs on a 14:00 → 26:00 clock ---------- */
+  /* ---------- the night runs on a 12:30 → 26:00 clock ---------- */
   function toMin(hhmm) {
     var p = String(hhmm).split(":");
     var m = (+p[0]) * 60 + (+p[1]);
@@ -113,7 +113,7 @@ window.Sections = window.Sections || {};
   }
 
   /* ---------- "on stage now" ----------------------------------------------
-     One clock for the whole site: ChampLive.nowMinutes() on the same 14:00 →
+     One clock for the whole site: ChampLive.nowMinutes() on the same 12:30 →
      26:00 event scale, with the same precedence (?now=HH:MM → the real clock
      on 5/6 sept 2026). The local implementation below is the fallback for a
      page that does not load js/livedata.js, and must keep that precedence

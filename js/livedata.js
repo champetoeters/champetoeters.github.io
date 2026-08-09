@@ -72,7 +72,7 @@
   }
 
   /* ------------------------------------------------------------ the clock
-     Event clock: 14:00 → 26:00, so anything before 08:00 is "tomorrow".
+     Event clock: 12:30 → 26:00, so anything before 08:00 is "tomorrow".
 
      ?now=HH:MM overrides it. That is a VIEW hook and nothing else: it moves
      which match reads as live and which act reads as on stage, and it is the

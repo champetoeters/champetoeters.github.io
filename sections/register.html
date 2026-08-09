@@ -15,14 +15,11 @@
     <header class="reg__head">
       <p class="u-eyebrow reg__eyebrow" data-reg="eyebrow"></p>
       <h2 class="u-display reg__title" id="reg-title">Schrijf je team in</h2>
-      <!-- What the fee buys, in one line — written by register.js from
-           data/event.json → teamEntry (price + includes). -->
-      <p class="reg__gets" data-reg="gets"></p>
-      <p class="reg__slots">
-        <span class="reg__slots-w" data-reg="slots-pre"></span>
-        <span class="reg__slots-n u-tabular" data-reg="slots-n"></span>
-        <span class="reg__slots-w" data-reg="slots-label"></span>
-      </p>
+      <!-- No line about what the fee buys (client): the price and what it
+           includes are said on the entry form itself, not under the title. -->
+      <!-- No running "Nog N plaatsen" here (client): with a women's cap of 6
+           inside a 22-team draw the single number could only mislead. The full
+           draw still swaps the whole form for the volzet panel. -->
     </header>
 
     <div class="reg__main">
@@ -122,9 +119,9 @@
                 <select class="glass-select reg-input" id="reg-level" name="level"
                         aria-describedby="reg-level-err">
                   <option value="" selected>Kies&hellip;</option>
-                  <option value="af-en-toe">Ik speel af en toe (P50/P100)</option>
-                  <option value="vaak">Ik speel vaak (P200/P300)</option>
-                  <option value="heel-vaak">Ik speel heel vaak (P400/P400)</option>
+                  <option value="af-en-toe">Ik speel af en toe (Geen idee welke P/P50)</option>
+                  <option value="vaak">Ik speel vaak (P100/P200)</option>
+                  <option value="heel-vaak">Ik speel heel vaak (P300/P400)</option>
                 </select>
                 <p class="glass-error reg-error" id="reg-level-err" hidden></p>
               </div>

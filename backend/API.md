@@ -26,7 +26,7 @@ runtime, so any crowd can watch. A failed/empty static read falls back to
   googleusercontent). Never send custom headers.
 - Response is always HTTP 200 with JSON `{ "ok": true, ... }` or
   `{ "ok": false, "error": "<code>" }`. Error codes: `bad-request`, `unauthorized`,
-  `full`, `not-found`, `too-many`, `closed`, `server`.
+  `full`, `women-full`, `not-found`, `too-many`, `closed`, `server`.
 - `too-many` = an abuse cap was hit on a public write (`register` / `order`):
   max 3 rows per e-mail address per tab (lowercased, +tag stripped), max 120 rows per tab per calendar day (anti-spam, not a sales limit; mail past Google's ~100/day is best-effort).
   Both are protections for the Sheet and the mail quota, not user-facing states;
@@ -46,7 +46,7 @@ runtime, so any crowd can watch. A failed/empty static read falls back to
   "player1": "…", "player2": "…", "email": "…", "phone": "…",
   "teamType": "Vrouwenteam",  // REQUIRED. Sent as a KEY ("vrouwen" | "mannen"),
                               // stored as the Dutch label — see TEAM_TYPES in Code.gs.
-  "level": "Ik speel vaak (P200/P300)",   // REQUIRED. Sent as a key
+  "level": "Ik speel vaak (P100/P200)",   // REQUIRED. Sent as a key
                               // ("af-en-toe" | "vaak" | "heel-vaak"), stored as the
                               // label — see LEVELS in Code.gs. An unknown key on
                               // either field fails the whole entry (bad-request):
@@ -135,6 +135,15 @@ page never claims a mail that died). A clientRef REPLAY answers without
 If no slots left → `{ ok:false, error:"full" }`. Past the abuse caps →
 `{ ok:false, error:"too-many" }`.
 
+**`women-full`** — the draw holds at most `MAX_WOMEN_TEAMS` (6) women's teams.
+The cap is checked inside the lock, after `full` and before the abuse caps, and
+only for `teamType` = `Vrouwenteam`; men's entries are unaffected while places
+remain. It is DELIBERATELY NOT ADVERTISED: `?action=state` carries no per-type
+tally and the form names no number, so the cap surfaces only here, on the
+submit it blocks. register.js prints it under the team-type field (not the
+volzet panel — the draw is not full, and changing that one answer is the way
+on). `admin.addRegistration` is NOT capped: organisers overrule.
+
 ### POST `{ action:"order", email, tickets }`
 `tickets` is an array of 1..25 `{ holder, type }` — one entry per person, and
 `type` must be a key of `TICKET_TYPES`. The browser never sends an amount: the
@@ -221,7 +230,7 @@ Include contact line + venue/date footer.
 ## The clock
 
 `?now=HH:MM` on any page → every "now" computation pretends it is that moment on
-event day, on the 14:00 → 26:00 event scale. It is a VIEW hook: it moves which
+event day, on the 12:30 → 26:00 event scale. It is a VIEW hook: it moves which
 match reads as live and which act reads as on stage, and it is the only way to
 see the event-day rendering before the day. It cannot reach this API, write
 anything, or make a page claim a result the published state does not carry.

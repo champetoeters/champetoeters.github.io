@@ -8,23 +8,23 @@
   },
   {
     "id": "soda",
-    "name": "Toegangsticket + soda of pint",
-    "short": "Soda of pint",
+    "name": "Toegangsticket + Soda/Pint",
+    "short": "Soda/Pint",
     "price": 5,
     "currency": "EUR"
   },
   {
     "id": "cocktail",
-    "name": "Toegangsticket + cocktail of glas Champetoeter (Pommery)",
-    "short": "Cocktail of glas Champetoeter",
+    "name": "Toegangsticket + Cocktail/Glas Champetoeter (Pommery)",
+    "short": "Cocktail/Glas Champetoeter",
     "price": 10,
     "currency": "EUR"
   },
   {
     "id": "fles",
-    "name": "Toegangsticket + fles Champetoeter (Pommery)",
+    "name": "Toegangsticket + Fles Champetoeter (Pommery)",
     "short": "Fles Champetoeter",
-    "price": 75,
+    "price": 79,
     "currency": "EUR"
   }
 ]
