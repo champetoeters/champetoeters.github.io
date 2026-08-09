@@ -4,8 +4,8 @@
  * URL. See backend/API.md for the contract.
  *
  *   apiEndpoint empty  → not-connected mode. The site renders, the timetable
- *                        falls back to data/demo-state.json, and registration /
- *                        ticket sales read "nog niet open". Nothing can fake a
+ *                        shows the draw with no results in it, and registration
+ *                        / ticket sales read "nog niet open". Nothing can fake a
  *                        confirmation.
  *   apiEndpoint set    → live mode. Set it to the Apps Script web-app URL
  *                        (https://script.google.com/macros/s/…/exec) or, in
@@ -27,16 +27,6 @@ window.CHAMP_CONFIG = {
     iban: "BE37 9731 8485 2328",
     holder: "Champetoeters",
   },
-
-  /* Demo clock for the verification round: "HH:MM" pretends it is that moment
-     on the event day (drives live-match + on-stage-now highlights). Empty for
-     production — the real clock takes over on 5 sept 2026.
-
-     Must match STORY_AT in tools/gendemo.py, which is what the seeded results
-     depict. It moved 18:45 → 19:25 when the draw went to 32 teams on 5 courts:
-     the group stage now runs to 19:00, so 18:45 no longer lands in the moment
-     the fixture describes (groups done, three quarter-finals in). */
-  demoNow: "19:25",
 
   contactEmail: "padel@tcleiemeers.be",
   contactPhone: "+32 476 95 35 33",

@@ -390,8 +390,72 @@ body.ad { min-height: 100vh; padding-bottom: var(--sp-8); }
 .ad-fchk__l { font-size: var(--fs-sm); font-weight: var(--fw-med); }
 .ad-form .ad-act { margin-top: var(--sp-1); }
 
+/* ---- the add-order basket ----------------------------------------------
+   One row per named ticket: a name, a formula, its own "Betaald", and a ✕ once
+   there is more than one. Name over formula on a phone (the two fields never
+   share a line at 390px), with the tick beside the formula; all on one line
+   from 30rem. */
+.ad-form__tks { display: flex; flex-direction: column; gap: var(--sp-3); }
+.ad-form__tk {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  /* Stacked: the ✕ sits on the NAME line, not floating between the two
+     fields where it reads as if it removed the formula. */
+  grid-template-areas: 'name x' 'type paid';
+  align-items: end;
+  gap: var(--sp-2) var(--sp-3);
+}
+.ad-form__tk > .glass-field:first-child { grid-area: name; }
+.ad-form__tk > .glass-field:nth-child(2) { grid-area: type; }
+.ad-form__tk > .ad-form__tkpaid { grid-area: paid; }
+.ad-form__tk > .ad-form__x { grid-area: x; }
+/* The row tick carries a word, not just a box: with several rows a bare box
+   next to a formula does not say what it would be ticking. */
+.ad-form__tkpaid { gap: var(--sp-2); white-space: nowrap; }
+@media (min-width: 30rem) {
+  .ad-form__tk {
+    grid-template-columns: 1fr 1fr auto auto;
+    grid-template-areas: 'name type paid x';
+  }
+}
+/* The basket-wide shortcut, under the rows it drives and set apart from them
+   by the same hairline the list uses between tickets. */
+.ad-form__all {
+  padding-top: var(--sp-2);
+  border-top: 1px solid rgb(var(--haze-rgb) / .14);
+}
+/* Same target and the same restraint as the row ✕ in the lists. */
+.ad-form__x {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  font-size: .82rem;
+  line-height: 1;
+  color: var(--paper-mute);
+  transition: color var(--dur-1) var(--ease-glass),
+              background-color var(--dur-1) var(--ease-glass);
+}
+.ad-form__x:hover { color: var(--paper); background-color: rgb(var(--haze-rgb) / .12); }
+.ad-form__x:active { background-color: rgb(2 5 16 / .34); }
 
-/* ---- teams (€50) -------------------------------------------------------- */
+.ad-form__tkfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.ad-add--sm { width: auto; min-height: 44px; }
+.ad-form__tot {
+  flex: 0 0 auto;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--paper-dim);
+}
+
+
+/* ---- teams (€44) -------------------------------------------------------- */
 
 .ad-t {
   display: flex;
@@ -437,9 +501,19 @@ body.ad { min-height: 100vh; padding-bottom: var(--sp-8); }
 .ad-t__i:focus-visible + .ad-check { outline: 2px solid var(--ball); outline-offset: 3px; }
 /* an empty slot has nothing to pay for */
 .ad-t__i:disabled + .ad-check { opacity: .34; }
+/* Part of the basket is ticked: a dash, not a tick, on the "Alles betaald" box
+   of the add form — half a basket must not read as a settled one. */
+.ad-t__i:indeterminate + .ad-check {
+  background-color: var(--ball);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='11'><path d='M1.6 5.5h11.8' fill='none' stroke='%230D1637' stroke-width='2.4' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px var(--ball-deep);
+}
 
 
-/* ---- orders (€12) ------------------------------------------------------- */
+/* ---- orders (open air) ------------------------------------------------------- */
 
 .ad-o { display: flex; align-items: center; gap: var(--sp-3); min-height: 64px; padding: 8px 2px; }
 .ad-o__b { flex: 1 1 auto; min-width: 0; }
@@ -451,30 +525,15 @@ body.ad { min-height: 100vh; padding-bottom: var(--sp-8); }
   color: var(--paper-mute);
 }
 
-.ad-step { flex: 0 0 auto; display: flex; align-items: center; gap: 2px; }
-.ad-step__b {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  font-size: 1.2rem;
-  font-weight: var(--fw-semi);
-  line-height: 1;
-  color: var(--paper);
-  background-color: rgb(var(--blue-300-rgb) / .34);
-  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .24);
-  transition: background-color var(--dur-1) var(--ease-glass);
+/* The named tickets inside one order. Indented under the buyer's row, each
+   one its own tap target with its own tick — four prices in a basket means a
+   count would say nothing about what has been paid. */
+.ad-tks { display: flex; flex-direction: column; }
+.ad-tks .ad-tk {
+  padding-left: var(--sp-4, 16px);
+  border-top: 1px solid rgb(var(--haze-rgb) / .1);
 }
-.ad-step__b:hover { background-color: rgb(var(--blue-100-rgb) / .48); }
-.ad-step__b[disabled] { opacity: .34; cursor: not-allowed; }
-.ad-step__v {
-  min-width: 52px;
-  text-align: center;
-  font-size: .95rem;
-  font-weight: var(--fw-semi);
-}
-.ad-step__v.is-full { color: var(--ball); }
+.ad-tks .ad-tk:first-child { border-top: 0; }
 
 
 /* ---- toast -------------------------------------------------------------- */

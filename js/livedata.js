@@ -20,17 +20,6 @@
   function endpoint() { return String(cfg().apiEndpoint || '').trim(); }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
-  /* Resolved against this script's own URL so the same file works from /,
-     /admin/ and /preview/ without knowing where it was loaded from. */
-  function dataUrl(file) {
-    try {
-      var s = document.querySelector('script[src*="livedata.js"]');
-      if (s && s.src) return new URL('../data/' + file, s.src).href;
-    } catch (e) { /* fall through */ }
-    var here = (root.location && root.location.pathname) || '';
-    return (/\/(preview|admin)\//.test(here) ? '../data/' : 'data/') + file;
-  }
-
   function get(url) {
     try {
       return fetch(url, { cache: 'no-store', redirect: 'follow' })
@@ -64,9 +53,9 @@
           return (j && j.ok && j.counts) ? j : live();
         });
     }
-    /* No API. The fabricated demo story may only show while the demo clock is
-       on — demoNow is the ONE seam that switches the whole demo off. */
-    if (conf.demoNow) return get(dataUrl('demo-state.json'));
+    /* No API configured: no live state at all. The site still renders — the
+       draw, the bill and the grid are static data — but nothing can invent a
+       result, a team or a count. */
     return Promise.resolve({});
   }
 
@@ -84,7 +73,12 @@
 
   /* ------------------------------------------------------------ the clock
      Event clock: 14:00 → 26:00, so anything before 08:00 is "tomorrow".
-     ?now= is a screenshot hook only and nothing in the UI advertises it. */
+
+     ?now=HH:MM overrides it. That is a VIEW hook and nothing else: it moves
+     which match reads as live and which act reads as on stage, and it is the
+     only way to see the event-day rendering before the event day. It cannot
+     reach the backend, write anything, or make the page claim a result the
+     published state does not carry. Nothing in the UI advertises it. */
 
   function toMin(hhmm) {
     var p = String(hhmm).split(':');
@@ -101,9 +95,6 @@
     var q = null;
     try { q = new URLSearchParams(root.location.search).get('now'); } catch (e) { q = null; }
     var hit = forced(q);
-    if (hit !== null) return hit;
-
-    hit = forced(cfg().demoNow);
     if (hit !== null) return hit;
 
     var d = new Date();

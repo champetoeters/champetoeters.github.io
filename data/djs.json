@@ -1,37 +1,32 @@
 [
   {
-    "name": "CHAMPETTER",
-    "tier": "headliner",
-    "genre": "Feest & Foute Hits",
-    "start": "23:30",
-    "end": "02:00"
+    "name": "LOUIS DEBUSSCHERE",
+    "start": "14:00",
+    "end": "16:00"
   },
   {
-    "name": "AURELIA",
-    "tier": "headliner",
-    "genre": "Melodic Techno",
-    "start": "22:00",
-    "end": "23:30"
+    "name": "CHAMPETOETERS & FRIENDS",
+    "start": "16:00",
+    "end": "19:00"
   },
   {
-    "name": "NOVA SCHELDT",
-    "tier": "main",
-    "genre": "Afro House",
-    "start": "20:30",
+    "name": "DYLAN",
+    "start": "20:00",
+    "end": "21:00"
+  },
+  {
+    "name": "MATTEO B2B MORTEN",
+    "start": "21:00",
     "end": "22:00"
   },
   {
-    "name": "FLOR & STEIN",
-    "tier": "main",
-    "genre": "Nu-Disco",
-    "start": "19:00",
-    "end": "20:30"
+    "name": "CHAMPETOETERS",
+    "start": "22:00",
+    "end": "00:00"
   },
   {
-    "name": "OSTEND SOUND",
-    "tier": "opener",
-    "genre": "Coastal House",
-    "start": "17:30",
-    "end": "19:00"
+    "name": "TO BE ANNOUNCED",
+    "start": "00:00",
+    "end": "02:00"
   }
 ]

@@ -12,31 +12,50 @@
 (function (root) {
   'use strict';
 
-  /* Draw, fixed by the schedule: which group place fills which QF seat.
-     Eight groups, eight winners, eight seats — the second index is 0 for every
-     one of them. No runner-up advances: on five courts the day only holds a
-     4+2+1 knockout, so finishing second in your group is the end of it. (With
-     four groups it used to be winner + runner-up; the [g, place] shape is kept
-     so a future draw can seat a second place again without new code.) */
+  /* The draw: which poule place fills which knock-out seat. [group, place],
+     place 0 = winner, 1 = runner-up.
+
+     Four poules, winner AND runner-up through, so the eight seats are filled
+     CROSS-WISE — A's winner in the first quarter, A's runner-up in the third.
+     The two halves of the bracket meet only in the finale, so two teams out of
+     the same poule can never be knocked out by each other before it. The
+     pairing is generated to match by tools/gendata.py, and
+     tools/bracket.test.mjs fails if the two ever disagree. */
   var GROUP_SLOT = {
-    QF1A: ['A', 0], QF1B: ['B', 0],   /* m49 */
-    QF2A: ['C', 0], QF2B: ['D', 0],   /* m50 */
-    QF3A: ['E', 0], QF3B: ['F', 0],   /* m51 */
-    QF4A: ['G', 0], QF4B: ['H', 0]    /* m52 */
+    QF1A: ['A', 0], QF1B: ['B', 1],
+    QF2A: ['C', 0], QF2B: ['D', 1],
+    QF3A: ['B', 0], QF3B: ['A', 1],
+    QF4A: ['D', 0], QF4B: ['C', 1]
   };
 
-  /* Slots filled by the winner of an earlier match. Listed in dependency
-     order: the finale's sources are resolved before it is read.
-     ⚠ These are match ids from schedule.json — 48 group matches come first, so
-     they shift whenever the draw size changes. tools/gendata.py prints the
-     count; tools/bracket.test.mjs fails loudly if they drift. */
-  var WINNER_SLOT = {
-    SF1A: 'm49', SF1B: 'm50',
-    SF2A: 'm51', SF2B: 'm52',
-    FA: 'm53', FB: 'm54'
-  };
+  /* Seats filled by the winner of an earlier match, READ OFF THE SCHEDULE
+     rather than typed. These used to be literal ids (m49…m54) and every change
+     of draw size silently re-pointed them at the wrong matches — the group
+     matches come first, so all of them shift at once. The schedule already
+     says which round a match belongs to; that is the durable fact. */
+  function winnerSlots(matches) {
+    var byRound = { qf: [], sf: [], final: [] };
+    matches.forEach(function (m) {
+      if (byRound[m.round]) byRound[m.round].push(m.id);
+    });
+    var map = {};
+    byRound.sf.forEach(function (id, i) {
+      map['SF' + (i + 1) + 'A'] = byRound.qf[i * 2];
+      map['SF' + (i + 1) + 'B'] = byRound.qf[i * 2 + 1];
+    });
+    byRound.final.forEach(function (id, i) {
+      if (i) return;                       /* one finale, always */
+      map.FA = byRound.sf[0];
+      map.FB = byRound.sf[1];
+    });
+    return map;
+  }
 
-  var SLOT_NAMES = Object.keys(GROUP_SLOT).concat(Object.keys(WINNER_SLOT));
+  /* Every seat name the resolver can fill. The knock-out seats are fixed by
+     GROUP_SLOT; the rest follow the deepest bracket the schedule can describe,
+     which is what slotNames has always promised its callers. */
+  var SLOT_NAMES = Object.keys(GROUP_SLOT)
+    .concat(['SF1A', 'SF1B', 'SF2A', 'SF2B', 'FA', 'FB']);
 
   /* ----------------------------------------------------- input hardening
      Everything below treats schedule/teams/results as hostile: results come
@@ -211,8 +230,9 @@
       return sideIds(m)[r.winner === 'A' ? 0 : 1];
     }
 
-    Object.keys(WINNER_SLOT).forEach(function (k) {
-      slots[k] = winnerOf(WINNER_SLOT[k]);
+    var winnerSlot = winnerSlots(matches);
+    Object.keys(winnerSlot).forEach(function (k) {
+      slots[k] = winnerOf(winnerSlot[k]);
     });
 
     /* -------------------------------------------------------- byMatch --- */

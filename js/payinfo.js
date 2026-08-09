@@ -4,12 +4,13 @@
      PayInfo.render(el, { amount, mededeling, kind })   kind: 'register' | 'order'
 
    turns `el` into ONE glass panel: what it costs, where it goes, the mededeling
-   to type (the team name for an inschrijving, the buyer's name for tickets —
-   that is how the organisers match the transfers), and the line that says you
-   can also pay at the event. Returns { panel, title } so the caller can move
-   focus to the heading.
+   to type when there IS one (the team name for an inschrijving; a ticket order
+   passes none at all — the named tickets are its record), and the line that
+   says you can also pay at the event. With no mededeling the row is dropped
+   entirely. Returns { panel, title } so the caller can move focus to the
+   heading.
 
-     PayInfo.recap({ amount, mededeling })   → "€50 · BE37 9731 8485 2328 · mededeling …"
+     PayInfo.recap({ amount, mededeling })   → "€44 · BE37 9731 8485 2328 · mededeling …"
 
    is the same information as one line, for the confirmation views: they replace
    the panel, and the details must survive that.

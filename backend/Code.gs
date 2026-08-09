@@ -50,16 +50,49 @@
  *    write, so a busy landing page cannot run up the Sheets quota.
  */
 
-var TEAM_PRICE = 50;            // authoritative — an amount from the client is ignored
-var TICKET_PRICE = 12;
-var MAX_QTY = 8;
+var TEAM_PRICE = 44;            // authoritative — an amount from the client is ignored
+/* The four open-air formulas. Every one is the same entry ticket; the drink
+   and the wristband that comes with it is the difference.
+
+   The KEY is what the browser sends; label/short/price are the server's, and
+   the amount is NEVER taken from the request. Repeated from
+   site/data/tickets.json because Apps Script cannot read it —
+   tools/bracket.test.mjs fails if the ids or the prices drift apart. */
+var TICKET_TYPES = {
+  'basis': { label: 'Toegangsticket', short: 'Enkel toegang', price: 3 },
+  'soda': { label: 'Toegangsticket + soda of pint', short: 'Soda of pint', price: 5 },
+  'cocktail': { label: 'Toegangsticket + cocktail of glas Champetoeter (Pommery)',
+                short: 'Cocktail of glas Champetoeter', price: 10 },
+  'fles': { label: 'Toegangsticket + fles Champetoeter (Pommery)',
+            short: 'Fles Champetoeter', price: 75 }
+};
+
+/* Tickets in ONE order. Each one carries a person's name, so this is also how
+   long the order form can get. Anti-spam, not a sales limit. */
+var MAX_TICKETS = 25;
 
 /* teams.json (site/data/teams.json) is the source of truth for the draw; Apps
    Script cannot read it, so the two numbers it needs live here. Keep in step:
    TOTAL_SLOTS = teams.length, OPEN_SLOTS = the ids with confirmed:false. */
-var TOTAL_SLOTS = 32;
-var OPEN_SLOTS = ['t17', 't18', 't19', 't20', 't21', 't22', 't23', 't24',
-                  't25', 't26', 't27', 't28', 't29', 't30', 't31', 't32'];
+var TOTAL_SLOTS = 22;
+var OPEN_SLOTS = ['t01', 't02', 't03', 't04', 't05', 't06', 't07', 't08',
+                  't09', 't10', 't11', 't12', 't13', 't14', 't15', 't16',
+                  't17', 't18', 't19', 't20', 't21', 't22'];
+
+/* The two choices the entry form asks for. The KEY is what the browser sends
+   (the <option value> in site/sections/register.html — Apps Script cannot read
+   that file, so the pair is repeated here and tools/bracket.test.mjs fails if
+   the two ever drift). The VALUE is what gets stored and mailed: the organiser
+   reads this straight out of the Sheet, and "heel-vaak" is not an answer. */
+var TEAM_TYPES = {
+  'vrouwen': 'Vrouwenteam',
+  'mannen': 'Mannenteam'
+};
+var LEVELS = {
+  'af-en-toe': 'Ik speel af en toe (P50/P100)',
+  'vaak': 'Ik speel vaak (P200/P300)',
+  'heel-vaak': 'Ik speel heel vaak (P400/P400)'
+};
 
 /* register/order are unauthenticated and send mail, so they are capped: the
    same address may not pile up rows, and a whole day cannot be flooded (the
@@ -90,8 +123,20 @@ var EVENT_WHEN = 'zaterdag 5 september 2026, 14:00 → 02:00';
 var EVENT_WHERE = 'TC Leiemeers, Luitenant-Generaal Gérardstraat 62, 8520 Kuurne';
 
 var COLUMNS = {
-  registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone', 'at', 'paid', 'clientRef'],
-  orders: ['ref', 'name', 'email', 'quantity', 'at', 'paidCount', 'clientRef'],
+  registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone',
+                  'teamType', 'level', 'at', 'paid', 'clientRef'],
+  /* `tickets` is the order itself: a JSON array of { holder, type, label,
+     price, paid }, one entry per named ticket. label and price are frozen into
+     the row on purpose — a formula whose price changes later must not silently
+     rewrite what somebody already agreed to pay.
+     `summary` and `amount` are derived, and exist so the raw Sheet stays
+     readable to a human who never opens /admin/. */
+  /* No buyer name column: the page asks only for an e-mail and the name on
+     each ticket, and the person ordering need not be one of the ticket
+     holders — so there is nobody to put in it (client, r11). `ref` identifies
+     the row here and in /admin/; it is deliberately never shown to a buyer
+     and never mailed, and a ticket order carries no mededeling at all. */
+  orders: ['ref', 'email', 'tickets', 'summary', 'amount', 'at', 'clientRef'],
   results: ['matchId', 'sets', 'winner', 'at'],
   payments: ['key', 'paid', 'at'],
   log: ['at', 'action', 'detail']
@@ -257,16 +302,57 @@ function tab_(name) {
   var sh = ss.getSheetByName(name);
   if (!sh) {
     sh = ss.insertSheet(name);
-    sh.getRange(1, 1, 1, COLUMNS[name].length).setValues([COLUMNS[name]]);
-    sh.setFrozenRows(1);
-    /* Every column plain text, or Sheets parses what it is given: "0476…"
-       loses its zero, "+32…" becomes a formula, an ISO stamp becomes a local
-       date-time. Numbers and booleans are read back through Number()/bool_(),
-       so text format costs nothing there. */
-    sh.getRange(1, 1, sh.getMaxRows(), COLUMNS[name].length).setNumberFormat('@');
+    writeHeader_(sh, name);
+  } else {
+    healHeader_(sh, name);
   }
   TABS_[name] = sh;
   return sh;
+}
+
+function writeHeader_(sh, name) {
+  var want = COLUMNS[name];
+  sh.getRange(1, 1, 1, want.length).setValues([want]);
+  sh.setFrozenRows(1);
+  /* Every column plain text, or Sheets parses what it is given: "0476…" loses
+     its zero, "+32…" becomes a formula, an ISO stamp becomes a local
+     date-time. Numbers and booleans are read back through Number()/bool_(), so
+     text format costs nothing there. */
+  sh.getRange(1, 1, sh.getMaxRows(), want.length).setNumberFormat('@');
+}
+
+/* A tab created by an OLDER version of this file still carries that version's
+   header row, and rows_() maps by header NAME — so a column this version
+   writes lands nowhere and reads back as undefined. That is exactly how the
+   registrations tab once stored teamName without ever reading it.
+
+   Repair it, but only while the tab is EMPTY: rewriting a header over existing
+   rows would relabel real data, which is worse than the mismatch. A non-empty
+   mismatch is left alone and warned about — resetAll clears the rows, and the
+   next call through here fixes the header for good.
+
+   console.warn, never log_(): log_ writes through tab_() and would recurse. */
+function healHeader_(sh, name) {
+  var want = COLUMNS[name];
+  var width = Math.max(want.length, sh.getLastColumn() || want.length);
+  var got = sh.getRange(1, 1, 1, width).getValues()[0].map(function (v) {
+    return String(v == null ? '' : v).trim();
+  });
+  var ok = true;
+  want.forEach(function (c, i) { if (got[i] !== c) ok = false; });
+  got.slice(want.length).forEach(function (v) { if (v) ok = false; });
+  if (ok) return;
+
+  if (sh.getLastRow() > 1) {
+    try {
+      console.warn('[champ] ' + name + ' has an old header row (' + got.join(',') +
+                   ') and ' + (sh.getLastRow() - 1) + ' rows in it. Run resetAll, ' +
+                   'then reload — the header repairs itself once the tab is empty.');
+    } catch (err) { /* console is a bonus */ }
+    return;
+  }
+  if (width > want.length) sh.getRange(1, 1, 1, width).clearContent();
+  writeHeader_(sh, name);
 }
 
 /* An 'at' cell edited by hand can still come back as a Date. */
@@ -328,10 +414,31 @@ function registrations_() {
       player2: String(r.player2),
       email: String(r.email),
       phone: String(r.phone),
+      teamType: String(r.teamType || ''),
+      level: String(r.level || ''),
       at: iso_(r.at),
       paid: bool_(r.paid),
       clientRef: String(r.clientRef || ''),
       __row: r.__row
+    };
+  });
+}
+
+/* A stored tickets cell, back into an array. Anything unreadable becomes an
+   empty order rather than throwing: one corrupt cell must not take out the
+   whole orders view. */
+function parseTickets_(raw) {
+  var list;
+  try { list = JSON.parse(String(raw || '[]')); } catch (err) { return []; }
+  if (!Array.isArray(list)) return [];
+  return list.map(function (t) {
+    t = t && typeof t === 'object' ? t : {};
+    return {
+      holder: String(t.holder || ''),
+      type: String(t.type || ''),
+      label: String(t.label || ''),
+      price: Number(t.price) || 0,
+      paid: !!t.paid
     };
   });
 }
@@ -341,11 +448,11 @@ function orders_() {
   return rows_('orders').map(function (r) {
     return {
       ref: String(r.ref),
-      name: String(r.name),
       email: String(r.email),
-      quantity: Number(r.quantity) || 0,
+      tickets: parseTickets_(r.tickets),
+      summary: String(r.summary || ''),
+      amount: Number(r.amount) || 0,
       at: iso_(r.at),
-      paidCount: Number(r.paidCount) || 0,
       clientRef: String(r.clientRef || ''),
       __row: r.__row
     };
@@ -468,7 +575,7 @@ function setRefSeq_(prefix, n) {
    still present — deleting the newest registration must not hand its number to
    the next one. The live rows are still consulted, so a hand-edited sheet or a
    wiped property store can only ever push the counter forward, never back.
-   resetAll clears both marks; seedDemo rebuilds them from the seeded rows. */
+   resetAll clears both marks. */
 function nextRef_(prefix, rows) {
   var n = Math.max(maxRefNumber_(rows), refSeq_(prefix)) + 1;
   setRefSeq_(prefix, n);
@@ -508,11 +615,15 @@ function cleanResult_(sets, winner) {
 function payIban_() { return String(props_().getProperty('PAY_IBAN') || 'BE37 9731 8485 2328').trim(); }
 function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Champetoeters').trim(); }
 
+/* `mededeling` is optional. A team inschrijving has one (the team name); a
+   ticket order has NONE — no buyer name is asked, and the internal TKT-nn is
+   not something a visitor should be asked to type (client, r11). The tickets
+   are listed by name in the mail above this, and that is the record. */
 function paymentLines_(mededeling) {
   var iban = payIban_();
   var first = iban
     ? '• Overschrijving naar ' + iban + ' op naam van ' + payHolder_() +
-      ' met mededeling "' + mededeling + '".'
+      (mededeling ? ' met mededeling "' + mededeling + '".' : '.')
     : '• Het rekeningnummer volgt nog. Betalen kan ook ter plaatse.';
   return [
     'Betalen kan op twee manieren:',
@@ -542,6 +653,8 @@ function registerMail_(entry) {
       '',
       'Jullie inschrijving is binnen.',
       'Team: ' + (entry.teamName || who) + ' (' + who + ')',
+      'Type: ' + entry.teamType,
+      'Niveau: ' + entry.level,
       'Inschrijvingsgeld: €' + TEAM_PRICE + ' per team.',
       ''
     ].concat(paymentLines_(entry.teamName || who), [''], footerLines_())
@@ -549,17 +662,33 @@ function registerMail_(entry) {
 }
 
 function orderMail_(order) {
-  var total = order.quantity * TICKET_PRICE;
+  var tickets = parseTickets_(order.tickets);
+  /* One line per ticket, named: the buyer has to be able to check that the
+     right person is on the right formula before they transfer anything. */
+  var lines = tickets.map(function (t) {
+    return '  · ' + t.holder + ' — ' + t.label + ' (€' + t.price + ')';
+  });
+  /* No name in the greeting: the only names in an order are the ones ON the
+     tickets, and whoever ordered may be none of them. Greeting them by the
+     first ticket holder would address the mail to the wrong person. */
   return {
     to: order.email,
     subject: 'Je open air tickets · ' + EVENT_NAME,
     lines: [
-      'Hallo ' + order.name + ',',
+      'Hallo,',
       '',
-      'Je tickets zijn gereserveerd.',
-      'Aantal: ' + order.quantity + ' × €' + TICKET_PRICE + ' = €' + total + '.',
+      (tickets.length === 1 ? 'Je ticket is' : 'Je ' + tickets.length + ' tickets zijn') +
+        ' gereserveerd.',
       ''
-    ].concat(paymentLines_(order.name), [''], footerLines_())
+    ].concat(lines, [
+      '',
+      'Totaal: €' + order.amount + '.',
+      'Aan de ingang krijg je per ticket een polsbandje dat bij de gekozen formule hoort.',
+      ''
+    ],
+    /* No mededeling: the named tickets listed above ARE what identifies this
+       order. Nothing else is asked of the person paying. */
+    paymentLines_(''), [''], footerLines_())
   };
 }
 
@@ -679,6 +808,12 @@ function cleanEntry_(body, paid) {
     player2: clean_(body.player2, 60),
     email: cleanEmail_(body.email),
     phone: clean_(body.phone, 40),
+    /* Stored as the Dutch label, resolved from the allow-list above. An
+       unknown key is not coerced to a default — it fails the whole entry,
+       because silently filing a team under the wrong niveau is worse than
+       refusing it. */
+    teamType: TEAM_TYPES[String(body.teamType || '')] || '',
+    level: LEVELS[String(body.level || '')] || '',
     at: new Date().toISOString(),
     paid: !!paid
   };
@@ -687,27 +822,64 @@ function cleanEntry_(body, paid) {
   if (!hasLetter_(entry.player1) || !hasLetter_(entry.player2)) return null;
   if (!isEmail_(entry.email)) return null;
   if (!isPhone_(entry.phone)) return null;
+  if (!entry.teamType || !entry.level) return null;
   return entry;
 }
 
-/* Same deal for order / addOrder. paidCount is clamped to 0..quantity; the
-   public action always passes 0. */
-function cleanOrder_(body, paidCount) {
-  var qty = Number(body.quantity);
+/* Same deal for order / addOrder. Every ticket in the basket carries the name
+   of the person it is for, and its own paid flag. */
+function cleanOrder_(body, paidAll) {
+  var list = Array.isArray(body.tickets) ? body.tickets : null;
+  if (!list || !list.length || list.length > MAX_TICKETS) return null;
+
+  var tickets = [];
+  for (var i = 0; i < list.length; i++) {
+    var t = list[i] && typeof list[i] === 'object' ? list[i] : {};
+    var spec = TICKET_TYPES[String(t.type || '')];
+    if (!spec) return null;                       /* unknown formula → refuse */
+    var holder = clean_(t.holder, 60);
+    if (holder.length < 2 || !hasLetter_(holder)) return null;
+    tickets.push({
+      holder: holder,
+      type: String(t.type),
+      label: spec.label,
+      price: spec.price,                          /* the server's price, always */
+      paid: !!paidAll
+    });
+  }
+
+  /* No buyer name is asked or inferred (client, r11). The person ordering may
+     be none of the ticket holders — paying for other people is normal here —
+     so guessing one from the basket would put the wrong name on the mail and
+     in the Sheet. An e-mail to send the confirmation to is all that is
+     needed; the order's own `ref` identifies it. A `name` sent by an older
+     client is accepted and ignored. */
   var order = {
     ref: '',
     clientRef: cleanToken_(body.clientRef),
-    name: clean_(body.name, 60),
     email: cleanEmail_(body.email),
-    quantity: qty,
-    at: new Date().toISOString(),
-    paidCount: 0
+    tickets: JSON.stringify(tickets),
+    summary: summaryOf_(tickets),
+    amount: amountOf_(tickets),
+    at: new Date().toISOString()
   };
-  if (!order.name || !hasLetter_(order.name)) return null;
   if (!isEmail_(order.email)) return null;
-  if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) return null;
-  order.paidCount = Math.max(0, Math.min(qty, Math.trunc(Number(paidCount)) || 0));
   return order;
+}
+
+function amountOf_(tickets) {
+  var sum = 0;
+  tickets.forEach(function (t) { sum += Number(t.price) || 0; });
+  return sum;
+}
+
+/* "Jan Peeters — Soda of pint · An Maes — Enkel toegang". For the human
+   reading the Sheet; /admin/ renders from the tickets array itself. */
+function summaryOf_(tickets) {
+  return tickets.map(function (t) {
+    var spec = TICKET_TYPES[t.type];
+    return t.holder + ' — ' + ((spec && spec.short) || t.label);
+  }).join(' · ');
 }
 
 function actRegister_(body) {
@@ -749,15 +921,15 @@ function actOrder_(body) {
   var res = withLock_(function () {
     var rows = orders_();
     var seen = replay_(rows, order.clientRef);
-    if (seen) return { ok: true, reference: seen.ref, amount: Number(seen.quantity) * TICKET_PRICE };
+    if (seen) return { ok: true, reference: seen.ref, amount: seen.amount };
     if (overLimit_(rows, order.email)) return fail_('too-many');
 
     order.ref = nextRef_('TKT', rows);
     append_('orders', order);
-    log_('order', order.ref + ' x' + order.quantity + ' ' + order.email);
+    log_('order', order.ref + ' x' + parseTickets_(order.tickets).length + ' ' + order.email);
     dropStateCache_();
     mail = orderMail_(order);
-    return { ok: true, reference: order.ref, amount: order.quantity * TICKET_PRICE };
+    return { ok: true, reference: order.ref, amount: order.amount };
   });
 
   if (mail) res.mailed = sendMail_(mail);   /* see actRegister_ */
@@ -840,16 +1012,25 @@ function actAdmin_(body) {
     });
   }
 
-  if (op === 'setOrderPaid') {
+  /* One named ticket at a time: with four prices in one basket, "3 of 4 paid"
+     says nothing about how much came in. seq is 1-based, as /admin/ shows it. */
+  if (op === 'setTicketPaid') {
     var ref = String(body.ref || '');
-    var n = Math.trunc(Number(body.paidCount));
-    if (!Number.isFinite(n)) return fail_('bad-request');
+    var seq = Math.trunc(Number(body.seq));
+    if (!Number.isFinite(seq)) return fail_('bad-request');
+    var paidFlag = !!body.paid;
     return withLock_(function () {
       var order = orders_().filter(function (o) { return o.ref === ref; })[0];
       if (!order) return fail_('not-found');
-      var count = Math.max(0, Math.min(order.quantity, n));
-      setCell_('orders', order.__row, 'paidCount', count);
-      log_('setOrderPaid', ref + ' ' + count);
+      if (seq < 1 || seq > order.tickets.length) return fail_('bad-request');
+      var list = order.tickets.map(function (t, i) {
+        return {
+          holder: t.holder, type: t.type, label: t.label, price: t.price,
+          paid: (i === seq - 1) ? paidFlag : t.paid
+        };
+      });
+      setCell_('orders', order.__row, 'tickets', JSON.stringify(list));
+      log_('setTicketPaid', ref + '#' + seq + ' ' + paidFlag);
       dropStateCache_();
       return { ok: true };
     });
@@ -891,8 +1072,10 @@ function actAdmin_(body) {
     });
   }
 
+  /* The organiser selling at the door: same validation as the public action,
+     no caps, no mail. `paid` marks the WHOLE basket paid — cash in hand. */
   if (op === 'addOrder') {
-    var newOrder = cleanOrder_(body, body.paidCount);
+    var newOrder = cleanOrder_(body, !!body.paid);
     if (!newOrder) return fail_('bad-request');
     return withLock_(function () {
       var rows = orders_();
@@ -900,7 +1083,7 @@ function actAdmin_(body) {
       if (seen) return { ok: true, reference: seen.ref };
       newOrder.ref = nextRef_('TKT', rows);
       append_('orders', newOrder);
-      log_('addOrder', newOrder.ref + ' x' + newOrder.quantity);
+      log_('addOrder', newOrder.ref + ' ' + newOrder.summary);
       dropStateCache_();
       return { ok: true, reference: newOrder.ref };
     });
@@ -913,15 +1096,6 @@ function actAdmin_(body) {
       if (!row) return fail_('not-found');
       tab_('orders').deleteRow(row.__row);
       log_('deleteOrder', orderRef);
-      dropStateCache_();
-      return { ok: true };
-    });
-  }
-
-  if (op === 'seedDemo') {
-    return withLock_(function () {
-      seed_(body.state);
-      log_('seedDemo', '');
       dropStateCache_();
       return { ok: true };
     });
@@ -951,100 +1125,3 @@ function strip_(o) {
   return copy;
 }
 
-/* site/data/demo-state.json keeps its admin-only rows under `adminDemo`, so the
-   file can be seeded wholesale: nested orders / teamPaid / registrations are
-   merged with the top-level keys, top level winning on a key clash. */
-function seedSource_(raw) {
-  var src = raw && typeof raw === 'object' ? raw : {};
-  var nested = src.adminDemo && typeof src.adminDemo === 'object' ? src.adminDemo : {};
-  var arr = function (v) { return Array.isArray(v) ? v : []; };
-  return {
-    /* Full objects first, public { teamId, players } entries after: a slot
-       already described in detail is not duplicated by its public twin. */
-    registrations: arr(src.registrations).concat(arr(nested.registrations), arr(src.teams)),
-    orders: arr(src.orders).concat(arr(nested.orders)),
-    results: src.results && typeof src.results === 'object' ? src.results : nested.results,
-    teamPaid: Object.assign({}, nested.teamPaid, nested.payments, src.teamPaid, src.payments)
-  };
-}
-
-/* Replace ALL data with the given demo state. Registrations may arrive as full
-   objects or as the public { teamId, players } shape of ?action=state. */
-function seed_(raw) {
-  var src = seedSource_(raw);
-
-  clearTab_('registrations');
-  clearTab_('orders');
-  clearTab_('results');
-  clearTab_('payments');
-  /* The demo state carries its own refs, so the counters restart from it. */
-  setRefSeq_('INS', 0);
-  setRefSeq_('TKT', 0);
-
-  var kept = [];
-  src.registrations.forEach(function (r) {
-    if (!r || typeof r !== 'object') return;
-    var players = Array.isArray(r.players) ? r.players : [r.player1, r.player2];
-    var teamId = isTeamId_(r.teamId) ? String(r.teamId) : '';
-    var entry = {
-      ref: clean_(r.ref, 20) || nextRef_('INS', kept),
-      teamId: teamId,
-      teamName: clean_(r.teamName || r.name, 40),
-      player1: clean_(players[0], 60),
-      player2: clean_(players[1], 60),
-      email: cleanEmail_(r.email),
-      phone: clean_(r.phone, 40),
-      at: typeof r.at === 'string' ? r.at : new Date().toISOString(),
-      paid: !!r.paid
-    };
-    if (!entry.player1 && !entry.player2) return;
-    var dupe = kept.filter(function (x) {
-      return x.ref === entry.ref || (teamId && x.teamId === teamId);
-    }).length > 0;
-    if (dupe) return;
-    kept.push(entry);
-    append_('registrations', entry);
-  });
-
-  var keptOrders = [];
-  src.orders.forEach(function (o) {
-    if (!o || typeof o !== 'object') return;
-    var qty = Number(o.quantity);
-    if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) return;
-    var name = clean_(o.name, 60);
-    if (!name) return;
-    var paidCount = Math.max(0, Math.min(qty, Math.trunc(Number(o.paidCount)) || 0));
-    var row = {
-      ref: clean_(o.ref, 20) || nextRef_('TKT', keptOrders),
-      name: name,
-      email: cleanEmail_(o.email),
-      quantity: qty,
-      at: typeof o.at === 'string' ? o.at : new Date().toISOString(),
-      paidCount: paidCount
-    };
-    keptOrders.push(row);
-    append_('orders', row);
-  });
-
-  var results = src.results && typeof src.results === 'object' ? src.results : {};
-  Object.keys(results).forEach(function (id) {
-    if (!isMatchId_(id)) return;
-    var r = results[id] || {};
-    var ok = cleanResult_(r.sets, r.winner);
-    if (!ok) return;
-    append_('results', {
-      matchId: id,
-      sets: JSON.stringify(ok.sets),
-      winner: ok.winner,
-      at: new Date().toISOString()
-    });
-  });
-
-  Object.keys(src.teamPaid).forEach(function (key) {
-    if (!isTeamId_(key)) return;
-    append_('payments', { key: key, paid: !!src.teamPaid[key], at: new Date().toISOString() });
-  });
-
-  setRefSeq_('INS', Math.max(refSeq_('INS'), maxRefNumber_(kept)));
-  setRefSeq_('TKT', Math.max(refSeq_('TKT'), maxRefNumber_(keptOrders)));
-}

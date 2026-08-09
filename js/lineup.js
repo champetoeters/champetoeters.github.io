@@ -18,8 +18,8 @@ window.Sections = window.Sections || {};
   var DAY_AFTER = "2026-09-06";
   var NIGHT_END = 26 * 60;
 
-  /* Sets are never named (BRIEF §0, remark 6). `tier` stays a class only — it
-     drives nothing visual any more and must not become words. */
+  /* Sets are never named (BRIEF §0, remark 6). There is no headliner on this
+     bill and no genres — the client cut both. Every act renders identically. */
 
   /* ---------- the night runs on a 14:00 → 26:00 clock ---------- */
   function toMin(hhmm) {
@@ -75,25 +75,18 @@ window.Sections = window.Sections || {};
   }
 
   /* Returns { html, chars, line }.
-       line  — the whole name on ONE line, spaces included, the italic kicker
-               counted at its real 0.32em size. This is the ONLY measure the
-               CSS fits against, at every viewport: the words are `inline`
-               everywhere, so a name never stacks and never wraps.
+       line  — the whole name on ONE line, spaces included. This is the ONLY
+               measure the CSS fits against, at every viewport: the words are
+               `inline` everywhere, so a name never stacks and never wraps.
        chars — longest single word. Kept for the hyphenation fallback only.
+     EVERY word of a name is set at the same size. A short leading word used to
+     be demoted to a small italic kicker, which read "TO BE ANNOUNCED" as a
+     whispered "to" in front of the act (client, r11) — a name is a name.
      Word spans are joined with a real space, which renders between inline
      boxes and is what separates the words on screen. */
-  var KICK_EM = 0.32;
-
   function typeset(name) {
-    var ws = words(name);
-    var kicker = ws.length > 1 && ws[0].length <= 2 ? ws[0] : null;
-    var body = kicker ? ws.slice(1) : ws;
+    var body = words(name);
     var chars = 1, line = 0, parts = [];
-
-    if (kicker) {
-      parts.push('<span class="ln__w ln__w--kick">' + esc(kicker) + "</span>");
-      line += kicker.length * KICK_EM;
-    }
 
     body.forEach(function (w) {
       var cut = hyphenate(w);
@@ -121,10 +114,10 @@ window.Sections = window.Sections || {};
 
   /* ---------- "on stage now" ----------------------------------------------
      One clock for the whole site: ChampLive.nowMinutes() on the same 14:00 →
-     26:00 event scale, with the same precedence (?now=HH:MM → demoNow → the
-     real clock on 5/6 sept 2026). The local implementation below is only the
-     fallback for pages that do not load js/livedata.js — the standalone
-     preview harness — and must keep that precedence identical. */
+     26:00 event scale, with the same precedence (?now=HH:MM → the real clock
+     on 5/6 sept 2026). The local implementation below is the fallback for a
+     page that does not load js/livedata.js, and must keep that precedence
+     identical. */
   function liveMinutes() {
     var L = window.ChampLive;
     if (L && typeof L.nowMinutes === "function") {
@@ -134,9 +127,6 @@ window.Sections = window.Sections || {};
     var q = null;   // ?now=23:45 forces the live state for screenshots (BRIEF §0 rule 8)
     try { q = new URLSearchParams(location.search).get("now"); } catch (e) { q = null; }
     if (q && /^\d{1,2}:\d{2}$/.test(q)) return toMin(q);
-
-    var demo = window.CHAMP_CONFIG && window.CHAMP_CONFIG.demoNow;
-    if (demo && /^\d{1,2}:\d{2}$/.test(String(demo))) return toMin(demo);
 
     var d = new Date();
     var iso = d.getFullYear() + "-" +
@@ -150,7 +140,6 @@ window.Sections = window.Sections || {};
 
   /* ---------- render ---------- */
   function setHTML(dj, i, total) {
-    var tier = dj.tier;
     var name = typeset(dj.name);
 
     /* No inline custom property at all. The type is fitted from ONE --cl set on
@@ -158,7 +147,7 @@ window.Sections = window.Sections || {};
        by construction rather than by the cap happening to bind. Nothing here may
        set a colour, a tone or an opacity — all five share one background. */
     return '' +
-      '<li class="ln__set ln__set--' + tier + '" data-set="' + i + '">' +
+      '<li class="ln__set" data-set="' + i + '">' +
 
         /* the spine, desktop only — display:none below 1024px so it can never
            run through a centred name (client, r10) */
@@ -176,8 +165,6 @@ window.Sections = window.Sections || {};
             '<span class="ln__name" aria-hidden="true">' + name.html + "</span>" +
           "</h3>" +
         "</div>" +
-
-        '<p class="ln__genre">' + esc(dj.genre) + "</p>" +
       "</li>";
   }
 

@@ -48,11 +48,23 @@
    never scrolls. */
 #tickets.section {
   display: grid;
+  /* `safe` centre: exact vertical centring while the block fits, but the
+     moment it is taller than the viewport the overflow goes DOWNWARD and the
+     top edge stays put. Plain `center` first, so an engine without `safe`
+     keeps the old behaviour rather than dropping the declaration.
+
+     The symmetric padding is what makes both halves true: it is at least the
+     height of the page head, so an overflowing block starts BELOW the Terug
+     pill instead of sliding under it — and because the same value sits at the
+     bottom, the centred case is still centred on the exact viewport middle.
+     (Measured: the ticket basket grew past 100svh and slid its title under
+     the pill.) */
   align-content: center;
+  align-content: safe center;
   margin-top: calc(-1 * var(--page-head-h, 72px));
   min-height: 100vh;
   min-height: 100svh;
-  padding-block: clamp(8px, 3vw, 40px);
+  padding-block: max(var(--page-head-h, 72px), clamp(8px, 3vw, 40px));
 }
 
 .tk { position: relative; isolation: isolate; }
@@ -125,6 +137,10 @@
   text-transform: uppercase;
   color: var(--tk-ink-2);
   margin-left: 8px;
+  /* The row is a flex container with gap:0 — the gap has to stay 0 so "€" and
+     the amount read as one number — so the space after "vanaf" is its own
+     margin, not whitespace in the markup (which a flex row collapses). */
+  margin-right: 8px;
 }
 
 /* One line, not a three-row perk list with three tick marks. Client: "trim
@@ -182,15 +198,15 @@
 }
 #tickets .tk-flow__btn { width: 100%; min-height: 54px; }
 
-/* -- how many ----------------------------------------------------------- */
+/* -- the basket --------------------------------------------------------
+   One row per ticket: a name and a formula. The row is a grid so the ✕ keeps
+   its column and the two fields share what is left — on a phone the fields
+   stack and the ✕ stays pinned to the first line, where the name is. */
 
-.tk-qty {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-}
-.tk-qty__k {
+.tk-basket { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.tk-basket__k {
+  margin: 0;
   font-family: var(--font-ui);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semi);
@@ -199,36 +215,65 @@
   color: var(--paper-dim);
 }
 
-.tk-stepper {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border-radius: var(--r-pill);
-  background: rgb(2 5 16 / .46);
-  box-shadow: inset 0 0 0 1px rgb(var(--haze-rgb) / .3),
-              inset 0 2px 5px rgb(2 5 16 / .5);
-  flex: none;
+.tk-rows { list-style: none; margin: 0; padding: 0; display: flex;
+           flex-direction: column; gap: var(--sp-4); }
+
+.tk-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid rgb(var(--haze-rgb) / .16);
 }
-.tk-stepper__btn {
-  width: 44px;
-  height: 44px;
+.tk-row:first-child { padding-top: 0; border-top: 0; }
+
+/* Name over formula at EVERY width. Side by side, the picker got 217px to
+   show 259px of text, so "€10 · Cocktail of glas Champetoeter" read as
+   "€10 · Cocktail of gla" — a formula you cannot read is a formula you do not
+   buy, and after choosing you could not check what you had chosen. A native
+   <select> cannot wrap or ellipsize gracefully, so the fix is room. */
+.tk-row__fields { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.tk-row__name, .tk-row__type { min-width: 0; }
+
+/* Sits on the first line beside the name, never centred against a two-line
+   row — a remove control that drifts is a remove control you mis-tap. */
+.tk-row__x {
+  width: 40px;
+  height: 40px;
+  margin-top: 22px;              /* clears the .glass-label above the input */
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: var(--paper);
-  transition: background-color var(--dur-1) var(--ease-out), opacity var(--dur-1) linear;
+  color: var(--paper-dim);
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) linear;
 }
-.tk-stepper__btn:hover:not(:disabled) { background: rgb(var(--paper-rgb) / .12); }
-.tk-stepper__btn:active:not(:disabled) { background: rgb(var(--paper-rgb) / .2); }
-.tk-stepper__btn:disabled { opacity: .3; cursor: not-allowed; }
-.tk-stepper__btn:focus-visible { outline: 2px solid var(--ball); outline-offset: -2px; }
-.tk-stepper__btn svg { width: 15px; height: 15px; }
-.tk-stepper__val {
-  min-width: 34px;
-  text-align: center;
-  font-family: var(--tk-serif);
-  font-size: 1.3rem;
+.tk-row__x:hover { background: rgb(var(--paper-rgb) / .12); color: var(--paper); }
+.tk-row__x:focus-visible { outline: 2px solid var(--ball); outline-offset: -2px; }
+.tk-row__x svg { width: 16px; height: 16px; }
+/* The row error sits inside .tk-row__name, under the input it belongs to. */
+
+.tk-add {
+  align-self: flex-start;
+  padding: 0 var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--ball);
+  border-radius: var(--r-pill);
+  transition: opacity var(--dur-1) linear, background-color var(--dur-1) var(--ease-out);
+}
+.tk-add:hover:not(:disabled) { background: rgb(var(--ball-rgb) / .12); }
+.tk-add:disabled { opacity: .35; cursor: not-allowed; }
+.tk-add:focus-visible { outline: 2px solid var(--ball); outline-offset: 2px; }
+
+/* The running total. Hidden for a single ticket: the button already carries
+   that same figure, and printing it twice reads as two amounts. */
+.tk-tot {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  color: var(--paper-dim);
   font-variant-numeric: tabular-nums;
 }
 
@@ -516,7 +561,7 @@ body[data-champ-flow-done="1"] .page-back { display: none; }
 
 /* Every target in this section clears the 44px floor (§9). */
 #tickets button { min-height: 44px; }
-#tickets .tk-stepper__btn { min-height: 44px; min-width: 44px; }
+#tickets .tk-row__x { min-height: 40px; min-width: 40px; }
 
 /* Waiting for the health probe — see register.css: label stays the action,
    dimmed and inert, so the text never flips from "niet open" to open. */

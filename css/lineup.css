@@ -1,7 +1,7 @@
 /* ============================================================================
    lineup — "& FRIENDS". The bill of performers. Owned by the lineup builder.
 
-   ONE JOB (BRIEF §0.1): who is playing music, and when. Time, name and genre
+   ONE JOB (BRIEF §0.1): who is playing music, and when. Time and name
    are printed like a programme — nothing to operate.
 
    Brand (BRIEF §1/§5): cobalt monochrome with exactly ONE accent, tennis-ball
@@ -12,7 +12,7 @@
    gradient down the night belongs to .ln__sky, once, for the whole section.
 
    Below 1024px the entry is CENTRED and the vertical spine is gone: time, name
-   and genre stack on the centre line and the horizontal hairline between
+   stack on the centre line and the horizontal hairline between
    entries is the only rule. The spine returns at ≥1024px, where the time
    gutter gives it a column to sit in.
 
@@ -41,7 +41,7 @@
      pixels, hairline letterspaced caps never reach their nominal colour, so
      small text needs a brighter value AND ≥12px AND more weight to hit 4.5:1. */
   --ln-haze-lift: 186 206 230;   /* the display italic ampersand */
-  --ln-micro:     212 228 246;   /* letterspaced caps: the genre */
+  --ln-micro:     212 228 246;   /* letterspaced caps */
   --ln-faint: rgb(var(--ln-paper) / .62);
 
   position: relative;
@@ -173,7 +173,7 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "when" "body" "genre";
+  grid-template-areas: "when" "body";
   justify-items: center;
   text-align: center;
   padding-block: clamp(26px, 5vw, 44px);
@@ -181,7 +181,6 @@
 #lineup .ln__rail  { grid-area: rail; display: none; }
 #lineup .ln__when  { grid-area: when; }
 #lineup .ln__body  { grid-area: body; }
-#lineup .ln__genre { grid-area: genre; }
 
 /* engraved table rule above every entry — the ONLY line in the mobile layout,
    so it is symmetric about the centre the type is set on. */
@@ -294,15 +293,13 @@
 /* the name is its own query container: 100cqi is the width the name is fitted
    to, so it must be the full measure the entry is allowed to use */
 #lineup .ln__head3 { container-type: inline-size; }
-#lineup .ln__head3,
-#lineup .ln__genre {
+#lineup .ln__head3 {
   opacity: 0;
   transform: translate3d(0, 14px, 0);
   transition: opacity .66s cubic-bezier(.22,.61,.36,1), transform .66s cubic-bezier(.22,.61,.36,1);
 }
 #lineup .ln__set.is-in .ln__when  { opacity: 1; transform: none; }
 #lineup .ln__set.is-in .ln__head3 { opacity: 1; transform: none; transition-delay: .07s; }
-#lineup .ln__set.is-in .ln__genre { opacity: 1; transform: none; transition-delay: .15s; }
 
 /* ---------- the name: Didone caps, painted solid -------------------------- */
 #lineup .ln__head3 { margin: 0; }
@@ -318,7 +315,7 @@
   line-height: .94;
   /* ONE LINE, EVERY WIDTH, ONE SIZE. --cl is set once on .ln__list by
      js/lineup.js: the LONGEST name measured on a single line. Fitting against
-     the full line (not the longest word) is what keeps "NOVA SCHELDT" from
+     the full line (not the longest word) is what keeps a two-word act from
      stacking; fitting every act against the same --cl is what makes all five
      identical at every width instead of only where --cap happens to bind. */
   font-size: min(calc(var(--k, 1.3) * 100cqi / var(--cl, 10)), var(--cap, 3rem));
@@ -333,19 +330,9 @@
 /* inline at EVERY width — the words of a name stay on one line together */
 #lineup .ln__w { display: inline; }
 #lineup .ln__hy { display: none; }
-#lineup .ln__w--kick {
-  font-size: .3em;
-  font-weight: 400;
-  font-style: italic;
-  letter-spacing: .3em;
-  line-height: 1.2;
-  margin-right: .4em;
-  text-transform: uppercase;
-  color: rgb(var(--ln-haze) / .9);
-  background: none;
-  -webkit-text-fill-color: rgb(var(--ln-haze) / .9);
-  text-shadow: none;
-}
+/* No per-word demotion: a short leading word ("TO BE ANNOUNCED") is part of the
+   name and is set at the name's size. The only small italic amp on this section
+   is .ln__title-amp, on the section title. */
 
 /* --k is the fit coefficient: 1 / (widest Didone cap advance + letterspacing).
    One size for every act (client: there is no headliner) — the cap sits below
@@ -353,23 +340,12 @@
 #lineup .ln__set { --k: 1.22; --cap: clamp(2rem, 9vw, 3.6rem); --nv: .95; }
 
 /* The list used to end on the closer's extra air; with uniform acts the last
-   row keeps only a small tail so the section closes right under the genre. */
+   row keeps only a small tail so the section closes right under the name. */
 #lineup .ln__set:last-child { padding-block-end: clamp(10px, 2vw, 18px); }
 
 /* The name used to be dragged left over the rail with a negative margin so a
    stacked, word-fitted name could reach the page edge. Both are gone: the name
    is one line, fitted to the centred measure, and never crosses a rule. */
-
-/* ---------- genre --------------------------------------------------------- */
-#lineup .ln__genre {
-  margin: clamp(10px, 1.8vw, 16px) 0 0;
-  font-size: clamp(12px, 3.1vw, 13px);
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgb(var(--ln-micro));
-}
 
 /* ---------- on stage now --------------------------------------------------
    The live act is marked by the "Speelt nu" pill alone. It used to also get a
@@ -378,10 +354,10 @@
    the time on mobile and beside it in the gutter on desktop. */
 
 /* ============================ DESKTOP =====================================
-   ≥1024px every act is ONE horizontal band — when | name | genre on a single
-   line — so the header and three acts fit the first screen and all five inside
-   1.6 of them. Stacking them in a narrow column put exactly one act on a
-   1440×900 screen. */
+   ≥1024px every act is ONE horizontal band — when | name on a single line — so
+   the header and three acts fit the first screen and the rest inside 1.6 of
+   them. Stacking them in a narrow column put exactly one act on a 1440×900
+   screen. */
 @media (min-width: 1024px) {
   #lineup {
     --ln-rail: 36px;
@@ -389,9 +365,8 @@
        grows a second time-line and the row bloats. Measured ink is 150px at
        1440 and ~125px at 1024, plus the 24px rail padding. */
     --ln-margin: clamp(180px, 13.6vw, 192px);
-    /* Both side columns stop growing before the measure does, so the name never
+    /* The gutter stops growing before the measure does, so the name never
        shrinks as the window widens. */
-    --ln-genre: clamp(124px, 13vw, 178px);
     padding-block: 56px clamp(40px, 4.5vw, 72px);
   }
 
@@ -404,8 +379,8 @@
   /* ---- the band ----------------------------------------------------------- */
   #lineup .ln__set {
     grid-template-columns:
-      var(--ln-margin) var(--ln-rail) minmax(0, 1fr) var(--ln-genre);
-    grid-template-areas: "when rail body genre";
+      var(--ln-margin) var(--ln-rail) minmax(0, 1fr);
+    grid-template-areas: "when rail body";
     align-items: center;
     justify-items: stretch;
     text-align: left;
@@ -435,7 +410,6 @@
   }
 
   #lineup .ln__body  { padding-left: var(--ln-body-pad); }
-  #lineup .ln__genre { margin-top: 0; padding-left: var(--ln-body-pad); }
 }
 
 /* ============================ REDUCED MOTION ============================== */
@@ -448,6 +422,5 @@
     transition-delay: 0s !important;
   }
   #lineup .ln__when,
-  #lineup .ln__head3,
-  #lineup .ln__genre { opacity: 1; transform: none; }
+  #lineup .ln__head3 { opacity: 1; transform: none; }
 }

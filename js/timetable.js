@@ -2,10 +2,10 @@
    timetable.js — CHAMPETOETERS & FRIENDS
 
    One job (BRIEF §0): let someone find out WHEN and WHERE they play. A row is
-   time · baan · names and nothing else; the sheet is padel only, 14:00 → 20:30,
-   broken by nothing but the four phase headings. Exactly one control exists,
-   and only on mobile: the court switcher, because five columns do not fit
-   390px.
+   time · baan · type · names and nothing else; the sheet is padel only,
+   12:30 → 20:00, broken by nothing but the four phase headings. Exactly one
+   control exists, and only on mobile: the court switcher, because five columns
+   do not fit 390px.
 
    All visible copy is Dutch and is written here or in the fragment. The data
    is read-only to this section, so anything English in it is translated on the
@@ -58,25 +58,25 @@ window.Sections = window.Sections || {};
 
   /* Knockout ids never resolve to a team. Spelled out so a placeholder reads as
      a real, understandable entry rather than a code. */
-  /* Must agree with GROUP_SLOT in bracket.js: eight groups, eight winners, no
-     runners-up. A seat labelled "Tweede Groep …" that the bracket never fills
-     would sit there unresolved all evening. */
+  /* Must agree with GROUP_SLOT in bracket.js — four poules, winner AND
+     runner-up. A seat named here that the bracket never fills would sit
+     unresolved all evening; tools/bracket.test.mjs checks the two agree. */
   var KO = {
-    QF1A: 'Winnaar Groep A',      QF1B: 'Winnaar Groep B',
-    QF2A: 'Winnaar Groep C',      QF2B: 'Winnaar Groep D',
-    QF3A: 'Winnaar Groep E',      QF3B: 'Winnaar Groep F',
-    QF4A: 'Winnaar Groep G',      QF4B: 'Winnaar Groep H',
-    SF1A: 'Winnaar Kwartfinale 1', SF1B: 'Winnaar Kwartfinale 2',
-    SF2A: 'Winnaar Kwartfinale 3', SF2B: 'Winnaar Kwartfinale 4',
-    FA:   'Winnaar Halve finale 1', FB:   'Winnaar Halve finale 2'
+    QF1A: 'Winnaar Poule A',       QF1B: 'Tweede Poule B',
+    QF2A: 'Winnaar Poule C',       QF2B: 'Tweede Poule D',
+    QF3A: 'Winnaar Poule B',       QF3B: 'Tweede Poule A',
+    QF4A: 'Winnaar Poule D',       QF4B: 'Tweede Poule C',
+    SF1A: 'Winnaar Knock-out 1',   SF1B: 'Winnaar Knock-out 2',
+    SF2A: 'Winnaar Knock-out 3',   SF2B: 'Winnaar Knock-out 4',
+    FA:   'Winnaar Halve finale 1', FB:  'Winnaar Halve finale 2'
   };
 
   /* One heading per phase, keyed on m.round — NOT on m.roundLabel. The schedule
-     interleaves the eight groups, so the labels cycle down the sheet and keying
+     interleaves the four poules, so the labels cycle down the sheet and keying
      on them emits dozens of false phase boundaries. Never printed on a row. */
   var PHASE = {
-    group: 'Groepswedstrijden',
-    qf: 'Kwartfinales',
+    group: 'Poules',
+    qf: 'Knock-out',
     sf: 'Halve finales',
     final: 'FINALE'
   };
@@ -100,13 +100,12 @@ window.Sections = window.Sections || {};
 
   /* ---------------------------------------------------------- live bridge
      window.ChampLive / window.ChampBracket are optional: index.html loads
-     them, the preview harness may not, and a static build with no backend
-     falls back to data/demo-state.json inside ChampLive itself. Nothing here
-     may throw or block when they are missing. */
+     them, and a static build with no backend simply has no results to show.
+     Nothing here may throw or block when they are missing. */
 
-  /* Event-clock minutes. ChampLive owns the precedence (?now= → demoNow →
-     real clock on 5/6 sept 2026); the branch below only exists for pages that
-     do not load livedata.js, and keeps that precedence identical. */
+  /* Event-clock minutes. ChampLive owns the precedence (?now= → real clock on
+     5/6 sept 2026); the branch below only exists for a page that does not load
+     livedata.js, and keeps that precedence identical. */
   function liveNow(sched) {
     var L = window.ChampLive;
     if (L && typeof L.nowMinutes === 'function') {
@@ -115,8 +114,6 @@ window.Sections = window.Sections || {};
     var q = null;
     try { q = new URLSearchParams(location.search).get('now'); } catch (e) { /* */ }
     if (q && /^\d{1,2}:\d{2}$/.test(q)) return toMin(q);
-    var demo = window.CHAMP_CONFIG && window.CHAMP_CONFIG.demoNow;
-    if (demo && /^\d{1,2}:\d{2}$/.test(String(demo))) return toMin(demo);
     var d = new Date();
     var iso = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
     if (sched && iso === sched.date) return d.getHours() * 60 + d.getMinutes();
@@ -156,7 +153,7 @@ window.Sections = window.Sections || {};
   function dataUrl(file) {
     var s = document.querySelector('script[src*="timetable.js"]');
     try { if (s && s.src) return new URL('../data/' + file, s.src).href; } catch (e) { /* */ }
-    return (location.pathname.indexOf('/preview/') > -1 ? '../data/' : 'data/') + file;
+    return 'data/' + file;
   }
 
   /* ------------------------------------------------------------ site plan
@@ -254,9 +251,8 @@ window.Sections = window.Sections || {};
     indexTeams(data.teams);
 
     /* ---- when is "now"? -------------------------------------------------
-       ?now=HH:MM and CHAMP_CONFIG.demoNow are screenshot hooks only —
-       nothing in the UI advertises them (BRIEF §0 rule 8). On the day itself
-       the real clock drives this.                                          */
+       ?now=HH:MM is a screenshot hook only and nothing in the UI advertises
+       it (BRIEF §0 rule 8). On the day itself the real clock drives this. */
     var now = clockNow();     /* re-read once a minute — see `update` below */
 
     /* ---- refs ----------------------------------------------------------- */
@@ -340,14 +336,21 @@ window.Sections = window.Sections || {};
          the time says.
 
          The clock alone is not enough for anything else. A halve finale whose
-         seats still read "Winnaar Kwartfinale 4" cannot be in play, and a
+         seats still read "Winnaar Knock-out 4" cannot be in play, and a
          "Vrije plaats" never plays at all — at 19:15 the clock happily marked
          both NU BEZIG. So a clock state is only trusted once both seats are
          two real pairs; until then the row is simply a row. */
       var playable = !A.open && !A.tbd && !B.open && !B.tbd;
       var stcls = res ? 'is-done' : playable ? stateOf(m) : '';
 
+      /* The client asked for the type of every match to be visible on the match
+         itself, not only in the phase heading it sits under — a poule row and a
+         knock-out row look identical otherwise. roundLabel already carries it
+         ("Poule A", "Knock-out", "Halve finale", "Finale"). */
+      var kind = m.roundLabel || phaseName(m);
+
       var aria = m.start + ', ' + (courtName[m.court] || m.court) + '. ' +
+        (kind ? kind + '. ' : '') +
         A.full + ' tegen ' + B.full +
         (res
           ? '. Uitslag ' + res.spoken +
@@ -365,6 +368,7 @@ window.Sections = window.Sections || {};
         '" data-m="' + esc(m.id) + '" data-court="' + esc(m.court) + '" data-r="' + r + '" data-c="' + c +
         '" aria-label="' + esc(aria) + '">' +
         '<span class="tt-m__court">' + esc(courtName[m.court] || m.court) + '</span>' +
+        (kind ? '<span class="tt-m__kind">' + esc(kind) + '</span>' : '') +
         '<span class="tt-m__tie">' + nm(A, 0) +
         '<span class="tt-m__b"><span class="tt-m__v" aria-hidden="true">vs</span>' +
         nm(B, 1) + '</span>' +
@@ -643,10 +647,19 @@ window.Sections = window.Sections || {};
        there is a backend, re-pulls the state and re-applies the whole overlay.
        Nothing here animates and nothing polls while the tab is in the
        background; coming back to the tab repaints at once. */
-    /* Three minutes, not one: a padel match lasts thirty, and every tick is a
-       billed backend execution when the static state is unavailable. The ±30%
-       jitter keeps a crowd of phones from asking in the same second. */
-    var TICK = 180000;
+    /* One minute — the rate the published state can actually change at: the
+       static read in livedata.js buckets its cache-buster on Math.floor(now /
+       60000), so a faster tick would only re-read the same CDN copy. A score
+       typed in /admin/ is on every phone within the minute.
+
+       ⚠️ This is free ONLY while the GitHub state branch is being published
+       (Script property GITHUB_TOKEN). Without it every tick falls back to
+       `action=state` on Apps Script, which is billed runtime against the ~90
+       min/day quota — at one tick per phone per minute a busy afternoon eats
+       it. If that branch ever stops updating, put this back to 180000.
+
+       The ±30% jitter keeps a crowd of phones from asking in the same second. */
+    var TICK = 60000;
     var tick = null;
 
     function clockNow() {

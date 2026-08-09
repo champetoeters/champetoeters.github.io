@@ -2,8 +2,8 @@
    admin.js — the organisers' tool at /admin/
    Owned by: admin builder.
 
-   One job per view (BRIEF §0): enter a score, tick a €50 team payment, count
-   €12 ticket payments. Used one-handed on a phone next to a court, so every
+   One job per view (BRIEF §0): enter a score, tick a €44 team payment, count
+   open air ticket payments. Used one-handed on a phone next to a court, so every
    write is optimistic and every failure reverts and says so.
 
    Consumes: window.ChampBracket (resolve), window.ChampLive (post, mergedTeams),
@@ -13,34 +13,29 @@
    Transport: every write is POST { action:'admin', password, op, … } through
    ChampLive.post (see backend/API.md). Response error 'unauthorized' anywhere
    drops back to the login view.
-
-   ?state=demo is a screenshot hook (BRIEF §0 rule 8): it skips the login and
-   feeds the views a fixture. Nothing in the UI advertises it and no write
-   leaves the browser.
    ========================================================================= */
 (function () {
   'use strict';
 
   var SESSION_KEY = 'champ.admin.pw';
-  var TICKET_PRICE = 12;
   var DATA = '../data/';
 
   /* Dutch labels — data is already Dutch and is never re-translated. */
   var PHASE = {
-    group: 'Groepswedstrijden',
-    qf: 'Kwartfinales',
+    group: 'Poules',
+    qf: 'Knock-out',
     sf: 'Halve finales',
     final: 'FINALE'
   };
-  /* Same map as timetable.js: eight groups, winners only — no runners-up. */
+  /* Same map as timetable.js: four poules, winner AND runner-up through. */
   var KO = {
-    QF1A: 'Winnaar Groep A', QF1B: 'Winnaar Groep B',
-    QF2A: 'Winnaar Groep C', QF2B: 'Winnaar Groep D',
-    QF3A: 'Winnaar Groep E', QF3B: 'Winnaar Groep F',
-    QF4A: 'Winnaar Groep G', QF4B: 'Winnaar Groep H',
-    SF1A: 'Winnaar Kwartfinale 1', SF1B: 'Winnaar Kwartfinale 2',
-    SF2A: 'Winnaar Kwartfinale 3', SF2B: 'Winnaar Kwartfinale 4',
-    FA: 'Winnaar Halve finale 1', FB: 'Winnaar Halve finale 2'
+    QF1A: 'Winnaar Poule A',       QF1B: 'Tweede Poule B',
+    QF2A: 'Winnaar Poule C',       QF2B: 'Tweede Poule D',
+    QF3A: 'Winnaar Poule B',       QF3B: 'Tweede Poule A',
+    QF4A: 'Winnaar Poule D',       QF4B: 'Tweede Poule C',
+    SF1A: 'Winnaar Knock-out 1',   SF1B: 'Winnaar Knock-out 2',
+    SF2A: 'Winnaar Knock-out 3',   SF2B: 'Winnaar Knock-out 4',
+    FA:   'Winnaar Halve finale 1', FB:  'Winnaar Halve finale 2'
   };
   var OPEN = 'Vrije plaats';
   var MONTH = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
@@ -76,7 +71,6 @@
   var RX_LETTER = /\p{L}/u;
   var RX_EMAIL = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
   var RX_TEL = /^(?:\+|00)?\d{8,15}$/;
-  var MAX_QTY = 8;
 
   function scrub(v, max) {
     return String(v == null ? '' : v)
@@ -98,10 +92,6 @@
   /* ------------------------------------------------------------------ state */
 
   var S = {
-    /* The demo fixture opens the tool WITHOUT the password, so it exists only
-       on an unwired build — never where a backend (and real data) lives. */
-    demo: !((window.CHAMP_CONFIG || {}).apiEndpoint) &&
-          /(^|&)state=demo(&|$)/.test(location.search.slice(1)),
     pw: '',
     schedule: { slots: [], matches: [] },
     courtName: {},
@@ -113,7 +103,7 @@
     registrations: [],
     orders: [],
     teamPaid: {},
-    teamPrice: 50,
+    teamPrice: 44,
     bracket: null,
     open: null,      /* matchId whose editor is open */
     draft: null,     /* { sets: [[a,b],…], winner: 'A'|'B'|null } */
@@ -138,7 +128,6 @@
   /* ----------------------------------------------------------------- backend */
 
   function post(payload, opts) {
-    if (S.demo) return Promise.resolve({ ok: true });
     var live = window.ChampLive;
     if (!live || typeof live.post !== 'function') return Promise.resolve({ ok: false, error: 'server' });
     return live.post(payload, opts).then(function (r) { return r || { ok: false, error: 'server' }; },
@@ -443,12 +432,16 @@
       '" data-ref="' + esc(ref) + '" aria-label="' + esc(label) + '">✕</button>';
   }
 
+  /* "Nee" carries the primary weight, "Ja" the ghost. This is used one-handed
+     at a busy gate and the delete cannot be undone: the biggest, brightest,
+     easiest-to-hit target must be the one that changes nothing. "Nee" comes
+     first for the same reason. */
   function askHtml(kind, ref) {
     return '<div class="ad-conf"><span class="ad-conf__q">Verwijderen?</span>' +
-      '<button type="button" class="glass-btn glass-btn--sm glass-btn--primary" data-act="del-yes"' +
-      ' data-kind="' + kind + '" data-ref="' + esc(ref) + '">Ja</button>' +
-      '<button type="button" class="glass-btn glass-btn--sm glass-btn--ghost" data-act="del-no"' +
-      ' data-kind="' + kind + '" data-ref="' + esc(ref) + '">Nee</button></div>';
+      '<button type="button" class="glass-btn glass-btn--sm glass-btn--primary" data-act="del-no"' +
+      ' data-kind="' + kind + '" data-ref="' + esc(ref) + '">Nee</button>' +
+      '<button type="button" class="glass-btn glass-btn--sm glass-btn--ghost" data-act="del-yes"' +
+      ' data-kind="' + kind + '" data-ref="' + esc(ref) + '">Ja, verwijderen</button></div>';
   }
 
   function fieldHtml(id, label, key, value, type, max, extra) {
@@ -457,6 +450,66 @@
       '" type="' + type + '" maxlength="' + max + '" autocomplete="off" spellcheck="false"' +
       (type === 'text' ? '' : ' autocapitalize="off"') + (extra || '') +
       ' value="' + esc(value == null ? '' : value) + '"></div>';
+  }
+
+  /* Same shape as fieldHtml, for the two choice fields. The option lists are
+     the ones in site/sections/register.html and the allow-lists in
+     backend/Code.gs — a team entered here must satisfy exactly the rules a
+     public registration does, because it goes through the same cleanEntry_. */
+  var TEAM_TYPES = [['vrouwen', 'Vrouwenteam'], ['mannen', 'Mannenteam']];
+  /* Twin of TICKET_TYPES in backend/Code.gs — an order entered here is
+     validated by exactly the same code as a public one. */
+  var TICKET_TYPES = [['basis', 'Enkel toegang', 3],
+                      ['soda', 'Soda of pint', 5],
+                      ['cocktail', 'Cocktail of glas Champetoeter', 10],
+                      ['fles', 'Fles Champetoeter', 75]];
+  /* Twin of MAX_TICKETS in backend/Code.gs — a bigger basket is refused there
+     as bad-request, so the form must not offer to build one. */
+  var MAX_TICKETS = 25;
+  function ticketSpec(type) {
+    return TICKET_TYPES.filter(function (t) { return t[0] === type; })[0] || null;
+  }
+  /* The picker shows the price; the rows show it in their own column. */
+  var TICKET_OPTIONS = TICKET_TYPES.map(function (t) {
+    return [t[0], t[1] + ' — €' + t[2]];
+  });
+  var LEVELS = [['af-en-toe', 'Ik speel af en toe (P50/P100)'],
+                ['vaak', 'Ik speel vaak (P200/P300)'],
+                ['heel-vaak', 'Ik speel heel vaak (P400/P400)']];
+
+  /* "Vrouwenteam" → "Vrouwen", "Ik speel vaak (P200/P300)" → "P200/P300".
+     A row on a phone has no space for the sentence, and the ranking in the
+     brackets is the part the organiser actually reads. */
+  function shortType(v) { return String(v).replace(/team$/i, ''); }
+  /* key → the label the SERVER stores. The optimistic row drawn after an add
+     has to carry the same value the next overview will bring back, or the row
+     silently changes wording under the organiser on the first refresh. */
+  function labelOf(options, key) {
+    var hit = options.filter(function (o) { return o[0] === key; })[0];
+    return hit ? hit[1] : '';
+  }
+  /* The row already says it is a ticket, so it prints the formula's short
+     name — resolved from the type, not sliced off the stored label, which is
+     a full sentence with a brand in brackets. An unknown type falls back to
+     whatever was stored, so a formula added later still reads. */
+  function shortFormula(type, label) {
+    var spec = ticketSpec(type);
+    return spec ? spec[1] : String(label || '');
+  }
+  function shortLevel(v) {
+    var m = String(v).match(/\(([^)]+)\)/);
+    return m ? m[1] : String(v);
+  }
+
+  function selectHtml(id, label, key, value, options) {
+    return '<div class="glass-field ad-f"><label class="glass-label" for="ad-f-' + id + '">' +
+      esc(label) + '</label><select class="glass-select" id="ad-f-' + id +
+      '" data-f="' + key + '">' +
+      '<option value=""' + (value ? '' : ' selected') + '>Kies…</option>' +
+      options.map(function (o) {
+        return '<option value="' + esc(o[0]) + '"' + (value === o[0] ? ' selected' : '') +
+          '>' + esc(o[1]) + '</option>';
+      }).join('') + '</select></div>';
   }
 
   function addBtnHtml(kind, label) {
@@ -472,6 +525,94 @@
       '</div>';
   }
 
+  /* The add-order basket: one row per named ticket, mixed formulas allowed —
+     the same order shape the public page posts. Row fields are keyed
+     "tk:<i>:<field>" so setFormField can put them back in S.form.tickets.
+
+     Paid is PER TICKET here, like it is in the list below: three friends at the
+     door where one pays cash and two still owe is an order the organiser has to
+     be able to enter as it really is. The basket-wide tick under the rows is a
+     shortcut for the common case, not the only way in. */
+  function formTicketsHtml(tickets) {
+    var rows = tickets.map(function (t, i) {
+      return '<li class="ad-form__tk">' +
+        fieldHtml('hd' + i, 'Op naam van', 'tk:' + i + ':holder', t.holder, 'text', 60) +
+        selectHtml('tt' + i, 'Formule', 'tk:' + i + ':type', t.type, TICKET_OPTIONS) +
+        '<label class="ad-fchk ad-form__tkpaid">' +
+        '<input type="checkbox" class="ad-t__i u-sr-only" data-f="tk:' + i + ':paid"' +
+        (t.paid ? ' checked' : '') +
+        ' aria-label="Ticket ' + (i + 1) + ' betaald">' +
+        '<span class="ad-check" aria-hidden="true"></span>' +
+        '<span class="ad-fchk__l">Betaald</span></label>' +
+        (tickets.length > 1
+          ? '<button type="button" class="ad-form__x" data-act="tk-rm" data-i="' + i +
+            '" aria-label="Ticket ' + (i + 1) + ' verwijderen">✕</button>'
+          : '') +
+        '</li>';
+    }).join('');
+    return '<ol class="ad-form__tks">' + rows + '</ol>' +
+      '<div class="ad-form__tkfoot">' +
+      '<button type="button" class="ad-add ad-add--sm" data-act="tk-add">+ Nog een ticket</button>' +
+      '<span class="ad-form__tot u-tabular" data-el="formTot">' + formTotalText(tickets) + '</span>' +
+      '</div>';
+  }
+
+  /* The basket-wide tick: CHECKED when every row is paid, INDETERMINATE when
+     only some are (a property, not an attribute — set after render by
+     syncAllPaid). It has no data-f of its own: the rows are the truth, this
+     only writes to them and reads back from them. */
+  function formAllPaidHtml(tickets) {
+    var n = tickets.length;
+    var on = tickets.filter(function (t) { return t.paid; }).length;
+    return '<label class="ad-fchk ad-form__all">' +
+      '<input type="checkbox" class="ad-t__i u-sr-only" data-act="allpaid"' +
+      (n && on === n ? ' checked' : '') + (on && on < n ? ' data-some="1"' : '') +
+      ' aria-label="Alle tickets betaald">' +
+      '<span class="ad-check" aria-hidden="true"></span>' +
+      '<span class="ad-fchk__l">Alles betaald</span></label>';
+  }
+
+  /* Repaint the basket-wide tick from the rows, without re-rendering the form —
+     a re-render would take the caret out of whatever is being typed. */
+  function paintAllPaid() {
+    if (!S.form || S.form.kind !== 'order') return;
+    var box = document.querySelector('[data-act="allpaid"]');
+    if (!box) return;
+    var n = S.form.tickets.length;
+    var on = S.form.tickets.filter(function (t) { return t.paid; }).length;
+    box.checked = !!n && on === n;
+    box.indeterminate = on > 0 && on < n;
+  }
+
+  /* The shortcut: one tap sets every row. The rows are what gets submitted, so
+     both S.form and the boxes on screen are moved — readForm() reads the DOM
+     back and would otherwise undo this on the next keystroke. */
+  function setAllTicketsPaid(on) {
+    if (!S.form || S.form.kind !== 'order') return;
+    S.form.tickets.forEach(function (t) { t.paid = on; });
+    Array.prototype.forEach.call(
+      document.querySelectorAll('.ad-form [data-f^="tk:"][data-f$=":paid"]'),
+      function (b) { b.checked = on; });
+    paintAllPaid();
+  }
+
+  function formTotalText(tickets) {
+    var sum = 0, n = 0;
+    tickets.forEach(function (t) {
+      var spec = ticketSpec(t.type);
+      if (spec) { sum += spec[2]; n++; }
+    });
+    return n ? n + ' × · ' + euro(sum) : '';
+  }
+
+  /* Repaint only the total line — re-rendering the list would move the caret
+     out of the field the organiser is typing in. */
+  function paintFormTotal() {
+    if (!S.form || S.form.kind !== 'order') return;
+    var el = document.querySelector('[data-el="formTot"]');
+    if (el) el.textContent = formTotalText(S.form.tickets);
+  }
+
   function checkHtml(key, on, label) {
     return '<label class="ad-fchk"><input type="checkbox" class="ad-t__i u-sr-only" data-f="' + key + '"' +
       (on ? ' checked' : '') + '><span class="ad-check" aria-hidden="true"></span>' +
@@ -483,8 +624,26 @@
       ? window.ChampLive.token()
       : 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
     return kind === 'team'
-      ? { kind: 'team', clientRef: tok, teamName: '', player1: '', player2: '', email: '', phone: '', paid: false, err: '' }
-      : { kind: 'order', clientRef: tok, name: '', email: '', quantity: '1', paidCount: '0', err: '' };
+      ? { kind: 'team', clientRef: tok, teamName: '', player1: '', player2: '', email: '',
+          phone: '', teamType: '', level: '', paid: false, err: '' }
+      /* Same basket the public page sends: an e-mail and one named ticket per
+         person, formulas mixed freely. No buyer name is asked here either —
+         the organiser at the door has the ticket holders in front of them, and
+         who pays is not necessarily one of them (cleanOrder_, backend/Code.gs). */
+      : { kind: 'order', clientRef: tok, email: '',
+          tickets: [{ holder: '', type: '', paid: false }], err: '' };
+  }
+
+  /* One writer for every field of an add form, so the three places that take
+     input (readForm, the change handler, the input handler) agree on what a
+     key means. A basket row is keyed "tk:<i>:<holder|type>"; everything else
+     is a plain property of S.form. */
+  function setFormField(f, key, value) {
+    if (!f || !key) return;
+    var parts = String(key).split(':');
+    if (parts[0] !== 'tk') { f[key] = value; return; }
+    var row = f.tickets && f.tickets[Number(parts[1])];
+    if (row) row[parts[2]] = value;
   }
 
   /* The form re-renders whenever its list does (a payment tick elsewhere, a
@@ -495,7 +654,7 @@
     var box = document.querySelector('.ad-form');
     if (!box) return f;
     Array.prototype.forEach.call(box.querySelectorAll('[data-f]'), function (el) {
-      f[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value;
+      setFormField(f, el.dataset.f, el.type === 'checkbox' ? el.checked : el.value);
     });
     return f;
   }
@@ -522,41 +681,61 @@
       : '.ad-x[data-ref="' + ref + '"]');
   }
 
+  /* BOTH panels are re-rendered, never just the one being opened. There is one
+     S.form for the whole app, and readForm/formError/formBusy find their nodes
+     with a bare document.querySelector('.ad-form'): if an abandoned form is
+     left standing in the other (hidden) panel, those lookups hit IT instead —
+     the teams panel comes first in the DOM, so opening a team form, switching
+     to Open air and adding an order read the team form's empty e-mail, wrote
+     the error into the hidden panel and disabled the wrong button. The order
+     button then did nothing at all, with nothing on screen to say why. */
+  function renderForms() { renderTeams(); renderOrders(); }
+
   function openForm(kind) {
     S.form = blankForm(kind);
     S.ask = null;
-    if (kind === 'team') renderTeams(); else renderOrders();
+    renderForms();
     var first = document.querySelector('.ad-form input[data-f]');
     if (first) first.focus();
   }
 
   function closeForm() {
-    var kind = S.form && S.form.kind;
     S.form = null;
-    if (kind === 'team') renderTeams(); else renderOrders();
+    renderForms();
   }
 
-  /* Server rules, said in Dutch. Anything that passes here passes there. */
+  /* Server rules, said in Dutch. Anything that passes here passes there.
+     Checked in the order the fields are drawn: one message shows at a time, so
+     it has to be about the first thing that is still missing on screen. */
   function teamError(f) {
+    if (!f.email) return 'Vul een e-mailadres in.';
+    if (!RX_EMAIL.test(f.email)) return 'Dit e-mailadres klopt niet.';
+    if (!f.phone) return 'Vul een gsm-nummer in.';
+    if (!RX_TEL.test(f.phone.replace(/[\s.\-()/]/g, ''))) return 'Dit gsm-nummer klopt niet.';
     if (!f.teamName || f.teamName.length < 2) return 'Vul een teamnaam in (minstens 2 tekens).';
     if (!RX_LETTER.test(f.teamName)) return 'Deze teamnaam klopt niet.';
     if (!f.player1) return 'Vul de naam van speler 1 in.';
     if (!RX_LETTER.test(f.player1)) return 'De naam van speler 1 klopt niet.';
     if (!f.player2) return 'Vul de naam van speler 2 in.';
     if (!RX_LETTER.test(f.player2)) return 'De naam van speler 2 klopt niet.';
-    if (!f.email) return 'Vul een e-mailadres in.';
-    if (!RX_EMAIL.test(f.email)) return 'Dit e-mailadres klopt niet.';
-    if (!f.phone) return 'Vul een gsm-nummer in.';
-    if (!RX_TEL.test(f.phone.replace(/[\s.\-()/]/g, ''))) return 'Dit gsm-nummer klopt niet.';
+    if (!f.teamType) return 'Kies het type team.';
+    if (!f.level) return 'Kies het niveau.';
     return '';
   }
 
+  /* Every ticket in the basket is checked, so a mixed order entered at the
+     door passes exactly what cleanOrder_ would accept. The message names the
+     row, because with several of them "Deze naam klopt niet" is not enough. */
   function orderError(f) {
-    if (!f.name) return 'Vul een naam in.';
-    if (!RX_LETTER.test(f.name)) return 'Deze naam klopt niet.';
     if (!f.email) return 'Vul een e-mailadres in.';
     if (!RX_EMAIL.test(f.email)) return 'Dit e-mailadres klopt niet.';
-    if (!(f.quantity >= 1 && f.quantity <= MAX_QTY)) return 'Aantal tickets: 1 tot ' + MAX_QTY + '.';
+    if (!f.tickets.length) return 'Voeg minstens één ticket toe.';
+    for (var i = 0; i < f.tickets.length; i++) {
+      var t = f.tickets[i], who = 'Ticket ' + (i + 1) + ': ';
+      if (!t.holder || t.holder.length < 2) return who + 'vul in op wiens naam het staat.';
+      if (!RX_LETTER.test(t.holder)) return who + 'deze naam klopt niet.';
+      if (!t.type) return who + 'kies een formule.';
+    }
     return '';
   }
 
@@ -568,7 +747,9 @@
       clientRef: String(raw.clientRef || ''),
       teamName: scrub(raw.teamName, 40),
       player1: scrub(raw.player1, 60), player2: scrub(raw.player2, 60),
-      email: scrubEmail(raw.email), phone: scrub(raw.phone, 40), paid: !!raw.paid
+      email: scrubEmail(raw.email), phone: scrub(raw.phone, 40),
+      teamType: String(raw.teamType || ''), level: String(raw.level || ''),
+      paid: !!raw.paid
     };
     var err = teamError(f);
     if (err) { formError(err); return; }
@@ -579,7 +760,9 @@
         S.registrations.push({
           ref: r.reference, teamId: r.teamId, teamName: f.teamName,
           player1: f.player1, player2: f.player2,
-          email: f.email, phone: f.phone, at: new Date().toISOString(), paid: f.paid
+          email: f.email, phone: f.phone,
+          teamType: labelOf(TEAM_TYPES, f.teamType), level: labelOf(LEVELS, f.level),
+          at: new Date().toISOString(), paid: f.paid
         });
         S.form = null;
         mergeTeams();
@@ -599,29 +782,80 @@
     var raw = readForm();
     var f = {
       clientRef: String(raw.clientRef || ''),
-      name: scrub(raw.name, 60), email: scrubEmail(raw.email),
-      quantity: num(raw.quantity), paidCount: num(raw.paidCount) || 0
+      email: scrubEmail(raw.email),
+      tickets: raw.tickets.map(function (t) {
+        return { holder: scrub(t.holder, 60), type: String(t.type || ''), paid: !!t.paid };
+      })
     };
     var err = orderError(f);
     if (err) { formError(err); return; }
-    f.paidCount = Math.max(0, Math.min(f.quantity, f.paidCount));
+
+    /* addOrder takes ONE paid flag for the whole basket (backend/API.md) — the
+       deployed Apps Script has no per-ticket field, and this build must keep
+       working against the backend that is already live. So the basket is filed
+       all-paid or all-unpaid, and a MIXED one is corrected afterwards with the
+       same setTicketPaid the list uses. An all-paid or all-unpaid basket — what
+       is entered at the door nearly every time — costs exactly one write. */
+    var allPaid = f.tickets.every(function (t) { return t.paid; });
+
     formBusy(true);
-    admin('addOrder', f, { retries: 2 }).then(function (r) {
+    /* Sent in exactly the shape the public page sends — same validation, same
+       cleanOrder_ on the other side. No buyer name in either. */
+    admin('addOrder', {
+      clientRef: f.clientRef, email: f.email, paid: allPaid,
+      tickets: f.tickets.map(function (t) { return { holder: t.holder, type: t.type }; })
+    }, { retries: 2 }).then(function (r) {
       formBusy(false);
       if (r && r.ok) {
+        /* The optimistic row must carry what the next overview will bring
+           back: the server's label and price, frozen per ticket. */
+        var drawn = f.tickets.map(function (t) {
+          var spec = ticketSpec(t.type);
+          return { holder: t.holder, type: t.type, label: spec ? spec[1] : '',
+                   price: spec ? spec[2] : 0, paid: t.paid };
+        });
         S.orders.push({
-          ref: r.reference, name: f.name, email: f.email, quantity: f.quantity,
-          at: new Date().toISOString(), paidCount: f.paidCount
+          ref: r.reference, email: f.email,
+          tickets: drawn,
+          amount: drawn.reduce(function (sum, t) { return sum + t.price; }, 0),
+          at: new Date().toISOString()
         });
         S.form = null;
         renderOrders();
         toast('Bestelling toegevoegd (' + r.reference + ')', 'ok');
+        /* Only the rows that differ from how the basket was filed. */
+        var fixes = [];
+        drawn.forEach(function (t, i) { if (t.paid !== allPaid) fixes.push({ seq: i + 1, t: t }); });
+        if (fixes.length) syncTicketPaid(r.reference, fixes);
         return;
       }
       if (r && r.error === 'unauthorized') { expire(); return; }
       formError(r && r.error === 'bad-request' ? 'Controleer de gegevens.'
         : 'Niet bewaard, probeer opnieuw.');
     });
+  }
+
+  /* Corrects the ticks of a mixed basket that was just added, ONE AT A TIME:
+     every admin write takes the script lock and pushes a new state.json, so
+     firing them together only queues on the server and multiplies the chances
+     of a timeout. A ticket whose write is lost falls back to how the basket was
+     filed and says so — the order itself is already saved, and the organiser
+     can fix that one tick in the list. */
+  function syncTicketPaid(ref, fixes) {
+    var i = 0, failed = 0;
+    (function next() {
+      if (i >= fixes.length) {
+        if (failed) { renderOrders(); toast('Niet elk vinkje bewaard, kijk de bestelling na', 'bad'); }
+        return;
+      }
+      var job = fixes[i++];
+      admin('setTicketPaid', { ref: ref, seq: job.seq, paid: job.t.paid }, { retries: 2 })
+        .then(function (r) {
+          if (!(r && r.ok)) { job.t.paid = !job.t.paid; failed++; }
+          if (r && r.error === 'unauthorized') { renderOrders(); expire(); return; }
+          next();
+        });
+    })();
   }
 
   function delTeam(ref) {
@@ -672,7 +906,13 @@
       /* The team name is the row; the players become its detail line. */
       var teamLabel = (typeof t.name === 'string' && t.name.trim()) ? t.name.trim() : '';
       if (has && teamLabel) meta.push(pairFull(t.players));
-      else if (t.club) meta.push(t.club);
+      /* Type and niveau ride along on the detail line — the organiser sorts
+         the draw by them, and the short forms keep the row on one line on a
+         phone. Stored as full Dutch labels, so they are shortened for display
+         only; anything unrecognised is printed as it came. */
+      var reg = S.regByTeam[t.id];
+      if (reg && reg.teamType) meta.push(shortType(reg.teamType));
+      if (reg && reg.level) meta.push(shortLevel(reg.level));
       if (!has) meta.push('nog geen inschrijving');
       var name = has ? (teamLabel || pairFull(t.players)) : (t.label || OPEN);
       return '<div class="ad-item"><div class="ad-r"><label class="ad-t">' +
@@ -684,7 +924,8 @@
         ' aria-label="Betaald: ' + esc(name) + '">' +
         '<span class="ad-check" aria-hidden="true"></span>' +
         '</label>' +
-        /* Only a registration is ours to delete; t01–t16 are pre-entered. */
+        /* Only a registration is ours to delete; an organiser-entered slot
+           (ROSTER in tools/gendata.py) is not. */
         (p.ref ? delBtn('team', p.ref, 'Inschrijving ' + name + ' verwijderen') : '') +
         '</div>' + (p.ref && S.ask === p.ref ? askHtml('team', p.ref) : '') + '</div>';
     }).join('');
@@ -693,11 +934,17 @@
     var form = S.form && S.form.kind === 'team';
     var add = form
       ? '<div class="ad-item ad-item--add"><div class="glass glass--inset ad-form">' +
+        /* Same field order as the public form in sections/register.html —
+           contact first. The organiser fills this in at the bar with the team
+           standing there, so the two screens must not ask in a different
+           order. */
+        fieldHtml('em', 'E-mail', 'email', S.form.email, 'email', 160) +
+        fieldHtml('tel', 'Gsm', 'phone', S.form.phone, 'tel', 40) +
         fieldHtml('tn', 'Teamnaam', 'teamName', S.form.teamName, 'text', 40) +
         fieldHtml('p1', 'Speler 1', 'player1', S.form.player1, 'text', 60) +
         fieldHtml('p2', 'Speler 2', 'player2', S.form.player2, 'text', 60) +
-        fieldHtml('em', 'E-mail', 'email', S.form.email, 'email', 160) +
-        fieldHtml('tel', 'Gsm', 'phone', S.form.phone, 'tel', 40) +
+        selectHtml('tt', 'Type team', 'teamType', S.form.teamType, TEAM_TYPES) +
+        selectHtml('lv', 'Niveau', 'level', S.form.level, LEVELS) +
         checkHtml('paid', S.form.paid, 'Betaald (' + euro(S.teamPrice) + ')') +
         formActs(S.form.err) + '</div></div>'
       : (free ? addBtnHtml('team', 'Team toevoegen') : '');
@@ -732,68 +979,98 @@
   function renderOrders() {
     var el = panel('orders');
     if (!el) return;
-    var tickets = 0, paid = 0;
+
+    /* Money, not ticket counts: four prices in one basket means "3 of 4 paid"
+       could be €9 or €85. The header totals what has actually come in. */
+    var due = 0, got = 0, ticketsN = 0, paidN = 0;
     S.orders.forEach(function (o) {
-      tickets += (+o.quantity || 0);
-      paid += Math.max(0, Math.min(+o.quantity || 0, +o.paidCount || 0));
+      (o.tickets || []).forEach(function (t) {
+        ticketsN++;
+        due += +t.price || 0;
+        if (t.paid) { paidN++; got += +t.price || 0; }
+      });
     });
 
     var rows = S.orders.map(function (o) {
-      var q = +o.quantity || 0, pc = Math.max(0, Math.min(q, +o.paidCount || 0));
-      var meta = [euro(q * TICKET_PRICE)];   /* the TKT ref stays in the Sheet */
+      var list = o.tickets || [];
+      /* No TKT ref on screen: a buyer never sees it and is never asked to type
+         it, so it is noise on a row that is already identified by the e-mail.
+         It stays the key everything writes with (delete, setTicketPaid) and it
+         is still in the Sheet if a transfer ever has to be traced by hand. */
+      var meta = [euro(o.amount || 0)];
       var d = shortDate(o.at);
       if (d) meta.push(d);
+      var openN = list.filter(function (t) { return !t.paid; }).length;
+      if (openN) meta.push(openN + ' open');
+
+      /* Headed by the e-mail the confirmation went to — the only thing an
+         order says about whoever placed it. There is no buyer name, and the
+         names below are the TICKET HOLDERS', who need not include the person
+         who ordered or pays.
+
+         One line per named ticket. The checkbox is the whole label, so the
+         name and the formula are both tap targets — this is used one-handed. */
+      var lines = list.map(function (t, i) {
+        var seq = i + 1;
+        /* Resolved from the TYPE, not read off the stored label: an optimistic
+           row drawn right after an add carries only the short label, so reading
+           t.label directly made the wording change under the organiser on the
+           first refresh. shortFormula falls back to the label for a type this
+           build does not know. */
+        var spec = shortFormula(t.type, t.label);
+        return '<label class="ad-t ad-tk"><span class="ad-t__b">' +
+          '<span class="ad-t__n">' + esc(t.holder || '\u2013') + '</span>' +
+          '<span class="ad-t__m">' + esc(spec) + ' · ' + euro(t.price || 0) +
+          '</span></span>' +
+          '<input type="checkbox" class="ad-t__i u-sr-only" data-act="tkpaid"' +
+          ' data-ref="' + esc(o.ref) + '" data-seq="' + seq + '"' +
+          (t.paid ? ' checked' : '') +
+          ' aria-label="Betaald: ' + esc((t.holder || '') + ', ' + spec) + '">' +
+          '<span class="ad-check" aria-hidden="true"></span></label>';
+      }).join('');
+
       return '<div class="ad-item"><div class="ad-r"><div class="ad-o">' +
-        '<span class="ad-o__b"><span class="ad-o__n">' + esc(o.name || '\u2013') + '</span>' +
+        '<span class="ad-o__b"><span class="ad-o__n">' + esc(o.email || o.ref) + '</span>' +
         '<span class="ad-o__m u-tabular">' + esc(meta.join(' · ')) + '</span></span>' +
-        '<span class="ad-step" role="group" aria-label="Betaalde tickets: ' + esc(o.name || o.ref) + '">' +
-        '<button type="button" class="ad-step__b" data-act="dec" data-ref="' + esc(o.ref) + '"' +
-        (pc <= 0 ? ' disabled' : '') + ' aria-label="Eén ticket minder betaald">−</button>' +
-        '<span class="ad-step__v u-tabular' + (pc === q && q ? ' is-full' : '') + '">' + pc + '/' + q + '</span>' +
-        '<button type="button" class="ad-step__b" data-act="inc" data-ref="' + esc(o.ref) + '"' +
-        (pc >= q ? ' disabled' : '') + ' aria-label="Eén ticket meer betaald">+</button>' +
-        '</span></div>' +
-        delBtn('order', o.ref, 'Bestelling ' + (o.name || o.ref) + ' verwijderen') +
-        '</div>' + (S.ask === o.ref ? askHtml('order', o.ref) : '') + '</div>';
+        '</div>' +
+        delBtn('order', o.ref, 'Bestelling ' + (o.email || o.ref) + ' verwijderen') +
+        '</div><div class="ad-tks">' + lines + '</div>' +
+        (S.ask === o.ref ? askHtml('order', o.ref) : '') + '</div>';
     }).join('');
 
     var form = S.form && S.form.kind === 'order';
     var add = form
       ? '<div class="ad-item ad-item--add"><div class="glass glass--inset ad-form">' +
-        fieldHtml('nm', 'Naam', 'name', S.form.name, 'text', 60) +
         fieldHtml('oem', 'E-mail', 'email', S.form.email, 'email', 160) +
-        '<div class="ad-fgrid">' +
-        fieldHtml('qty', 'Aantal (1–' + MAX_QTY + ')', 'quantity', S.form.quantity, 'text', 1,
-          ' inputmode="numeric" pattern="[0-9]*"') +
-        fieldHtml('pc', 'Betaald', 'paidCount', S.form.paidCount, 'text', 1,
-          ' inputmode="numeric" pattern="[0-9]*"') +
-        '</div>' + formActs(S.form.err) + '</div></div>'
+        formTicketsHtml(S.form.tickets) +
+        formAllPaidHtml(S.form.tickets) +
+        formActs(S.form.err) + '</div></div>'
       : addBtnHtml('order', 'Bestelling toevoegen');
 
     el.innerHTML = '<div class="ad-head"><span class="ad-tot"><span class="ad-tot__x u-tabular">' +
-      paid + ' van ' + tickets + '</span> tickets betaald · <span class="u-tabular">' +
-      euro(paid * TICKET_PRICE) + '</span></span>' +
-      '<span class="ad-hint">' + euro(TICKET_PRICE) + ' per ticket.</span></div>' +
+      euro(got) + '</span> van ' + euro(due) + ' betaald</span>' +
+      '<span class="ad-hint">' + paidN + ' van ' + ticketsN + ' tickets.</span></div>' +
       '<div class="ad-list">' +
       (rows || '<p class="ad-empty">Nog geen ticketbestellingen.</p>') + add + '</div>';
+
+    /* indeterminate is a property, not an attribute — it cannot be written into
+       the HTML above, so it is applied to the box that just landed. */
+    if (form) paintAllPaid();
   }
 
-  function stepOrder(ref, delta) {
+  function setTicketPaid(ref, seq, paid) {
     var o = S.orders.filter(function (x) { return x.ref === ref; })[0];
-    if (!o) return;
-    var q = +o.quantity || 0;
-    var prev = Math.max(0, Math.min(q, +o.paidCount || 0));
-    var next = Math.max(0, Math.min(q, prev + delta));
-    if (next === prev) return;
-    o.paidCount = next;
+    if (!o || !o.tickets || !o.tickets[seq - 1]) return;
+    var t = o.tickets[seq - 1];
+    var prev = !!t.paid;
+    if (prev === paid) return;
+    t.paid = paid;
     renderOrders();
-    var same = '[data-ref="' + ref + '"][data-act="' + (delta > 0 ? 'inc' : 'dec') + '"]';
-    if (document.querySelector(same + ':not([disabled])')) keepFocus(same);
-    else keepFocus('[data-ref="' + ref + '"]:not([disabled])');
-    write('setOrderPaid', { ref: ref, paidCount: next }, function () {
-      o.paidCount = prev;
+    keepFocus('[data-act="tkpaid"][data-ref="' + ref + '"][data-seq="' + seq + '"]');
+    write('setTicketPaid', { ref: ref, seq: seq, paid: paid }, function () {
+      t.paid = prev;
       renderOrders();
-    }, next + ' van ' + q + ' betaald');
+    }, (t.holder || 'Ticket') + (paid ? ' betaald' : ' niet betaald'));
   }
 
   /* ================================= views =============================== */
@@ -871,8 +1148,7 @@
     if (a === 'refresh') { pullOverview(function (ok) { if (ok) toast('Bijgewerkt', 'ok'); }); return; }
     if (a === 'save') { saveMatch(S.open); return; }
     if (a === 'clear') { clearMatch(S.open); return; }
-    if (a === 'inc') { stepOrder(act.dataset.ref, 1); return; }
-    if (a === 'dec') { stepOrder(act.dataset.ref, -1); return; }
+
     if (a === 'del-ask') { askDelete(act.dataset.kind, act.dataset.ref); return; }
     if (a === 'del-no') {
       S.ask = null;
@@ -886,6 +1162,28 @@
     }
     if (a === 'add-open') { openForm(act.dataset.kind); return; }
     if (a === 'add-cancel') { closeForm(); return; }
+    /* Grow/shrink the basket. readForm() first, or what is already typed in
+       the other rows is lost when the form re-renders. */
+    if (a === 'tk-add') {
+      var f = readForm();
+      if (!f || f.tickets.length >= MAX_TICKETS) return;
+      /* A new row starts unpaid even when the ones above it are ticked: a
+         ticket nobody has paid for yet is the safe default at a gate. */
+      f.tickets.push({ holder: '', type: '', paid: false });
+      f.err = '';
+      renderOrders();
+      keepFocus('#ad-f-hd' + (f.tickets.length - 1));
+      return;
+    }
+    if (a === 'tk-rm') {
+      var fr = readForm();
+      if (!fr || fr.tickets.length <= 1) return;
+      fr.tickets.splice(Number(act.dataset.i), 1);
+      fr.err = '';
+      renderOrders();
+      keepFocus('[data-act="tk-add"]');
+      return;
+    }
     if (a === 'add-save') {
       if (S.form && S.form.kind === 'team') addTeam(); else if (S.form) addOrder();
       return;
@@ -896,7 +1194,7 @@
       syncWin(act.closest('.ad-ed'));
       return;
     }
-    if (a === 'paid') return;   /* handled on change */
+    if (a === 'paid' || a === 'tkpaid') return;   /* handled on change */
   });
 
   /* The match row is a button; a click anywhere on it toggles its editor. */
@@ -909,8 +1207,21 @@
   document.addEventListener('change', function (e) {
     var box = e.target;
     if (!box.dataset) return;
+    if (box.dataset.act === 'allpaid') {
+      setAllTicketsPaid(box.checked);
+      return;
+    }
     if (box.dataset.f && S.form) {
-      S.form[box.dataset.f] = box.type === 'checkbox' ? box.checked : box.value;
+      setFormField(S.form, box.dataset.f, box.type === 'checkbox' ? box.checked : box.value);
+      /* A formula picker changes the basket total, a row's tick changes what
+         "Alles betaald" should show. Repaint those two — a re-render here would
+         take the caret out of the form. */
+      paintFormTotal();
+      paintAllPaid();
+      return;
+    }
+    if (box.dataset.act === 'tkpaid') {
+      setTicketPaid(box.dataset.ref, Number(box.dataset.seq), box.checked);
       return;
     }
     if (box.dataset.act !== 'paid') return;
@@ -921,13 +1232,11 @@
     var i = e.target;
     if (!i.dataset) return;
 
-    /* An add form survives a re-render because what is typed lands in S.form. */
+    /* An add form survives a re-render because what is typed lands in S.form.
+       Through setFormField, or a basket key ("tk:0:holder") becomes a junk
+       property instead of reaching S.form.tickets[0]. */
     if (i.dataset.f && S.form) {
-      if (i.dataset.f === 'quantity' || i.dataset.f === 'paidCount') {
-        var only = i.value.replace(/[^0-9]/g, '').slice(0, 1);
-        if (only !== i.value) i.value = only;
-      }
-      S.form[i.dataset.f] = i.value;
+      setFormField(S.form, i.dataset.f, i.value);
       formError('');
       return;
     }
@@ -947,6 +1256,15 @@
     if (e.key === 'Escape' && S.ask) { S.ask = null; renderTeams(); renderOrders(); return; }
     if (e.key === 'Enter' && S.form && e.target.matches && e.target.matches('.ad-form input[data-f]')) {
       e.preventDefault();
+      /* Enter inside a basket row moves ON to that ticket's formula instead of
+         submitting: with several rows, submitting from row 1 only ever means
+         "Ticket 2: vul in op wiens naam het staat". Same behaviour as the
+         public page, which moves focus rather than firing a doomed submit. */
+      var tk = String(e.target.dataset.f || '').split(':');
+      if (tk[0] === 'tk') {
+        var next = document.querySelector('#ad-f-tt' + tk[1]);
+        if (next) { next.focus(); return; }
+      }
       if (S.form.kind === 'team') addTeam(); else addOrder();
       return;
     }
@@ -995,8 +1313,6 @@
     if (d[3] && d[3].teamEntry && d[3].teamEntry.price) S.teamPrice = d[3].teamEntry.price;
     mergeTeams();
 
-    if (S.demo) { S.pw = 'demo'; showApp(); apply(demoData()); return; }
-
     if (!window.CHAMP_CONFIG || !window.CHAMP_CONFIG.apiEndpoint) {
       E.loginNote.hidden = false;
       E.pw.disabled = true;
@@ -1013,61 +1329,4 @@
     pullOverview();
   });
 
-  /* ------------------------------------------------------- screenshot fixture
-     ?state=demo only. Never reachable from the UI, never posted anywhere. */
-
-  /* Reads the schedule it has already loaded rather than listing match ids.
-     A typed list went stale the moment the draw grew from 4 groups on 3 courts
-     to 8 groups on 5 courts: every id past m24 changed meaning, and the fixture
-     went on "working" while depicting a tournament that no longer existed.
-     The story matches tools/fixtures/demo-full-state.json — every group match
-     played, three quarter-finals in, the fourth still on court. */
-  function demoData() {
-    var SETS = [
-      [[6, 3], [6, 4]], [[4, 6], [6, 2], [10, 8]], [[6, 1], [6, 4]],
-      [[7, 5], [3, 6], [10, 6]], [[6, 2], [6, 2]], [[6, 4], [4, 6], [10, 7]],
-      [[6, 0], [6, 3]], [[3, 6], [6, 4], [10, 5]], [[6, 4], [6, 4]],
-      [[6, 3], [5, 7], [10, 8]], [[6, 2], [7, 5]], [[7, 6], [6, 4]]
-    ];
-    var ms = (S.schedule && S.schedule.matches) || [];
-    var qfSeen = 0, results = {};
-    ms.forEach(function (m, i) {
-      if (m.round === 'group') {
-        /* nothing */
-      } else if (m.round === 'qf' && qfSeen < 3) {
-        qfSeen++;
-      } else {
-        return;                      /* 4th QF on court, semis and finale to come */
-      }
-      var sets = SETS[i % SETS.length];
-      results[m.id] = { sets: sets, winner: winnerIndex(sets) === 1 ? 'B' : 'A' };
-    });
-
-    /* Every other pre-entered team has paid, so the list opens with work in it.
-       Derived from the teams actually in the draw — a typed id list outlived the
-       slots it named. */
-    var paid = {};
-    (S.teams || []).filter(function (t) { return t.confirmed; })
-      .forEach(function (t, i) { if (i % 2 === 0) paid[t.id] = true; });
-
-    /* Against the FIRST unsold place, whichever that is. Pinning it to an id
-       put a registration on a slot that had since been pre-entered. */
-    var firstOpen = (S.teams || []).filter(function (t) {
-      return !t.confirmed;
-    })[0];
-
-    return {
-      results: results,
-      teamPaid: paid,
-      registrations: firstOpen ? [{
-        ref: 'INS-01', teamId: firstOpen.id, player1: 'Anna Peeters', player2: 'Tom Claes',
-        email: 'anna@example.be', phone: '0470 00 00 00', at: '2026-08-04T10:12:00Z', paid: false
-      }] : [],
-      orders: [
-        { ref: 'TKT-01', name: 'Lien Vanhee', email: 'lien@example.be', quantity: 4, at: '2026-08-02T18:20:00Z', paidCount: 2 },
-        { ref: 'TKT-02', name: 'Bram Dewulf', email: 'bram@example.be', quantity: 2, at: '2026-08-06T09:05:00Z', paidCount: 0 },
-        { ref: 'TKT-03', name: 'Sofie Vermeersch', email: 'sofie@example.be', quantity: 1, at: '2026-08-11T20:41:00Z', paidCount: 1 }
-      ]
-    };
-  }
 })();

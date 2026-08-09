@@ -15,7 +15,7 @@
     <header class="reg__head">
       <p class="u-eyebrow reg__eyebrow" data-reg="eyebrow"></p>
       <h2 class="u-display reg__title" id="reg-title">Schrijf je team in</h2>
-      <!-- What the €50 buys, in one line — written by register.js from
+      <!-- What the fee buys, in one line — written by register.js from
            data/event.json → teamEntry (price + includes). -->
       <p class="reg__gets" data-reg="gets"></p>
       <p class="reg__slots">
@@ -44,8 +44,30 @@
           <p class="reg-live" data-reg="live"></p>
 
           <!-- maxlength mirrors the scrub rules in js/register.js and the server:
-               40 / 60 / 60 / 160 / 40. -->
+               160 / 40 / 40 / 60 / 60, in the order the fields appear below.
+               Contact first on purpose: e-mail + gsm are how the organiser
+               reaches a team, so they are the first thing asked. Changing this
+               order means changing ORDER in js/register.js too — that is what
+               decides which error gets the focus on a failed submit. -->
           <div class="reg-fields">
+            <div class="reg-row">
+              <div class="reg-field glass-field">
+                <label class="glass-label" for="reg-email">E-mail</label>
+                <input class="glass-input reg-input" id="reg-email" name="email" type="email"
+                       maxlength="160" inputmode="email" autocomplete="email" spellcheck="false"
+                       aria-describedby="reg-email-err">
+                <p class="glass-error reg-error" id="reg-email-err" hidden></p>
+              </div>
+
+              <div class="reg-field glass-field">
+                <label class="glass-label" for="reg-tel">Gsm</label>
+                <input class="glass-input reg-input u-tabular" id="reg-tel" name="phone" type="tel"
+                       maxlength="40" inputmode="tel" autocomplete="tel"
+                       aria-describedby="reg-tel-err">
+                <p class="glass-error reg-error" id="reg-tel-err" hidden></p>
+              </div>
+            </div>
+
             <div class="reg-row">
               <div class="reg-field glass-field reg-field--wide">
                 <label class="glass-label" for="team-name">Teamnaam</label>
@@ -55,6 +77,7 @@
                 <p class="glass-error reg-error" id="team-name-err" hidden></p>
               </div>
             </div>
+
             <div class="reg-row">
               <div class="reg-field glass-field">
                 <label class="glass-label" for="p1-name">Speler 1</label>
@@ -73,21 +96,37 @@
               </div>
             </div>
 
+            <!-- Type + niveau (client). Both ship with an empty first option
+                 on purpose: a preselected "Vrouwenteam" would quietly file
+                 every team that never touched the field under one answer, and
+                 the organiser could not tell a choice from a default.
+
+                 ⚠ These option VALUES are an allow-list the backend repeats
+                 (TEAM_TYPES / LEVELS in backend/Code.gs — Apps Script cannot
+                 read this file). tools/bracket.test.mjs fails if the two
+                 drift apart. -->
             <div class="reg-row">
               <div class="reg-field glass-field">
-                <label class="glass-label" for="reg-email">E-mail</label>
-                <input class="glass-input reg-input" id="reg-email" name="email" type="email"
-                       maxlength="160" inputmode="email" autocomplete="email" spellcheck="false"
-                       aria-describedby="reg-email-err">
-                <p class="glass-error reg-error" id="reg-email-err" hidden></p>
+                <label class="glass-label" for="reg-type">Type team</label>
+                <select class="glass-select reg-input" id="reg-type" name="teamType"
+                        aria-describedby="reg-type-err">
+                  <option value="" selected>Kies&hellip;</option>
+                  <option value="vrouwen">Vrouwenteam</option>
+                  <option value="mannen">Mannenteam</option>
+                </select>
+                <p class="glass-error reg-error" id="reg-type-err" hidden></p>
               </div>
 
               <div class="reg-field glass-field">
-                <label class="glass-label" for="reg-tel">Gsm</label>
-                <input class="glass-input reg-input u-tabular" id="reg-tel" name="phone" type="tel"
-                       maxlength="40" inputmode="tel" autocomplete="tel"
-                       aria-describedby="reg-tel-err">
-                <p class="glass-error reg-error" id="reg-tel-err" hidden></p>
+                <label class="glass-label" for="reg-level">Niveau</label>
+                <select class="glass-select reg-input" id="reg-level" name="level"
+                        aria-describedby="reg-level-err">
+                  <option value="" selected>Kies&hellip;</option>
+                  <option value="af-en-toe">Ik speel af en toe (P50/P100)</option>
+                  <option value="vaak">Ik speel vaak (P200/P300)</option>
+                  <option value="heel-vaak">Ik speel heel vaak (P400/P400)</option>
+                </select>
+                <p class="glass-error reg-error" id="reg-level-err" hidden></p>
               </div>
             </div>
           </div>
@@ -124,7 +163,7 @@
              button is an anonymous item that will not shrink, and this label is
              long enough to have overflowed the pill on a phone. -->
         <a class="glass-btn glass-btn--primary reg-btn reg-full__cta" href="/tickets/">
-          <span data-reg="full-tickets">Kom supporteren: open air ticket €12</span>
+          <span data-reg="full-tickets">Kom supporteren: open air ticket</span>
         </a>
         <a class="reg-full__home" href="/">Terug naar de startpagina</a>
       </div>

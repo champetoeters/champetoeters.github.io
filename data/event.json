@@ -16,22 +16,22 @@
   "dateDisplay": "ZA 5 SEPT 2026",
   "timeDisplay": "14:00 → 02:00",
   "teamEntry": {
-    "price": 50,
+    "price": 44,
     "currency": "EUR",
     "unit": "per team",
-    "places": 32,
-    "confirmed": 16,
-    "open": 16,
+    "places": 22,
+    "confirmed": 0,
+    "open": 22,
     "includes": [
       "Twee spelers",
-      "Minstens drie wedstrijden",
+      "Minstens vier wedstrijden",
       "Toegang tot de open air voor beide spelers"
     ]
   },
   "stats": {
-    "teams": 32,
+    "teams": 22,
     "courts": 5,
-    "djs": 5,
-    "matches": 55
+    "djs": 6,
+    "matches": 57
   }
 }

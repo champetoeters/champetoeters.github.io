@@ -6,7 +6,7 @@
  * window.Sections[name].init(rootEl, data).
  */
 
-const DATA_FILES = ['event', 'teams', 'courts', 'djs', 'schedule', 'tickets', 'clubs'];
+const DATA_FILES = ['event', 'teams', 'courts', 'djs', 'schedule', 'tickets'];
 
 /* Everything this loader fetches resolves against THIS FILE's URL, never the
    page's: pages live at /, /register/ and /tickets/ (clean URLs), and a

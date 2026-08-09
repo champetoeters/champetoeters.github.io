@@ -56,31 +56,26 @@
         </h1>
       </div>
 
-      <!-- One line, then one primary action (BRIEF §0 rule 2). Both hrefs are
-           real pages, not anchors. -->
+      <!-- One line, then the two ways in: play it, or come to it. The client
+           asked for two buttons of equal standing here — the ticket route used
+           to be a demoted text link, and it was carrying half the audience.
+           Both hrefs are real pages, not anchors. -->
       <div class="hero__body">
-        <!-- "Open air", not "openlucht": the ticket two lines down uses the
+        <!-- "Open air", not "openlucht": the ticket button below uses the
              product's name, and two words for the same thing in one viewport
              reads as two things. -->
         <p class="hero__pitch">Open air en padel.</p>
 
-        <a class="glass-btn glass-btn--primary hero__cta" href="/register/">
-          Schrijf je team in
-        </a>
-
-        <!-- Ships EMPTY: hero.js paints the figure — static (event.json) on an
-             unwired build, live otherwise. A hardcoded "Nog 2" painting first
-             and flipping to the real count a beat later reads as a glitch. -->
-        <p class="hero__slots">
-          <span class="hero__dot" aria-hidden="true"></span>
-          <span data-hero="slots-line"></span>
-        </p>
-
-        <p class="hero__alt">
-          <a class="hero__link" href="/tickets/">
-            <span class="hero__link-t">Geen speler? Open air ticket &euro;12</span>
-          </a>
-        </p>
+        <div class="hero__actions">
+          <!-- Ships as the plain register CTA. hero.js swaps it to a dead
+               "Volzet" chip — and promotes the ticket button in its place —
+               once the draw is full. No live count is printed: the client
+               took the counter off this page. -->
+          <a class="glass-btn glass-btn--primary hero__cta" href="/register/"
+             data-hero="cta-team">Schrijf je team in</a>
+          <a class="glass-btn glass-btn--ghost hero__cta" href="/tickets/"
+             data-hero="cta-ticket">Inkomsticket bestellen</a>
+        </div>
       </div>
 
     </div>

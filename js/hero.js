@@ -6,11 +6,10 @@
      1. Fit the Didone wordmark to its lockup so it spans it exactly, at any
         width, whichever serif the machine actually has (Playfair, Didot,
         Bodoni and Times are wildly different widths — a CSS clamp cannot know).
-     2. Bind the real numbers: event.json first, then the live count from
-        ChampLive.state() so "nog N plaatsen" cannot outlive the last slot.
+     2. Close the team CTA when the draw is full, from the live count.
 
-   Both CTAs are ordinary page navigations (register.html / tickets.html), so
-   there is no click handler in this section at all.
+   Both CTAs are ordinary page navigations (/register/ and /tickets/), so there
+   is no click handler in this section at all.
 
    Nothing here runs on a timer, and that is deliberate: the hero's beat — the
    glow pulse, the sheen pass, the wordmark's breathe — is entirely CSS
@@ -25,83 +24,61 @@
 window.Sections = window.Sections || {};
 
 window.Sections.hero = {
-  init(root, data) {
+  init(root) {
     if (!root || root.dataset.heroReady === "1") return;
     root.dataset.heroReady = "1";
 
     const $ = (sel) => root.querySelector(sel);
     const byKey = (k) => root.querySelector('[data-hero="' + k + '"]');
 
-    const event = (data && data.event) || {};
-    const stats = event.stats || {};
-    const entry = event.teamEntry || {};
+    /* ---- 1. Volzet -----------------------------------------------------
+       The client took the live count off this page: it is either possible to
+       enter or it is not, and a running figure only invites the visitor to do
+       arithmetic. So nothing paints in the ordinary case — the buttons ship
+       exactly as the markup has them — and the ONE thing worth saying is said
+       when the draw fills up.
 
-    /* ---- 1. Real numbers ----------------------------------------------
-       Open places live in event.teamEntry.open; the tickets.json lookup is
-       only a second source. Both are the build-time figure — the live count
-       below overrides them the moment the backend answers, so the hero can
-       never promise a place the registration page has already sold. */
+       Closing is live-only and one-way. A missing, slow or unusable answer
+       leaves the page open, because the registration page checks the count
+       again on submit and the backend is the judge either way: the worst a
+       stale hero can do is send someone one click further. */
 
-    const slotsLine = byKey("slots-line");
-    const cta = $(".hero__cta");
-    const alt = $(".hero__alt");
+    const teamCta = byKey("cta-team");
+    const ticketCta = byKey("cta-ticket");
 
-    function renderSlots(open, total) {
-      if (!slotsLine || !(open >= 0) || !(total > 0)) return;
-      slotsLine.textContent = "";
-      if (open === 0) {
-        slotsLine.textContent = "Volzet";
-        /* The big green button must lead somewhere that can still say yes: a
-           "Schrijf je team in" that lands on the volzet panel wastes the
-           page's highest-demand tap. The one thing still possible — the open
-           air ticket — takes its place, and the alt line goes (it would now
-           repeat the button). Same sentence as the register volzet panel. */
-        if (cta) {
-          cta.setAttribute("href", "/tickets/");
-          cta.textContent = "Kom supporteren: open air ticket";
-        }
-        if (alt) alt.hidden = true;
-        return;
+    function closeTeamEntry() {
+      if (!teamCta) return;
+      /* A dead chip, not a link: no href, so it leaves the tab order and
+         cannot be clicked or opened in a new tab. Its promise is gone, so the
+         ticket button takes over the primary weight — the page's biggest tap
+         must always lead somewhere that can still say yes. */
+      teamCta.removeAttribute("href");
+      teamCta.setAttribute("aria-disabled", "true");
+      teamCta.classList.remove("glass-btn--primary");
+      teamCta.classList.add("glass-btn--disabled", "hero__cta--dead");
+      /* Keeps its subject. A bare "Volzet" only reads to someone who saw the
+         button it replaced — a visitor arriving after the draw filled up has
+         never seen "Schrijf je team in" and would be told that something,
+         unspecified, is full. Uppercased by .hero__cta--dead. */
+      teamCta.textContent = "Padel volzet";
+      if (ticketCta) {
+        ticketCta.classList.remove("glass-btn--ghost");
+        ticketCta.classList.add("glass-btn--primary");
       }
-      if (cta) {
-        cta.setAttribute("href", "/register/");
-        cta.textContent = "Schrijf je team in";
-      }
-      if (alt) alt.hidden = false;
-      slotsLine.insertAdjacentHTML("afterbegin",
-        'Nog <b class="u-tabular" data-hero="slots">' + Math.round(open) +
-        '</b> van de <span class="u-tabular" data-hero="teams-total">' +
-        Math.round(total) + "</span> plaatsen");
     }
 
-    const places = typeof entry.places === "number" ? entry.places : stats.teams;
-
-    let open = typeof entry.open === "number" ? entry.open : null;
-    if (open == null) {
-      const team = ((data && data.tickets) || []).find((t) => t && t.id === "team");
-      if (team && typeof team.remaining === "number") open = team.remaining;
-    }
-    /* The live count. When a live source exists the line stays EMPTY until it
-       answers — painting the static "Nog 2" first and flipping to "Volzet" a
-       beat later reads as a glitch (client). Without a live source (preview,
-       unwired build) the static figure is all there is, so it paints at once. */
     const live = window.ChampLive;
     const cfg = window.CHAMP_CONFIG || {};
-    const hasLiveSource = !!(live && typeof live.state === "function" &&
-                             (cfg.apiEndpoint || cfg.demoNow));
-    if (open != null && !hasLiveSource) renderSlots(open, places);
-
-    if (hasLiveSource) {
+    if (live && typeof live.state === "function" && cfg.apiEndpoint) {
       try {
         Promise.resolve(live.state()).then((state) => {
           const c = (state && state.counts) || null;
-          if (c && typeof c.slots === "number" && typeof c.registrations === "number") {
-            renderSlots(Math.max(0, c.slots - c.registrations), c.slots);
-          } else if (open != null) {
-            renderSlots(open, places);   /* unusable answer → static after all */
+          if (c && typeof c.slots === "number" && typeof c.registrations === "number" &&
+              c.slots > 0 && c.registrations >= c.slots) {
+            closeTeamEntry();
           }
-        }, () => { if (open != null) renderSlots(open, places); });
-      } catch (e) { if (open != null) renderSlots(open, places); }
+        }, () => { /* no answer → leave it open */ });
+      } catch (e) { /* leave it open */ }
     }
 
     /* ---- 2. Fit the wordmark ------------------------------------------

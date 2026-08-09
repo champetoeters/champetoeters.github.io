@@ -149,17 +149,11 @@
   margin-bottom: var(--tt-release);
 }
 .tt-gridwrap { order: 3; min-width: 0; margin-top: calc(-1 * var(--tt-release)); }
-/* A row leaving under the panel would otherwise be sliced mid-glyph. 18px
-   was shorter than one time heading, so a "16:00" was cut in half instead of
-   fading; 40px is longer than the tallest line in the sheet. Weighted so the
-   first half still hides the row and only the tail is see-through. */
-.tt-venue::after {
-  content: "";
-  position: absolute; inset: 100% 0 auto; height: 40px;
-  pointer-events: none;
-  background: linear-gradient(180deg,
-    #0D1637 0%, rgb(13 22 55 / .92) 30%, rgb(13 22 55 / .55) 62%, rgb(13 22 55 / 0) 100%);
-}
+/* NO fade ramp under the panel. A 40px gradient in the page colour used to sit
+   here so a row leaving under the panel faded instead of being sliced — but a
+   row spends that whole 40px UNDER it, which paints the top of white glyphs
+   dark grey and makes the line hard to read on the way out. A clean edge
+   against an opaque sticky surface is what every sheet does; that wins. */
 /* Keyboard focus must keep the panel's full height clear of itself. */
 .tt-m,
 .tt-row { scroll-margin-top: calc(var(--tt-3d-h) + 34px); }
@@ -194,14 +188,9 @@
 }
 .tt-hcell--time { padding-left: 0; }
 .tt-hcell.is-hot { color: rgb(var(--tt-ball)); }
-/* A row scrolling under the header was cut off at the hairline mid-glyph. The
-   same short ramp the mobile panel uses, so a name leaves rather than stops. */
-.tt-hcell::after {
-  content: "";
-  position: absolute; inset: 100% 0 auto; height: 16px;
-  pointer-events: none;
-  background-image: linear-gradient(180deg, #0D1637, rgb(13 22 55 / 0));
-}
+/* No ramp here either — same reason as .tt-venue above: 16px of page colour
+   over a row is 16px of dimmed white text, and the hairline under the court
+   names is a cleaner edge to disappear behind than a grey wash. */
 
 /* One hairline per time and nothing else — it is how the eye tracks from the
    time across to the right court. */
@@ -237,6 +226,20 @@
 .tt-m:focus-visible { outline: 2px solid rgb(var(--tt-ball)); outline-offset: 1px; }
 
 .tt-m__court { display: none; }        /* desktop: the column header says it */
+
+/* The type of match, on the cell itself. Quiet: it is the third thing you read
+   after the time and the names, and on a full sheet it repeats a lot. */
+.tt-m__kind {
+  display: block;
+  font-family: var(--tt-serif);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: rgb(var(--tt-micro));
+  line-height: 1.4;
+  margin-bottom: 3px;
+}
 
 .tt-m__tie { display: block; }
 .tt-m__n {
@@ -327,7 +330,9 @@
   letter-spacing: .26em; text-transform: uppercase;
   color: rgb(var(--tt-micro));
 }
-.tt-headrow:first-child .tt-heading { padding-top: 0; }
+/* POULES gets the same air above it as KNOCK-OUT and HALVE FINALES. It used to
+   be the one exception (padding-top: 0, because it opens the sheet), which read
+   as the heading being glued to the court names. */
 
 .tt-heading--final {
   font-size: clamp(1.5rem, 3.4vw, 2.4rem);
@@ -459,6 +464,9 @@
   }
   /* one court chosen: repeating its name thirteen times is noise */
   .tt-gridwrap.is-single .tt-m__court { display: none; }
+  /* On the phone the row is a flex line — the type rides with the names, not
+     as a block above them, or every row grows a third line. */
+  .tt-m__kind { margin-bottom: 1px; font-size: 10.5px; }
   .tt-m__tie { flex: 1 1 auto; min-width: 0; }
   .tt-m__n { font-size: .95rem; }
 

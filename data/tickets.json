@@ -1,15 +1,30 @@
 [
   {
-    "id": "openair",
-    "name": "Open air ticket",
-    "price": 12,
-    "currency": "EUR",
-    "desc": "Alle wedstrijden en alle dj's, tot 02:00.",
-    "includes": [
-      "Alle wedstrijden, alle vijf de banen",
-      "Elke dj, 17:30 → 02:00",
-      "Heel de dag in en uit"
-    ],
-    "remaining": 240
+    "id": "basis",
+    "name": "Toegangsticket",
+    "short": "Enkel toegang",
+    "price": 3,
+    "currency": "EUR"
+  },
+  {
+    "id": "soda",
+    "name": "Toegangsticket + soda of pint",
+    "short": "Soda of pint",
+    "price": 5,
+    "currency": "EUR"
+  },
+  {
+    "id": "cocktail",
+    "name": "Toegangsticket + cocktail of glas Champetoeter (Pommery)",
+    "short": "Cocktail of glas Champetoeter",
+    "price": 10,
+    "currency": "EUR"
+  },
+  {
+    "id": "fles",
+    "name": "Toegangsticket + fles Champetoeter (Pommery)",
+    "short": "Fles Champetoeter",
+    "price": 75,
+    "currency": "EUR"
   }
 ]

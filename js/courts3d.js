@@ -959,7 +959,7 @@
   /* Round names arrive from `schedule.json` in English. Translate from the
      language-neutral `round` code and borrow only the group LETTER from the
      label; an unrecognised code prints nothing rather than English. */
-  var ROUND_NL = { group: 'Groep', qf: 'Kwartfinale', sf: 'Halve finale', final: 'Finale' };
+  var ROUND_NL = { group: 'Poule', qf: 'Knock-out', sf: 'Halve finale', final: 'Finale' };
   function roundNL(md) {
     var base = ROUND_NL[md.round];
     if (!base) return '';

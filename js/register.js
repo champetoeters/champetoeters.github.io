@@ -18,15 +18,12 @@
    to the payment or confirmation views. The page never fakes a confirmation.
 
    Sanitising (item 11): scrub() mirrors the server's clean() exactly, so what
-   the field shows is what the server will store.
-
-   Debug hooks, invisible to a visitor (§0 rule 8):
-   ?state=filled | error | pay | success — rendered locally, never a request. */
+   the field shows is what the server will store. */
 
 window.Sections = window.Sections || {};
 
-/* Resolved against this file's own URL so it works from site/register.html and
-   from site/preview/register.html without either page knowing about it. */
+/* Resolved against this file's own URL, so the page can move without this
+   file knowing where it went. */
 var REG_BASE = (function () {   /* var: a double-injected classic script must not
      throw a redeclaration SyntaxError. */
   const me = document.currentScript;
@@ -103,12 +100,15 @@ window.Sections.register = {
     const TOTAL     = num(entry.places,    teams.length);
     const TAKEN     = num(entry.confirmed, teams.filter(t => t.confirmed).length);
     const REMAINING = num(entry.open,      Math.max(0, TOTAL - TAKEN));
-    const FEE       = num(entry.price, 50);
+    const FEE       = num(entry.price, 44);
     const FEE_TXT   = '€' + FEE;
 
-    /* The open air ticket, for the volzet panel's one way on. */
-    const TICKETS   = (D.tickets && D.tickets[0]) || {};
-    const TKT_TXT   = '€' + num(TICKETS.price, 12);
+    /* The open air ticket, for the volzet panel's one way on. There are four
+       formulas now, so the panel quotes the cheapest as a FROM price — naming
+       one of the four would promise the wrong thing. */
+    const TKT_PRICES = ((D.tickets) || []).map(t => t && t.price)
+      .filter(v => typeof v === 'number');
+    const TKT_TXT   = TKT_PRICES.length ? 'vanaf €' + Math.min(...TKT_PRICES) : '';
 
     /* The weekday costs the eyebrow a line on a 390px phone and says nothing
        the date does not. */
@@ -139,9 +139,13 @@ window.Sections.register = {
 
     /* What the fee buys, in one line. The price comes from event.json; the three
        things it includes are teamEntry.includes, said shorter than the data spells
-       them out (BRIEF §0 rule 6 — plain and short beats complete). */
+       them out (BRIEF §0 rule 6 — plain and short beats complete).
+       "vier" is not a rounding of the data: with 22 teams in poules of 6/6/5/5
+       every team plays 4 or 5 group matches, which is what event.json promises.
+       This line said "drie" and under-promised the one thing a paying team
+       cares about. Keep it in step with teamEntry.includes in event.json. */
     ref('gets').textContent =
-      FEE_TXT + ' per team: twee spelers, minstens drie wedstrijden, open air voor beiden.';
+      FEE_TXT + ' per team: twee spelers, minstens vier wedstrijden, open air voor beiden.';
 
     let remaining = REMAINING;
 
@@ -300,9 +304,19 @@ window.Sections.register = {
         const s = scrub(v, 40, true);
         if (!s) return 'Vul je gsm-nummer in.';
         return TEL.test(telDigits(s)) ? '' : 'Dit gsm-nummer klopt niet.';
-      }
+      },
+      /* The two selects. Their allowed values are the option values in the
+         markup, read back from the element itself rather than typed here a
+         second time — a <select> cannot hold anything else, so the only case
+         left to catch is "still on the empty placeholder". */
+      'reg-type': v => (v ? '' : 'Kies of jullie een vrouwen- of mannenteam zijn.'),
+      'reg-level': v => (v ? '' : 'Kies jullie niveau.')
     };
-    const ORDER = ['team-name', 'p1-name', 'p2-name', 'reg-email', 'reg-tel'];
+    /* Must match the VISUAL order in sections/register.html: this is what picks
+       which field gets the error message and the focus on a failed submit, and
+       sending someone back up past a field they can already see reads as a bug. */
+    const ORDER = ['reg-email', 'reg-tel', 'team-name', 'p1-name', 'p2-name',
+                   'reg-type', 'reg-level'];
 
     const labelOf = el => {
       const l = root.querySelector('label[for="' + el.id + '"]');
@@ -487,6 +501,8 @@ window.Sections.register = {
       player2: scrub(byId('p2-name').value, 60, true),
       email:   scrubEmail(byId('reg-email').value),
       phone:   scrub(byId('reg-tel').value, 40, true),
+      teamType: byId('reg-type').value,
+      level:    byId('reg-level').value,
       submittedAt: new Date().toISOString()
     });
 
@@ -608,7 +624,8 @@ window.Sections.register = {
 
       ref('full-eyebrow').textContent = EYEBROW_TXT;
       ref('full-lead').textContent = lead;
-      ref('full-tickets').textContent = 'Kom supporteren: open air ticket ' + TKT_TXT;
+      ref('full-tickets').textContent =
+        ('Kom supporteren: open air ticket ' + TKT_TXT).trim();
 
       ref('full-title').focus();
       speakStatus('Volzet. ' + lead);
@@ -657,47 +674,5 @@ window.Sections.register = {
       }
     });
 
-    /* =====================================================================
-       DEBUG HOOKS — screenshots only, invisible to a visitor (§0 rule 8).
-       Local render, no request, no reference the server did not give: the
-       fixture number is only ever shown to whoever typed ?state= themselves.
-       ==================================================================== */
-
-    function fill(map) {
-      Object.keys(map).forEach(id => { const el = byId(id); if (el) el.value = map[id]; });
-    }
-
-    const FIXTURE = { 'team-name': 'De Baseliners',
-                      'p1-name': 'Jasper Vanhoutte', 'p2-name': 'Lien Vandewalle',
-                      'reg-email': 'jasper@example.be', 'reg-tel': '+32 470 12 34 56' };
-
-    let params;
-    try { params = new URLSearchParams(window.location.search); }
-    catch (err) { params = new URLSearchParams(''); }
-
-    /* Screenshot hooks are for the UNWIRED build only (BRIEF §0 rule 8): on a
-       build with a backend they are dead, so nobody can fabricate a
-       confirmation on the production site. */
-    if (CFG.apiEndpoint) return;
-
-    switch (params.get('state')) {
-      case 'error':
-        fill({ 'team-name': 'D', 'p1-name': 'Jasper Vanhoutte', 'p2-name': '',
-               'reg-email': 'jasper@', 'reg-tel': '0499' });
-        paintSummary(checkAll());
-        break;
-      case 'filled':
-        fill(FIXTURE);
-        break;
-      case 'pay':
-        fill(FIXTURE);
-        showPay({ ok: true, reference: 'INS-07', amount: FEE });
-        break;
-      case 'success':
-        fill(FIXTURE);
-        showDone('INS-07');
-        break;
-      default: break;
-    }
   }
 };

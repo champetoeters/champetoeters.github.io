@@ -601,83 +601,52 @@
   align-items: center;
   justify-content: center;
   min-height: 54px;
-  padding: 0 clamp(28px, 2.4cqw, 44px);
+  padding: 0 clamp(22px, 2.0cqw, 36px);
   border-radius: 999px;
   font-family: var(--hb-ui);
   font-size: 1.0625rem;
   font-weight: 600;
   letter-spacing: -.008em;
   white-space: nowrap;
+}
+
+/* Two routes of equal standing. They sit on one row while both fit and stack
+   to full width when they do not — a button pair that wraps to two ragged
+   half-width pills is the one arrangement that reads as broken.
+
+   No horizontal centring trick is needed: .hero__body already centres its
+   children, and `justify-content` handles the row. */
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(10px, 1.4cqw, 14px);
   margin-top: clamp(14px, 2.4vh, 28px);
 }
 
-/* Scarcity reads as a caption on the button, not as a second message. */
-.hero__slots {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  margin-top: clamp(9px, 1.3vh, 14px);
-  font-size: .875rem;
-  font-weight: 500;
-  color: rgb(244 247 251 / .74);
+/* Below the wrap point each button owns the full column, so the pair reads as
+   a stack of two equal choices rather than two orphaned pills. */
+@container (width < 30rem) {
+  .hero__actions { flex-direction: column; align-items: stretch; }
+  .hero__cta { width: 100%; }
 }
-.hero__slots b { color: var(--hb-ball); font-weight: 700; }
 
-.hero__dot {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--hb-ball);
-  box-shadow: 0 0 0 4px rgb(198 220 99 / .13);
-}
-/* The line ships empty and hero.js writes the count once it is known — until
-   then the whole caption hides, or the dot would sit there pointing at
-   nothing. Engines without :has() show a lone dot for a beat: harmless. */
-.hero__slots:has([data-hero="slots-line"]:empty) { visibility: hidden; }
-
-/* The demoted ticket route: a text link, deliberately not a button. */
-.hero__alt {
-  margin: 0;
-  margin-top: clamp(8px, 1.4vh, 16px);
-}
-.hero__link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: 6px;
-  color: rgb(244 247 251 / .70);
+/* Volzet: the team button keeps its shape and loses its promise. Painted here
+   rather than leaning on [disabled] — this is an <a> that hero.js stripped the
+   href from, and an anchor without href takes no :disabled styling. */
+.hero__cta--dead {
+  cursor: default;
+  opacity: .62;
+  letter-spacing: .04em;
+  text-transform: uppercase;
   font-size: .9375rem;
-  font-weight: 500;
-  transition: color .18s ease;
-}
-/* The underline is PAINTED (a 1px background line under the span): WebKit
-   refuses text-decoration anywhere inside this inline-flex anchor, measured on
-   real pixels. A painted line renders in every engine and hugs the text. */
-.hero__link-t {
-  /* No padding: with line-height 1 the content-box bottom is ~3px under the
-     baseline, so the line sits where a native underline would — hugging the
-     text, not floating under the descenders. */
-  background-image: linear-gradient(rgb(244 247 251 / .6), rgb(244 247 251 / .6));
-  background-size: 100% 1px;
-  background-position: 0 calc(100% - 1px);
-  background-repeat: no-repeat;
-}
-.hero__link:hover {
-  color: var(--hb-paper);
-}
-.hero__link:hover .hero__link-t {
-  background-image: linear-gradient(rgb(244 247 251 / .85), rgb(244 247 251 / .85));
 }
 
 /* Type on a raked surface needs a halo as well as a pool. Tight and dark, so
    it never reads as a glow. */
 .hero__crest-sub,
 .hero__stamp,
-.hero__pitch,
-.hero__slots,
-.hero__link {
+.hero__pitch {
   text-shadow: 0 1px 2px rgb(4 9 26 / .88), 0 0 12px rgb(4 9 26 / .62);
 }
 

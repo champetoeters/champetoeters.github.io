@@ -27,11 +27,23 @@
    phone's retracting URL bar can never push the page into a scrollbar. */
 #register.u-section {
   display: grid;
+  /* `safe` centre: exact vertical centring while the block fits, but the
+     moment it is taller than the viewport the overflow goes DOWNWARD and the
+     top edge stays put. Plain `center` first, so an engine without `safe`
+     keeps the old behaviour rather than dropping the declaration.
+
+     The symmetric padding is what makes both halves true: it is at least the
+     height of the page head, so an overflowing block starts BELOW the Terug
+     pill instead of sliding under it — and because the same value sits at the
+     bottom, the centred case is still centred on the exact viewport middle.
+     (Measured: the ticket basket grew past 100svh and slid its title under
+     the pill.) */
   align-content: center;
+  align-content: safe center;
   margin-top: calc(-1 * var(--page-head-h, 72px));
   min-height: 100vh;
   min-height: 100svh;
-  padding-block: clamp(14px, 3.4vw, 48px);
+  padding-block: max(var(--page-head-h, 72px), clamp(14px, 3.4vw, 48px));
 }
 
 #register [hidden] { display: none !important; }
@@ -101,7 +113,7 @@
     0 8px 26px rgb(3 7 22 / .58);
 }
 
-/* What the €50 buys — one line, written by register.js from event.json.
+/* What the fee buys — one line, written by register.js from event.json.
    No max-width of its own: the sentence is ~77 characters and the narrow
    container (760px) is the measure — a tighter cap forced a two-line wrap
    on desktop where one line fits. */
