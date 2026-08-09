@@ -135,6 +135,9 @@ var STATE_REPO = 'champetoeters/champetoeters.github.io';
 var STATE_BRANCH = 'state';
 var STATE_PATH = 'state.json';
 
+/* The address the mails go out FROM. No mail prints it any more (the contact
+   line was dropped 2026-08-09) — replies land here regardless, since nothing
+   sets a Reply-To. */
 var CONTACT_EMAIL = 'event@champetoeters.be';
 var EVENT_NAME = 'CHAMPETOETERS & FRIENDS';
 var EVENT_WHEN = 'zaterdag 5 september 2026, 12:30 → 02:00';
@@ -143,6 +146,14 @@ var EVENT_WHERE = 'TC Leiemeers, Luitenant-Generaal Gérardstraat 62, 8520 Kuurn
    bare URLs — there is no anchor to hide them behind. */
 var INSTAGRAM_URL = 'https://www.instagram.com/champetoeters/';
 var TICKETS_URL = 'https://champetoeters.be/tickets/';
+/* The club's Google Maps listing, addressed by place CID — the stable half of
+   the feature id in the organiser's own share link
+   (…!1s0x47c33ba24c56b12d:0xc8c979546509cf7f → 0xc8c979546509cf7f in decimal).
+   EVENT_WHERE is anchored to this in the HTML body (mailHtml_) because a phone
+   left to auto-detect the address swallows the "TC Leiemeers, " prefix and
+   geocodes it to the wrong pin. Rebuild from 50.8470306, 3.2883501 if the
+   listing ever moves; site/data/venue.json holds the surveyed court origin. */
+var VENUE_MAP_URL = 'https://maps.google.com/?cid=14468228681283784575';
 
 var COLUMNS = {
   registrations: ['ref', 'teamId', 'teamName', 'player1', 'player2', 'email', 'phone',
@@ -652,27 +663,30 @@ function cleanResult_(sets, winner) {
 function payIban_() { return String(props_().getProperty('PAY_IBAN') || 'IE75 SUMU 9903 6513 1743 98').trim(); }
 function payHolder_() { return String(props_().getProperty('PAY_HOLDER') || 'Sebbe Benoit').trim(); }
 
-/* `mededeling` is optional. A team inschrijving has one (the team name); a
-   ticket order builds its own payment block (orderMail_) from the client's
-   template, so it never comes through here. */
-function paymentLines_(mededeling) {
+/* Both mails ask for the same transfer in the same words (client, 2026-08-09):
+   only the noun ("inschrijving" / "bestelling") and the mededeling differ. The
+   mededeling is what identifies the payment — the team name for a register,
+   the ticket holders for an order — so it is never optional here.
+   Transfer is the ONLY route offered: no pay-at-the-event line. */
+function payBlock_(amount, noun, mededeling) {
   var iban = payIban_();
-  var first = iban
-    ? 'Naar ' + iban + ' op naam van ' + payHolder_() +
-      (mededeling ? ' met mededeling "' + mededeling + '".' : '.')
-    : 'Het rekeningnummer volgt nog. Je hoeft nu dus nog niets over te schrijven.';
+  if (!iban) {
+    return ['Het rekeningnummer volgt nog. Je hoeft nu dus nog niets over te schrijven.'];
+  }
   return [
-    'Betalen doe je via overschrijving:',
-    first,
-    'Nog niet betaald? Geen probleem: je plaats/tickets staan vast zodra we je',
-    'betaling ontvangen.'
+    'Om je ' + noun + ' definitief te bevestigen, vragen we je om het totaalbedrag van',
+    '€' + amount + ' over te schrijven op onderstaande rekening:',
+    '  IBAN: ' + iban + ' (' + payHolder_() + ')',
+    '  Bedrag: €' + amount,
+    '  Mededeling: ' + mededeling
   ];
 }
 
-function footerLines_() {
+/* Where and when — the last two lines of both mails. Neither prints a contact
+   line any more (client, 2026-08-09): the mails carry no Reply-To, so a reply
+   already lands on CONTACT_EMAIL, the account that sent them. */
+function eventLines_() {
   return [
-    'Vragen? Mail ' + CONTACT_EMAIL + '.',
-    '',
     EVENT_NAME + ' · ' + EVENT_WHEN,
     EVENT_WHERE
   ];
@@ -685,9 +699,12 @@ function firstName_(full) {
   return String(full || '').trim().split(/\s+/)[0] || '';
 }
 
-/* Wording per the client's template (Mails champetoeters.pdf, p.2). The
-   payment block is NOT in that template but is kept: it is the only place a
-   team is told how to pay the €44. */
+/* Shortened to match orderMail_ (client, 2026-08-09): the payment ask moves up
+   to just under the greeting — it is the one thing the reader must act on —
+   and everything that only reassured ("helemaal in orde", "wij hebben er zin
+   in", "laat gerust iets weten") is gone, along with the emoji and the
+   contact line. The "inschrijvingsgeld: €44" line went with it: payBlock_
+   already states the amount twice. */
 function registerMail_(entry) {
   var who = [entry.player1, entry.player2].filter(Boolean).join(' & ');
   var voornaam = firstName_(entry.player1);
@@ -697,46 +714,39 @@ function registerMail_(entry) {
     lines: [
       voornaam ? 'Hallo ' + voornaam + ',' : 'Hallo,',
       '',
-      'Goed nieuws! Jouw inschrijving voor het padeltornooi van ' + EVENT_NAME + ' is',
-      'helemaal in orde. Zowel jij als je padelpartner zijn succesvol ingeschreven.',
-      'Jullie plek op het tornooi is dus officieel bevestigd! 🎾',
+      'Goed nieuws! Jullie inschrijving voor het padeltornooi van ' + EVENT_NAME +
+        ' is goed ontvangen.',
+      '',
+      'Betaling'
+    ].concat(payBlock_(TEAM_PRICE, 'inschrijving', entry.teamName || who), [
       '',
       'We kijken er alvast naar uit om jullie te verwelkomen.',
-      '',
-      'Als deelnemer krijg je sowieso:',
-      '  • een welkomstticket',
-      '  • padelballen',
-      '  • een gratis drankje',
+      'Als deelnemer krijg je van ons sowieso:',
+      '• Een welkomstticket',
+      '• Padelballen',
+      '• Een gratis drankje',
       '',
       'Het speelschema en de praktische info ontvangen jullie later in een aparte mail.',
       '',
       'Wil je ondertussen niets missen? Volg ' + EVENT_NAME + ' op Instagram:',
       INSTAGRAM_URL,
-      'Daar delen we als eerste alle updates en nieuwtjes rond het tornooi.',
+      'Daar delen we alle updates en nieuwtjes rond het event.',
+      'Supporters kunnen hun toegangsticket kopen via ' + TICKETS_URL,
       '',
-      'Supporters zijn natuurlijk meer dan welkom! Willen vrienden, familie of andere',
-      'supporters erbij zijn? Zij kunnen hier hun toegangsticket kopen:',
-      TICKETS_URL,
-      '',
-      'Inschrijvingsgeld: €' + TEAM_PRICE + ' per team.',
-      ''
-    ].concat(paymentLines_(entry.teamName || who), [
-      '',
-      'Bedankt voor jullie inschrijving. Wij hebben er alvast enorm veel zin in!',
-      '',
-      'Heb je in de tussentijd nog vragen? Laat gerust iets weten.',
-      '',
-      'Sportieve groeten,',
+      'Bedankt voor je inschrijving en tot dan!',
       'Team ' + EVENT_NAME,
       ''
-    ], footerLines_())
+    ], eventLines_())
   };
 }
 
 /* Wording per the client's template (Mails champetoeters.pdf, p.1). That
    template asks for the buyer's own name as mededeling, but no buyer name is
    collected (client, r11) — the names ON the tickets are the only names an
-   order has, so those are what identifies the transfer. */
+   order has, so those are what identifies the transfer.
+   Shortened 2026-08-09: no "we hebben je bestelling ontvangen" preamble, no
+   separate total (payBlock_ already states the amount twice), no emoji, and no
+   contact line — only the where/when footer. */
 function orderMail_(order) {
   var tickets = parseTickets_(order.tickets);
   /* One line per ticket, named: the buyer has to be able to check that the
@@ -744,19 +754,8 @@ function orderMail_(order) {
   var lines = tickets.map(function (t) {
     return '  · ' + t.holder + ' — ' + t.label + ' (€' + t.price + ')';
   });
-  var iban = payIban_();
   var mededeling = tickets.map(function (t) { return t.holder; }).join(', ');
-  var pay = iban
-    ? [
-        'Om je bestelling definitief te bevestigen, vragen we je om het totaalbedrag van',
-        '€' + order.amount + ' over te schrijven op onderstaande rekening:',
-        '  IBAN: ' + iban + ' (' + payHolder_() + ')',
-        '  Bedrag: €' + order.amount,
-        '  Mededeling: ' + mededeling
-      ]
-    : [
-        'Het rekeningnummer volgt nog. Je hoeft nu dus nog niets over te schrijven.'
-      ];
+  var pay = payBlock_(order.amount, 'bestelling', mededeling);
   /* No name in the greeting: the only names in an order are the ones ON the
      tickets, and whoever ordered may be none of them. Greeting them by the
      first ticket holder would address the mail to the wrong person. */
@@ -766,15 +765,10 @@ function orderMail_(order) {
     lines: [
       'Hallo,',
       '',
-      'Bedankt voor je bestelling voor ' + EVENT_NAME + '! 🎉',
-      '',
-      'We hebben je bestelling goed ontvangen. Hieronder vind je een overzicht van je',
-      'aangekochte tickets.',
+      'Bedankt voor je bestelling voor ' + EVENT_NAME + '!',
       '',
       'Jouw bestelling'
     ].concat(lines, [
-      '',
-      'Totaal te betalen: €' + order.amount,
       '',
       'Betaling'
     ], pay, [
@@ -788,16 +782,30 @@ function orderMail_(order) {
       INSTAGRAM_URL,
       'Daar delen we alle updates en nieuwtjes rond het event.',
       '',
-      'Bedankt voor je bestelling en tot dan! 🥂',
-      '',
+      'Bedankt voor je bestelling en tot dan!',
       'Team ' + EVENT_NAME,
       ''
-    ], footerLines_())
+    ], eventLines_())
   };
 }
 
 function escHtml_(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* The naive HTML twin of the plain-text body: same lines, <br> between them.
+   The venue line is the exception — it goes out as a real link to the club's
+   Maps listing. Left bare, iOS/Gmail detect it themselves and hand their guess
+   (including the "TC Leiemeers, " prefix, which is a POI name and not part of
+   the postal address) to a geocoder that drops the pin somewhere else. An
+   anchor stops the detector guessing; the visible text is unchanged. */
+function mailHtml_(lines) {
+  return '<p>' + lines.map(function (line) {
+    var safe = escHtml_(line);
+    return line === EVENT_WHERE
+      ? '<a href="' + escHtml_(VENUE_MAP_URL) + '">' + safe + '</a>'
+      : safe;
+  }).join('<br>') + '</p>';
 }
 
 /* A mail that bounces (quota, bad address) must not lose the entry: the row is
@@ -835,7 +843,7 @@ function sendMail_(mail) {
        event's own address. */
     GmailApp.sendEmail(mail.to, mail.subject, mail.lines.join('\n'), {
       name: EVENT_NAME,
-      htmlBody: '<p>' + mail.lines.map(escHtml_).join('<br>') + '</p>'
+      htmlBody: mailHtml_(mail.lines)
     });
     /* Early warning in the log tab: past the allowance every further
        confirmation is lost (the row still stands, the screen still tells the

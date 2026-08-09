@@ -206,17 +206,21 @@ Subject register: `Inschrijving ontvangen · CHAMPETOETERS & FRIENDS`
 Subject order:    `Je open air tickets · CHAMPETOETERS & FRIENDS`
 
 Body must contain: what was registered/ordered, the amount, payment instructions
-block. A register mail greets the players by name and carries a mededeling (the
-team name); an order mail greets nobody by name and carries NO mededeling — it
-lists the named tickets instead, and nobody is asked to type a reference:
+block. A register mail greets the first player by first name; an order mail
+greets nobody by name — whoever ordered may be none of the ticket holders.
 
-> Betalen doe je via overschrijving:
-> Naar {IBAN} op naam van {HOLDER}[ met mededeling "{MEDEDELING}"].
+Both mails carry the SAME payment block (`payBlock_(amount, noun, mededeling)`),
+directly under a `Betaling` heading:
 
-{MEDEDELING} is the TEAM NAME for a register mail. An order mail has none, and
-the clause is left out entirely — the line ends after {HOLDER}.
-> Nog niet betaald? Geen probleem — je plaats/tickets staan vast zodra we je
-> betaling ontvangen.
+> Om je {inschrijving|bestelling} definitief te bevestigen, vragen we je om het totaalbedrag van
+> €{AMOUNT} over te schrijven op onderstaande rekening:
+>   IBAN: {IBAN} ({HOLDER})
+>   Bedrag: €{AMOUNT}
+>   Mededeling: {MEDEDELING}
+
+{MEDEDELING} is the TEAM NAME for a register mail and the comma-joined ticket
+holders for an order — nobody is asked to type a reference. With `PAY_IBAN`
+empty the whole block collapses to the one "Het rekeningnummer volgt nog." line.
 
 Transfer is the ONLY payment route offered to a customer: no pay-at-the-event
 line anywhere in the mails or on the payment panel. (The organiser can still
@@ -230,7 +234,21 @@ which is the event's real account. Only an explicitly EMPTY `PAY_IBAN` produces 
 "Het rekeningnummer volgt nog." variant. Set both properties deliberately; do not
 rely on "unset" meaning "off".
 No Reply-To header: replies go to the sending account (the event's own address).
-Include contact line + venue/date footer.
+
+The HTML body (`mailHtml_`) is the plain-text lines joined with `<br>`, with ONE
+exception: the `EVENT_WHERE` line is wrapped in an `<a>` to `VENUE_MAP_URL`, the
+club's Maps listing by place CID. Without it a phone auto-detects the address,
+swallows the "TC Leiemeers, " prefix into its query and geocodes to the wrong
+pin. The visible text is identical either way, and the plain-text part is
+untouched — do not "simplify" mailHtml_ back to a bare `lines.map(escHtml_)`.
+
+Both mails end with the venue/date footer (`eventLines_()`) and nothing else:
+the "Vragen? Mail …" contact line is gone from both (client, 2026-08-09), as are
+the emoji — they rendered as ▯ boxes in the organiser's mail client. Both were
+shortened the same way that round: the payment ask sits high, right under the
+greeting for a register mail, and neither prints a separate total (`payBlock_`
+already names the amount twice). ⚠ Wording is CLIENT-OWNED — these mails were
+rewritten line by line to a pasted target. Do not "improve" the copy.
 
 ## The clock
 
