@@ -202,8 +202,12 @@ Team payment state for organiser-entered teams (any `confirmed` slot in teams.js
 
 ## EMAIL (sent by backend on register/order — Dutch, plain + concise)
 
-Subject register: `Inschrijving ontvangen · CHAMPETOETERS & FRIENDS`
-Subject order:    `Je open air tickets · CHAMPETOETERS & FRIENDS`
+Subject register: `Inschrijving ontvangen`
+Subject order:    `Je open air tickets`
+
+No event name in either subject (client, 2026-08-09): `sendMail_` sends with
+`name: EVENT_NAME`, so the From line already reads CHAMPETOETERS & FRIENDS and
+the suffix only cost subject width on a phone.
 
 Body must contain: what was registered/ordered, the amount, payment instructions
 block. A register mail greets the first player by first name; an order mail

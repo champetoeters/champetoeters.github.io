@@ -710,7 +710,10 @@ function registerMail_(entry) {
   var voornaam = firstName_(entry.player1);
   return {
     to: entry.email,
-    subject: 'Inschrijving ontvangen · ' + EVENT_NAME,
+    /* No " · CHAMPETOETERS & FRIENDS" tail: the sender already reads as the
+       event (sendMail_ passes `name: EVENT_NAME`), so the suffix only pushed
+       the useful half of the subject off a phone's screen. */
+    subject: 'Inschrijving ontvangen',
     lines: [
       voornaam ? 'Hallo ' + voornaam + ',' : 'Hallo,',
       '',
@@ -761,7 +764,7 @@ function orderMail_(order) {
      first ticket holder would address the mail to the wrong person. */
   return {
     to: order.email,
-    subject: 'Je open air tickets · ' + EVENT_NAME,
+    subject: 'Je open air tickets',   /* no event suffix — see registerMail_ */
     lines: [
       'Hallo,',
       '',

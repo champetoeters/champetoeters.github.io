@@ -28,6 +28,20 @@ window.CHAMP_CONFIG = {
     holder: "Sebbe Benoit",
   },
 
+  /* Is the draw public yet?
+   *
+   *   false → the sheet still renders in full (tijden, banen, poules, het
+   *           3D-beeld), but every seat reads "Vrije plaats": registrations
+   *           are NOT merged into the poules and no results are shown. The
+   *           organisers keep seeing everything at /admin/ — this only hides
+   *           the draw from the visitor.
+   *   true  → live mode: registrations fill their slot, scores print, and the
+   *           bracket names the knock-out seats as they resolve.
+   *
+   * Flip to true once the poules are final and may be published. Nothing else
+   * has to change. */
+  showDraw: false,
+
   contactEmail: "event@champetoeters.be",
   contactPhone: "",
 };

@@ -21,6 +21,11 @@
    re-applied — so a score entered at the court appears here without anyone
    reloading. The tick does nothing while the tab is hidden.
 
+   That whole live layer hangs off ONE switch: CHAMP_CONFIG.showDraw. While it
+   is false the sheet renders exactly as teams.json has it — every seat "Vrije
+   plaats", no scores, no resolved knock-out names, no backend traffic — so the
+   poules can stay private until the organisers publish them.
+
    Owns: sections/timetable.html, css/timetable.css, js/timetable.js
    Consumes: window.Courts3D, window.ChampBracket, window.ChampLive — every one
    optional and every call guarded, so the sheet renders identically if the
@@ -55,6 +60,12 @@ window.Sections = window.Sections || {};
 
   /* An unsold place in the draw. teams.json carries the Dutch label. */
   var OPEN = 'Vrije plaats';
+
+  /* …and what a seat reads while the draw is still private (showDraw false).
+     Not "Vrije plaats": nothing is for sale there yet, the pairing simply is
+     not decided. Every seat on the sheet reads this until the draw is
+     published. */
+  var SOON = 'Nog te bepalen';
 
   /* Knockout ids never resolve to a team. Spelled out so a placeholder reads as
      a real, understandable entry rather than a code. */
@@ -306,8 +317,14 @@ window.Sections = window.Sections || {};
         var players = (t.players || []).filter(Boolean);
         /* An unsold place must read as available: printed plainly, never
            hidden, never blank, never "TBD". A registration that filled the
-           slot arrives with its two players and reads like any other team. */
-        if (!players.length) return { open: true, name: t.label || OPEN, full: 'een vrije plaats' };
+           slot arrives with its two players and reads like any other team.
+           Before the draw is public there is nothing to be available for, so
+           the same seat reads "Nog te bepalen" instead. */
+        if (!players.length) {
+          return showDraw()
+            ? { open: true, name: t.label || OPEN, full: 'een vrije plaats' }
+            : { open: true, name: SOON, full: 'nog te bepalen' };
+        }
         /* Teams enter under a team name; the players stay in the aria text so
            a listener still hears who is on court. Data without a name (never
            the case in production) falls back to the surname pair. */
@@ -616,6 +633,12 @@ window.Sections = window.Sections || {};
 
     function applyState(state, force) {
       state = state || {};
+      /* Draw not published yet (CHAMP_CONFIG.showDraw === false): the sheet
+         keeps its times, banen and poule-labels, but the overlay is dropped on
+         the floor — no registrations merged into the seats, no scores, no
+         resolved knock-out names. Everything reads "Vrije plaats", which is
+         exactly what teams.json says on its own. */
+      if (!showDraw()) return;
       var sig = null;
       try { sig = JSON.stringify([state.results || {}, state.teams || []]); } catch (e) { /* repaint */ }
       if (sig !== null && sig === lastSig && !force) return;
@@ -676,6 +699,13 @@ window.Sections = window.Sections || {};
       return c ? String(c.apiEndpoint || '').trim() : '';
     }
 
+    /* May the visitor see the draw? Default is HIDDEN: a page that somehow
+       loads without config.js must not leak the poules by accident. */
+    function showDraw() {
+      var c = window.CHAMP_CONFIG;
+      return !!(c && c.showDraw);
+    }
+
     function update() {
       if (document.hidden) return;
       var next = clockNow();
@@ -688,7 +718,9 @@ window.Sections = window.Sections || {};
       if (next === null) { if (moved) paint(); return; }
 
       var L = window.ChampLive;
-      if (endpoint() && L && typeof L.refresh === 'function') {
+      /* Nothing to fetch while the draw is hidden — the overlay would only be
+         thrown away, and a hidden draw should cost the backend nothing. */
+      if (showDraw() && endpoint() && L && typeof L.refresh === 'function') {
         try {
           Promise.resolve(L.refresh()).then(function (state) { applyState(state, moved); },
             function () { if (moved) paint(); });
@@ -723,7 +755,7 @@ window.Sections = window.Sections || {};
 
     /* init never waits on the network (app.js awaits it before the next
        section renders). */
-    if (window.ChampLive && typeof window.ChampLive.state === 'function') {
+    if (showDraw() && window.ChampLive && typeof window.ChampLive.state === 'function') {
       try {
         Promise.resolve(window.ChampLive.state()).then(function (state) { applyState(state); },
           function () { /* keep static */ });
