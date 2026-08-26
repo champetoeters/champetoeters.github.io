@@ -64,8 +64,10 @@ window.Sections = window.Sections || {};
   /* …and what a seat reads while the draw is still private (showDraw false).
      Not "Vrije plaats": nothing is for sale there yet, the pairing simply is
      not decided. Every seat on the sheet reads this until the draw is
-     published. */
-  var SOON = 'Nog te bepalen';
+     published. Short on purpose (client): the sheet is a dense grid and the
+     spelled-out label pushed the cells wide. The aria text stays spelled out
+     — a screen reader should not have to expand an abbreviation. */
+  var SOON = 'TBD';
 
   /* Knockout ids never resolve to a team. Spelled out so a placeholder reads as
      a real, understandable entry rather than a code. */
@@ -316,10 +318,10 @@ window.Sections = window.Sections || {};
       if (t) {
         var players = (t.players || []).filter(Boolean);
         /* An unsold place must read as available: printed plainly, never
-           hidden, never blank, never "TBD". A registration that filled the
-           slot arrives with its two players and reads like any other team.
-           Before the draw is public there is nothing to be available for, so
-           the same seat reads "Nog te bepalen" instead. */
+           hidden, never blank. A registration that filled the slot arrives
+           with its two players and reads like any other team. Before the draw
+           is public there is nothing to be available for, so the same seat
+           reads SOON instead. */
         if (!players.length) {
           return showDraw()
             ? { open: true, name: t.label || OPEN, full: 'een vrije plaats' }
