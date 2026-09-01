@@ -1125,7 +1125,9 @@
   }
 
   function pullOverview(then) {
-    admin('overview').then(function (r) {
+    /* Read-only, so the same retries as the writes: Apps Script loses ~1
+       answer in 10, and a lost overview is the whole tool "not loading". */
+    admin('overview', null, { retries: 2 }).then(function (r) {
       if (r && r.ok) { apply(r); if (then) then(true); return; }
       if (r && r.error === 'unauthorized') { expire(); if (then) then(false); return; }
       toast('Geen verbinding met de server', 'bad');
@@ -1283,7 +1285,9 @@
     E.loginError.textContent = '';
     E.loginBtn.disabled = true;
     S.pw = pw;
-    admin('login').then(function (r) {
+    /* Verify-only, so retrying is free — without it, one lost Apps Script
+       answer reads as "Geen verbinding" with the right password typed. */
+    admin('login', null, { retries: 2 }).then(function (r) {
       E.loginBtn.disabled = false;
       if (r && r.ok) {
         try { sessionStorage.setItem(SESSION_KEY, pw); } catch (err) { /* private mode */ }
