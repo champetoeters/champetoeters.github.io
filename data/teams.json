@@ -1,154 +1,154 @@
 [
   {
     "id": "t01",
-    "group": "A",
+    "group": "1",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t02",
-    "group": "B",
+    "group": "1",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t03",
-    "group": "C",
+    "group": "1",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t04",
-    "group": "D",
+    "group": "1",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t05",
-    "group": "A",
+    "group": "2",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t06",
-    "group": "B",
+    "group": "2",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t07",
-    "group": "C",
+    "group": "2",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t08",
-    "group": "D",
+    "group": "2",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t09",
-    "group": "A",
+    "group": "3",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t10",
-    "group": "B",
+    "group": "3",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t11",
-    "group": "C",
+    "group": "3",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t12",
-    "group": "D",
+    "group": "3",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t13",
-    "group": "A",
+    "group": "4",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t14",
-    "group": "B",
+    "group": "4",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t15",
-    "group": "C",
+    "group": "4",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t16",
-    "group": "D",
+    "group": "4",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t17",
-    "group": "A",
+    "group": "V",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t18",
-    "group": "B",
+    "group": "V",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t19",
-    "group": "C",
+    "group": "V",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t20",
-    "group": "D",
+    "group": "V",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t21",
-    "group": "A",
+    "group": "V",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"
   },
   {
     "id": "t22",
-    "group": "B",
+    "group": "V",
     "confirmed": false,
     "players": [],
     "label": "Vrije plaats"

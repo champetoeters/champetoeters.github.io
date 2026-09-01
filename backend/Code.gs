@@ -79,6 +79,14 @@ var OPEN_SLOTS = ['t01', 't02', 't03', 't04', 't05', 't06', 't07', 't08',
                   't09', 't10', 't11', 't12', 't13', 't14', 't15', 't16',
                   't17', 't18', 't19', 't20', 't21', 't22'];
 
+/* Since the format restructure the slot id ENCODES the competition
+   (tools/gendata.py): t01–t16 are the vier herenpoules, t17–t22 the
+   damespoule. A registration must land in its own half — hand a vrouwenteam
+   t01 and the public draw seats it in Poule 1 on Baan 1 and feeds it into the
+   heren knock-out. freeSlots_ routes on teamType; tools/bracket.test.mjs
+   checks this list against teams.json group "V". */
+var WOMEN_SLOTS = ['t17', 't18', 't19', 't20', 't21', 't22'];
+
 /* The two choices the entry form asks for. The KEY is what the browser sends
    (the <option value> in site/sections/register.html — Apps Script cannot read
    that file, so the pair is repeated here and tools/bracket.test.mjs fails if
@@ -522,9 +530,17 @@ function bool_(v) {
   return s === 'true' || s === 'ja' || s === 'x' || s === '1';
 }
 
-function freeSlots_(regs) {
+/* Without a teamType this is the OVERALL capacity (the health flag: is any
+   place left at all); with one it is the pool that type may actually take —
+   dames in t17–t22, heren in t01–t16. Rows carry the LABEL ('Vrouwenteam'),
+   see countTeamType_ below. */
+function freeSlots_(regs, teamType) {
+  var women = teamType === TEAM_TYPES.vrouwen;
+  var pool = !teamType ? OPEN_SLOTS : OPEN_SLOTS.filter(function (id) {
+    return (WOMEN_SLOTS.indexOf(id) !== -1) === women;
+  });
   var taken = regs.map(function (r) { return r.teamId; });
-  return OPEN_SLOTS.filter(function (id) { return taken.indexOf(id) === -1; });
+  return pool.filter(function (id) { return taken.indexOf(id) === -1; });
 }
 
 /* Rows already carry the LABEL ('Vrouwenteam'), not the form key — cleanEntry_
@@ -1033,13 +1049,14 @@ function actRegister_(body) {
     var regs = registrations_();
     var seen = replay_(regs, entry.clientRef);
     if (seen) return { ok: true, reference: seen.ref, teamId: seen.teamId, amount: TEAM_PRICE };
-    var free = freeSlots_(regs);
-    if (!free.length) return fail_('full');
+    var free = freeSlots_(regs, entry.teamType);
     /* Before the e-mail cap, so a woman's team that is one too many hears the
-       reason it can act on rather than the generic retry message. */
-    if (entry.teamType === TEAM_TYPES.vrouwen && womenFull_(regs)) {
+       reason it can act on rather than the generic retry message. The pool
+       check backs up the tally: six dames slots, six teams, either way full. */
+    if (entry.teamType === TEAM_TYPES.vrouwen && (womenFull_(regs) || !free.length)) {
       return fail_('women-full');
     }
+    if (!free.length) return fail_('full');
     if (overLimit_(regs, entry.email)) return fail_('too-many');
 
     entry.teamId = free[0];
@@ -1206,7 +1223,7 @@ function actAdmin_(body) {
       var regs = registrations_();
       var seen = replay_(regs, newReg.clientRef);
       if (seen) return { ok: true, reference: seen.ref, teamId: seen.teamId };
-      var free = freeSlots_(regs);
+      var free = freeSlots_(regs, newReg.teamType);
       if (!free.length) return fail_('full');
       newReg.teamId = free[0];
       newReg.ref = nextRef_('INS', regs);

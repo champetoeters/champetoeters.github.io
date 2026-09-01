@@ -12,68 +12,67 @@
     "16:30",
     "17:00",
     "17:30",
-    "18:30",
-    "19:00",
-    "19:30"
+    "18:00",
+    "18:30"
   ],
   "matches": [
     {
       "id": "m01",
       "court": "court-3",
       "start": "12:30",
-      "end": "13:00",
+      "end": "12:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 1",
       "teams": [
         "t01",
-        "t21"
+        "t02"
       ]
     },
     {
       "id": "m02",
       "court": "court-1",
       "start": "12:30",
-      "end": "13:00",
+      "end": "12:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 2",
       "teams": [
         "t05",
-        "t17"
+        "t06"
       ]
     },
     {
       "id": "m03",
       "court": "court-2",
       "start": "12:30",
-      "end": "13:00",
+      "end": "12:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 3",
       "teams": [
         "t09",
-        "t13"
+        "t10"
       ]
     },
     {
       "id": "m04",
       "court": "court-4",
       "start": "12:30",
-      "end": "13:00",
+      "end": "12:55",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule 4",
       "teams": [
-        "t02",
-        "t22"
+        "t13",
+        "t14"
       ]
     },
     {
       "id": "m05",
       "court": "court-5",
       "start": "12:30",
-      "end": "13:00",
+      "end": "12:55",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t06",
+        "t17",
         "t18"
       ]
     },
@@ -81,275 +80,275 @@
       "id": "m06",
       "court": "court-3",
       "start": "13:00",
-      "end": "13:30",
+      "end": "13:25",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule 1",
       "teams": [
-        "t10",
-        "t14"
+        "t03",
+        "t04"
       ]
     },
     {
       "id": "m07",
       "court": "court-1",
       "start": "13:00",
-      "end": "13:30",
+      "end": "13:25",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule 2",
       "teams": [
         "t07",
-        "t19"
+        "t08"
       ]
     },
     {
       "id": "m08",
       "court": "court-2",
       "start": "13:00",
-      "end": "13:30",
+      "end": "13:25",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule 3",
       "teams": [
         "t11",
-        "t15"
+        "t12"
       ]
     },
     {
       "id": "m09",
       "court": "court-4",
       "start": "13:00",
-      "end": "13:30",
+      "end": "13:25",
       "round": "group",
-      "roundLabel": "Poule D",
+      "roundLabel": "Poule 4",
       "teams": [
-        "t08",
-        "t20"
+        "t15",
+        "t16"
       ]
     },
     {
       "id": "m10",
       "court": "court-5",
       "start": "13:00",
-      "end": "13:30",
+      "end": "13:25",
       "round": "group",
-      "roundLabel": "Poule D",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t12",
-        "t16"
+        "t19",
+        "t20"
       ]
     },
     {
       "id": "m11",
       "court": "court-3",
       "start": "13:30",
-      "end": "14:00",
+      "end": "13:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 1",
       "teams": [
         "t01",
-        "t17"
+        "t03"
       ]
     },
     {
       "id": "m12",
       "court": "court-1",
       "start": "13:30",
-      "end": "14:00",
+      "end": "13:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 2",
       "teams": [
-        "t21",
-        "t13"
+        "t05",
+        "t07"
       ]
     },
     {
       "id": "m13",
       "court": "court-2",
       "start": "13:30",
-      "end": "14:00",
+      "end": "13:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 3",
       "teams": [
-        "t05",
-        "t09"
+        "t09",
+        "t11"
       ]
     },
     {
       "id": "m14",
       "court": "court-4",
       "start": "13:30",
-      "end": "14:00",
+      "end": "13:55",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule 4",
       "teams": [
-        "t02",
-        "t18"
+        "t13",
+        "t15"
       ]
     },
     {
       "id": "m15",
       "court": "court-5",
       "start": "13:30",
-      "end": "14:00",
+      "end": "13:55",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t22",
-        "t14"
+        "t21",
+        "t22"
       ]
     },
     {
       "id": "m16",
       "court": "court-3",
       "start": "14:00",
-      "end": "14:30",
+      "end": "14:25",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule 1",
       "teams": [
-        "t06",
-        "t10"
+        "t02",
+        "t04"
       ]
     },
     {
       "id": "m17",
       "court": "court-1",
       "start": "14:00",
-      "end": "14:30",
+      "end": "14:25",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule 2",
       "teams": [
-        "t03",
-        "t19"
+        "t06",
+        "t08"
       ]
     },
     {
       "id": "m18",
       "court": "court-2",
       "start": "14:00",
-      "end": "14:30",
+      "end": "14:25",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule 3",
       "teams": [
-        "t07",
-        "t11"
+        "t10",
+        "t12"
       ]
     },
     {
       "id": "m19",
       "court": "court-4",
       "start": "14:00",
-      "end": "14:30",
+      "end": "14:25",
       "round": "group",
-      "roundLabel": "Poule D",
+      "roundLabel": "Poule 4",
       "teams": [
-        "t04",
-        "t20"
+        "t14",
+        "t16"
       ]
     },
     {
       "id": "m20",
       "court": "court-5",
       "start": "14:00",
-      "end": "14:30",
+      "end": "14:25",
       "round": "group",
-      "roundLabel": "Poule D",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t08",
-        "t12"
+        "t17",
+        "t19"
       ]
     },
     {
       "id": "m21",
       "court": "court-3",
       "start": "14:30",
-      "end": "15:00",
+      "end": "14:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 1",
       "teams": [
         "t01",
-        "t13"
+        "t04"
       ]
     },
     {
       "id": "m22",
       "court": "court-1",
       "start": "14:30",
-      "end": "15:00",
+      "end": "14:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 2",
       "teams": [
-        "t17",
-        "t09"
+        "t05",
+        "t08"
       ]
     },
     {
       "id": "m23",
       "court": "court-2",
       "start": "14:30",
-      "end": "15:00",
+      "end": "14:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule 3",
       "teams": [
-        "t21",
-        "t05"
+        "t09",
+        "t12"
       ]
     },
     {
       "id": "m24",
       "court": "court-4",
       "start": "14:30",
-      "end": "15:00",
+      "end": "14:55",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule 4",
       "teams": [
-        "t02",
-        "t14"
+        "t13",
+        "t16"
       ]
     },
     {
       "id": "m25",
       "court": "court-5",
       "start": "14:30",
-      "end": "15:00",
+      "end": "14:55",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule dames",
       "teams": [
         "t18",
-        "t10"
+        "t21"
       ]
     },
     {
       "id": "m26",
       "court": "court-3",
       "start": "15:00",
-      "end": "15:30",
+      "end": "15:25",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule 1",
       "teams": [
-        "t22",
-        "t06"
+        "t02",
+        "t03"
       ]
     },
     {
       "id": "m27",
       "court": "court-1",
       "start": "15:00",
-      "end": "15:30",
+      "end": "15:25",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule 2",
       "teams": [
-        "t03",
-        "t15"
+        "t06",
+        "t07"
       ]
     },
     {
       "id": "m28",
       "court": "court-2",
       "start": "15:00",
-      "end": "15:30",
+      "end": "15:25",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule 3",
       "teams": [
-        "t19",
+        "t10",
         "t11"
       ]
     },
@@ -357,319 +356,211 @@
       "id": "m29",
       "court": "court-4",
       "start": "15:00",
-      "end": "15:30",
+      "end": "15:25",
       "round": "group",
-      "roundLabel": "Poule D",
+      "roundLabel": "Poule 4",
       "teams": [
-        "t04",
-        "t16"
+        "t14",
+        "t15"
       ]
     },
     {
       "id": "m30",
       "court": "court-5",
       "start": "15:00",
-      "end": "15:30",
+      "end": "15:25",
       "round": "group",
-      "roundLabel": "Poule D",
+      "roundLabel": "Poule dames",
       "teams": [
         "t20",
-        "t12"
+        "t22"
       ]
     },
     {
       "id": "m31",
       "court": "court-3",
       "start": "15:30",
-      "end": "16:00",
+      "end": "15:55",
       "round": "group",
-      "roundLabel": "Poule A",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t01",
-        "t09"
+        "t17",
+        "t20"
       ]
     },
     {
       "id": "m32",
       "court": "court-1",
       "start": "15:30",
-      "end": "16:00",
+      "end": "15:55",
       "round": "group",
-      "roundLabel": "Poule A",
-      "teams": [
-        "t13",
-        "t05"
-      ]
-    },
-    {
-      "id": "m33",
-      "court": "court-2",
-      "start": "15:30",
-      "end": "16:00",
-      "round": "group",
-      "roundLabel": "Poule A",
-      "teams": [
-        "t17",
-        "t21"
-      ]
-    },
-    {
-      "id": "m34",
-      "court": "court-4",
-      "start": "15:30",
-      "end": "16:00",
-      "round": "group",
-      "roundLabel": "Poule B",
-      "teams": [
-        "t02",
-        "t10"
-      ]
-    },
-    {
-      "id": "m35",
-      "court": "court-5",
-      "start": "15:30",
-      "end": "16:00",
-      "round": "group",
-      "roundLabel": "Poule B",
-      "teams": [
-        "t14",
-        "t06"
-      ]
-    },
-    {
-      "id": "m36",
-      "court": "court-3",
-      "start": "16:00",
-      "end": "16:30",
-      "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule dames",
       "teams": [
         "t18",
         "t22"
       ]
     },
     {
-      "id": "m37",
-      "court": "court-1",
-      "start": "16:00",
-      "end": "16:30",
-      "round": "group",
-      "roundLabel": "Poule C",
-      "teams": [
-        "t03",
-        "t11"
-      ]
-    },
-    {
-      "id": "m38",
+      "id": "m33",
       "court": "court-2",
-      "start": "16:00",
-      "end": "16:30",
+      "start": "15:30",
+      "end": "15:55",
       "round": "group",
-      "roundLabel": "Poule C",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t15",
-        "t07"
-      ]
-    },
-    {
-      "id": "m39",
-      "court": "court-4",
-      "start": "16:00",
-      "end": "16:30",
-      "round": "group",
-      "roundLabel": "Poule D",
-      "teams": [
-        "t04",
-        "t12"
-      ]
-    },
-    {
-      "id": "m40",
-      "court": "court-5",
-      "start": "16:00",
-      "end": "16:30",
-      "round": "group",
-      "roundLabel": "Poule D",
-      "teams": [
-        "t16",
-        "t08"
-      ]
-    },
-    {
-      "id": "m41",
-      "court": "court-3",
-      "start": "16:30",
-      "end": "17:00",
-      "round": "group",
-      "roundLabel": "Poule A",
-      "teams": [
-        "t01",
-        "t05"
-      ]
-    },
-    {
-      "id": "m42",
-      "court": "court-1",
-      "start": "16:30",
-      "end": "17:00",
-      "round": "group",
-      "roundLabel": "Poule A",
-      "teams": [
-        "t09",
+        "t19",
         "t21"
       ]
     },
     {
-      "id": "m43",
-      "court": "court-2",
-      "start": "16:30",
-      "end": "17:00",
-      "round": "group",
-      "roundLabel": "Poule A",
-      "teams": [
-        "t13",
-        "t17"
-      ]
-    },
-    {
-      "id": "m44",
-      "court": "court-4",
-      "start": "16:30",
-      "end": "17:00",
-      "round": "group",
-      "roundLabel": "Poule B",
-      "teams": [
-        "t02",
-        "t06"
-      ]
-    },
-    {
-      "id": "m45",
-      "court": "court-5",
-      "start": "16:30",
-      "end": "17:00",
-      "round": "group",
-      "roundLabel": "Poule B",
-      "teams": [
-        "t10",
-        "t22"
-      ]
-    },
-    {
-      "id": "m46",
+      "id": "m34",
       "court": "court-3",
-      "start": "17:00",
-      "end": "17:30",
+      "start": "16:00",
+      "end": "16:25",
       "round": "group",
-      "roundLabel": "Poule B",
+      "roundLabel": "Poule dames",
       "teams": [
-        "t14",
+        "t17",
+        "t21"
+      ]
+    },
+    {
+      "id": "m35",
+      "court": "court-1",
+      "start": "16:00",
+      "end": "16:25",
+      "round": "group",
+      "roundLabel": "Poule dames",
+      "teams": [
+        "t20",
         "t18"
       ]
     },
     {
-      "id": "m47",
-      "court": "court-1",
-      "start": "17:00",
-      "end": "17:30",
-      "round": "group",
-      "roundLabel": "Poule C",
-      "teams": [
-        "t03",
-        "t07"
-      ]
-    },
-    {
-      "id": "m48",
+      "id": "m36",
       "court": "court-2",
-      "start": "17:00",
-      "end": "17:30",
-      "round": "group",
-      "roundLabel": "Poule C",
-      "teams": [
-        "t15",
-        "t19"
-      ]
-    },
-    {
-      "id": "m49",
-      "court": "court-4",
-      "start": "17:00",
-      "end": "17:30",
-      "round": "group",
-      "roundLabel": "Poule D",
-      "teams": [
-        "t04",
-        "t08"
-      ]
-    },
-    {
-      "id": "m50",
-      "court": "court-5",
-      "start": "17:00",
-      "end": "17:30",
-      "round": "group",
-      "roundLabel": "Poule D",
-      "teams": [
-        "t16",
-        "t20"
-      ]
-    },
-    {
-      "id": "m51",
-      "court": "court-3",
-      "start": "17:30",
-      "end": "18:00",
+      "start": "16:00",
+      "end": "16:25",
       "round": "qf",
-      "roundLabel": "Knock-out",
+      "roundLabel": "Kwartfinale",
       "teams": [
         "QF1A",
         "QF1B"
       ]
     },
     {
-      "id": "m52",
-      "court": "court-1",
-      "start": "17:30",
-      "end": "18:00",
+      "id": "m37",
+      "court": "court-4",
+      "start": "16:00",
+      "end": "16:25",
       "round": "qf",
-      "roundLabel": "Knock-out",
+      "roundLabel": "Kwartfinale",
       "teams": [
         "QF2A",
         "QF2B"
       ]
     },
     {
-      "id": "m53",
-      "court": "court-2",
-      "start": "17:30",
-      "end": "18:00",
+      "id": "m38",
+      "court": "court-5",
+      "start": "16:00",
+      "end": "16:25",
+      "round": "lqf",
+      "roundLabel": "Kleine kwartfinale",
+      "teams": [
+        "LQF1A",
+        "LQF1B"
+      ]
+    },
+    {
+      "id": "m39",
+      "court": "court-3",
+      "start": "16:30",
+      "end": "16:55",
+      "round": "group",
+      "roundLabel": "Poule dames",
+      "teams": [
+        "t19",
+        "t22"
+      ]
+    },
+    {
+      "id": "m40",
+      "court": "court-1",
+      "start": "16:30",
+      "end": "16:55",
       "round": "qf",
-      "roundLabel": "Knock-out",
+      "roundLabel": "Kwartfinale",
       "teams": [
         "QF3A",
         "QF3B"
       ]
     },
     {
-      "id": "m54",
-      "court": "court-4",
-      "start": "17:30",
-      "end": "18:00",
+      "id": "m41",
+      "court": "court-2",
+      "start": "16:30",
+      "end": "16:55",
       "round": "qf",
-      "roundLabel": "Knock-out",
+      "roundLabel": "Kwartfinale",
       "teams": [
         "QF4A",
         "QF4B"
       ]
     },
     {
-      "id": "m55",
+      "id": "m42",
+      "court": "court-4",
+      "start": "16:30",
+      "end": "16:55",
+      "round": "lqf",
+      "roundLabel": "Kleine kwartfinale",
+      "teams": [
+        "LQF2A",
+        "LQF2B"
+      ]
+    },
+    {
+      "id": "m43",
+      "court": "court-5",
+      "start": "16:30",
+      "end": "16:55",
+      "round": "lqf",
+      "roundLabel": "Kleine kwartfinale",
+      "teams": [
+        "LQF3A",
+        "LQF3B"
+      ]
+    },
+    {
+      "id": "m44",
       "court": "court-3",
-      "start": "18:30",
-      "end": "19:00",
+      "start": "17:00",
+      "end": "17:25",
+      "round": "group",
+      "roundLabel": "Poule dames",
+      "teams": [
+        "t17",
+        "t22"
+      ]
+    },
+    {
+      "id": "m45",
+      "court": "court-1",
+      "start": "17:00",
+      "end": "17:25",
+      "round": "group",
+      "roundLabel": "Poule dames",
+      "teams": [
+        "t18",
+        "t19"
+      ]
+    },
+    {
+      "id": "m46",
+      "court": "court-2",
+      "start": "17:00",
+      "end": "17:25",
       "round": "sf",
       "roundLabel": "Halve finale",
       "teams": [
@@ -678,10 +569,46 @@
       ]
     },
     {
-      "id": "m56",
+      "id": "m47",
+      "court": "court-4",
+      "start": "17:00",
+      "end": "17:25",
+      "round": "lsf",
+      "roundLabel": "Kleine halve finale",
+      "teams": [
+        "LSF1A",
+        "LSF1B"
+      ]
+    },
+    {
+      "id": "m48",
+      "court": "court-5",
+      "start": "17:00",
+      "end": "17:25",
+      "round": "lqf",
+      "roundLabel": "Kleine kwartfinale",
+      "teams": [
+        "LQF4A",
+        "LQF4B"
+      ]
+    },
+    {
+      "id": "m49",
+      "court": "court-3",
+      "start": "17:30",
+      "end": "17:55",
+      "round": "group",
+      "roundLabel": "Poule dames",
+      "teams": [
+        "t20",
+        "t21"
+      ]
+    },
+    {
+      "id": "m50",
       "court": "court-1",
-      "start": "18:30",
-      "end": "19:00",
+      "start": "17:30",
+      "end": "17:55",
       "round": "sf",
       "roundLabel": "Halve finale",
       "teams": [
@@ -690,12 +617,36 @@
       ]
     },
     {
-      "id": "m57",
+      "id": "m51",
       "court": "court-2",
-      "start": "19:30",
-      "end": "20:00",
+      "start": "17:30",
+      "end": "17:55",
+      "round": "lsf",
+      "roundLabel": "Kleine halve finale",
+      "teams": [
+        "LSF2A",
+        "LSF2B"
+      ]
+    },
+    {
+      "id": "m52",
+      "court": "court-2",
+      "start": "18:00",
+      "end": "18:25",
+      "round": "lfinal",
+      "roundLabel": "Kleine finale",
+      "teams": [
+        "LFA",
+        "LFB"
+      ]
+    },
+    {
+      "id": "m53",
+      "court": "court-2",
+      "start": "18:30",
+      "end": "18:55",
       "round": "final",
-      "roundLabel": "Finale",
+      "roundLabel": "Grote finale",
       "teams": [
         "FA",
         "FB"

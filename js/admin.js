@@ -20,22 +20,29 @@
   var SESSION_KEY = 'champ.admin.pw';
   var DATA = '../data/';
 
-  /* Dutch labels — data is already Dutch and is never re-translated. */
-  var PHASE = {
-    group: 'Poules',
-    qf: 'Knock-out',
-    sf: 'Halve finales',
-    final: 'FINALE'
-  };
-  /* Same map as timetable.js: four poules, winner AND runner-up through. */
+  /* Dutch labels — data is already Dutch and is never re-translated. The
+     afternoon interleaves (dames-slotronde naast de heren knock-out), so the
+     headings follow a RANK per round and only ever step forward; the
+     roundLabel on every row says what each match is. */
+  var PHASE_RANK = { group: 0, qf: 1, lqf: 1, sf: 2, lsf: 2, final: 3, lfinal: 3 };
+  var PHASE_NAME = ['Poules', 'Kwartfinales', 'Halve finales', 'Finales'];
+  /* Same map as timetable.js: de beste twee van elke herenpoule naar de grote
+     finales (QF…), de laatste twee naar de kleine finales (LQF…). */
   var KO = {
-    QF1A: 'Winnaar Poule A',       QF1B: 'Tweede Poule B',
-    QF2A: 'Winnaar Poule C',       QF2B: 'Tweede Poule D',
-    QF3A: 'Winnaar Poule B',       QF3B: 'Tweede Poule A',
-    QF4A: 'Winnaar Poule D',       QF4B: 'Tweede Poule C',
-    SF1A: 'Winnaar Knock-out 1',   SF1B: 'Winnaar Knock-out 2',
-    SF2A: 'Winnaar Knock-out 3',   SF2B: 'Winnaar Knock-out 4',
-    FA:   'Winnaar Halve finale 1', FB:  'Winnaar Halve finale 2'
+    QF1A:  'Winnaar Poule 1',  QF1B:  'Tweede Poule 4',
+    QF2A:  'Winnaar Poule 2',  QF2B:  'Tweede Poule 3',
+    QF3A:  'Winnaar Poule 4',  QF3B:  'Tweede Poule 1',
+    QF4A:  'Winnaar Poule 3',  QF4B:  'Tweede Poule 2',
+    LQF1A: 'Derde Poule 1',    LQF1B: 'Vierde Poule 4',
+    LQF2A: 'Derde Poule 2',    LQF2B: 'Vierde Poule 3',
+    LQF3A: 'Derde Poule 4',    LQF3B: 'Vierde Poule 1',
+    LQF4A: 'Derde Poule 3',    LQF4B: 'Vierde Poule 2',
+    SF1A:  'Winnaar kwartfinale 1', SF1B: 'Winnaar kwartfinale 2',
+    SF2A:  'Winnaar kwartfinale 3', SF2B: 'Winnaar kwartfinale 4',
+    LSF1A: 'Winnaar kleine kwartfinale 1', LSF1B: 'Winnaar kleine kwartfinale 2',
+    LSF2A: 'Winnaar kleine kwartfinale 3', LSF2B: 'Winnaar kleine kwartfinale 4',
+    FA:  'Winnaar halve finale 1',        FB:  'Winnaar halve finale 2',
+    LFA: 'Winnaar kleine halve finale 1', LFB: 'Winnaar kleine halve finale 2'
   };
   var OPEN = 'Vrije plaats';
   var MONTH = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
@@ -264,10 +271,14 @@
       done + '/' + ms.length + '</span> wedstrijden ingevuld</span>' +
       '<span class="ad-hint">Tik een wedstrijd om de score in te vullen.</span></div><div class="ad-list">'];
 
-    var phase = null;
+    var rank = -1;
     ms.forEach(function (m) {
       var head = '';
-      if (m.round !== phase) { phase = m.round; head = '<span class="ad-sub">' + esc(PHASE[m.round] || '') + '</span>'; }
+      var k = PHASE_RANK[m.round];
+      if (k != null && k > rank) {
+        rank = k;
+        head = '<span class="ad-sub">' + esc(PHASE_NAME[rank] || '') + '</span>';
+      }
 
       var A = sideOf(m, 0), B = sideOf(m, 1);
       var res = S.results[m.id];
@@ -275,8 +286,11 @@
       var wi = res ? (bm.winnerTeamId && A.tid ? (bm.winnerTeamId === A.tid ? 0 : 1)
         : (res.winner === 'B' ? 1 : 0)) : null;
 
+      /* roundLabel on EVERY row: naast elkaar spelen een dames-poulematch en
+         een kleine kwartfinale, en zonder label zijn die niet uit elkaar te
+         houden. */
       var meta = m.start + ' · ' + (S.courtName[m.court] || m.court) +
-        (m.round === 'group' && m.roundLabel ? ' · ' + m.roundLabel : '');
+        (m.roundLabel ? ' · ' + m.roundLabel : '');
       var isOpen = S.open === m.id;
 
       function nm(s, i) {
@@ -300,12 +314,13 @@
 
   function editorHtml(m, A, B, hasResult) {
     var d = S.draft || { sets: [], winner: null };
-    var rows = '';
-    for (var i = 0; i < 3; i++) {
-      var s = d.sets[i] || [null, null];
-      rows += '<span class="ad-ed__rl">Set ' + (i + 1) + '</span>' +
-        cell(m.id, i, 0, s[0], A.name) + cell(m.id, i, 1, s[1], B.name);
-    }
+    /* ONE score per match — the club's format (25 min op tijd, "eigenlijk is
+       er ook altijd maar 1 score, bv 5-10"). The result still travels as
+       sets:[[a,b]] so the API, bracket.js and the public sheet are untouched;
+       only this editor stopped asking for three. */
+    var s = d.sets[0] || [null, null];
+    var rows = '<span class="ad-ed__rl">Score</span>' +
+      cell(m.id, 0, 0, s[0], A.name) + cell(m.id, 0, 1, s[1], B.name);
     var level = needsPick(d);
     return '<div class="glass glass--inset ad-ed" id="ad-ed-' + esc(m.id) + '">' +
       '<div class="ad-ed__grid">' +
@@ -328,18 +343,18 @@
   function cell(mid, set, side, val, name) {
     return '<input class="glass-input u-tabular" type="text" inputmode="numeric" pattern="[0-9]*" ' +
       'maxlength="2" data-set="' + set + '" data-side="' + side + '" ' +
-      'aria-label="Set ' + (set + 1) + ', games ' + esc(name) + '" value="' +
+      'aria-label="Score ' + esc(name) + '" value="' +
       (val == null ? '' : esc(val)) + '">';
   }
 
-  /* A draft with an equal number of sets won on both sides needs a manual pick. */
+  /* A level score (op tijd kán het gelijk eindigen) needs a manual pick. */
   function needsPick(d) {
     var full = (d.sets || []).filter(function (s) { return s && s[0] != null && s[1] != null; });
     return full.length > 0 && winnerIndex(full) == null;
   }
 
   function readDraft(edEl) {
-    var sets = [[null, null], [null, null], [null, null]];
+    var sets = [[null, null]];
     Array.prototype.forEach.call(edEl.querySelectorAll('input[data-set]'), function (i) {
       var v = i.value === '' ? null : num(i.value);
       sets[+i.dataset.set][+i.dataset.side] = v;
@@ -361,8 +376,10 @@
   function openMatch(id) {
     var res = S.results[id];
     S.open = id;
+    /* slice(0,1): the editor shows one score, so a stored multi-set result
+       (older data) opens on its first set and re-saves as the one score. */
     S.draft = {
-      sets: (res && res.sets ? res.sets.map(function (s) { return [s[0], s[1]]; }) : []),
+      sets: (res && res.sets ? res.sets.slice(0, 1).map(function (s) { return [s[0], s[1]]; }) : []),
       winner: res && needsPick({ sets: res.sets }) ? res.winner : null
     };
     renderMatches();
@@ -394,7 +411,7 @@
       sets.push([s[0], s[1]]);
     });
     if (bad || !sets.length) {
-      err.textContent = bad ? 'Vul beide scores van de set in.' : 'Vul minstens één set in.';
+      err.textContent = bad ? 'Vul de score van beide teams in.' : 'Vul de score in.';
       return;
     }
     var wi = winnerIndex(sets);

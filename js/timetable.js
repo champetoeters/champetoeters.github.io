@@ -3,7 +3,7 @@
 
    One job (BRIEF §0): let someone find out WHEN and WHERE they play. A row is
    time · baan · type · names and nothing else; the sheet is padel only,
-   12:30 → 20:00, broken by nothing but the four phase headings. Exactly one
+   12:30 → 19:00, broken by nothing but the four phase headings. Exactly one
    control exists, and only on mobile: the court switcher, because five columns
    do not fit 390px.
 
@@ -69,31 +69,43 @@ window.Sections = window.Sections || {};
 
   /* Knockout ids never resolve to a team. Spelled out so a placeholder reads as
      a real, understandable entry rather than a code. */
-  /* Must agree with GROUP_SLOT in bracket.js — four poules, winner AND
-     runner-up. A seat named here that the bracket never fills would sit
-     unresolved all evening; tools/bracket.test.mjs checks the two agree. */
+  /* Must agree with GROUP_SLOT in bracket.js — vier herenpoules, and every
+     team goes through: de beste twee naar de GROTE finales (QF…), de laatste
+     twee naar de KLEINE finales (LQF…). A seat named here that the bracket
+     never fills would sit unresolved all evening; tools/bracket.test.mjs
+     checks the two agree. */
   var KO = {
-    QF1A: 'Winnaar Poule A',       QF1B: 'Tweede Poule B',
-    QF2A: 'Winnaar Poule C',       QF2B: 'Tweede Poule D',
-    QF3A: 'Winnaar Poule B',       QF3B: 'Tweede Poule A',
-    QF4A: 'Winnaar Poule D',       QF4B: 'Tweede Poule C',
-    SF1A: 'Winnaar Knock-out 1',   SF1B: 'Winnaar Knock-out 2',
-    SF2A: 'Winnaar Knock-out 3',   SF2B: 'Winnaar Knock-out 4',
-    FA:   'Winnaar Halve finale 1', FB:  'Winnaar Halve finale 2'
+    QF1A:  'Winnaar Poule 1',  QF1B:  'Tweede Poule 4',
+    QF2A:  'Winnaar Poule 2',  QF2B:  'Tweede Poule 3',
+    QF3A:  'Winnaar Poule 4',  QF3B:  'Tweede Poule 1',
+    QF4A:  'Winnaar Poule 3',  QF4B:  'Tweede Poule 2',
+    LQF1A: 'Derde Poule 1',    LQF1B: 'Vierde Poule 4',
+    LQF2A: 'Derde Poule 2',    LQF2B: 'Vierde Poule 3',
+    LQF3A: 'Derde Poule 4',    LQF3B: 'Vierde Poule 1',
+    LQF4A: 'Derde Poule 3',    LQF4B: 'Vierde Poule 2',
+    SF1A:  'Winnaar kwartfinale 1', SF1B: 'Winnaar kwartfinale 2',
+    SF2A:  'Winnaar kwartfinale 3', SF2B: 'Winnaar kwartfinale 4',
+    LSF1A: 'Winnaar kleine kwartfinale 1', LSF1B: 'Winnaar kleine kwartfinale 2',
+    LSF2A: 'Winnaar kleine kwartfinale 3', LSF2B: 'Winnaar kleine kwartfinale 4',
+    FA:  'Winnaar halve finale 1',        FB:  'Winnaar halve finale 2',
+    LFA: 'Winnaar kleine halve finale 1', LFB: 'Winnaar kleine halve finale 2'
   };
 
-  /* One heading per phase, keyed on m.round — NOT on m.roundLabel. The schedule
-     interleaves the four poules, so the labels cycle down the sheet and keying
-     on them emits dozens of false phase boundaries. Never printed on a row. */
-  var PHASE = {
-    group: 'Poules',
-    qf: 'Knock-out',
-    sf: 'Halve finales',
-    final: 'FINALE'
-  };
-  function phaseKey(m) { return m.round || ''; }
+  /* One heading per phase, keyed on a RANK per round — NOT on m.roundLabel,
+     and not on "the round changed" either. The afternoon interleaves: the
+     dames play their slotronde on the freed banen while the heren knock-out
+     runs next to it, and the kleine kwartfinale 4 still plays at 17:00 while
+     the halve finales start. So a heading marks where a phase BEGINS — the
+     first slot whose deepest match reaches a new rank — and the rows simply
+     run on under it; the kind label on every match says what each row is. */
+  var PHASE_RANK = { group: 0, qf: 1, lqf: 1, sf: 2, lsf: 2, final: 3, lfinal: 3 };
+  var PHASE_NAME = ['Poules', 'Kwartfinales', 'Halve finales', 'Finales'];
+  function phaseRank(m) {
+    var r = PHASE_RANK[m.round];
+    return r == null ? -1 : r;
+  }
   /* An unknown phase prints nothing and the run of times simply continues. */
-  function phaseName(m) { return PHASE[m.round] || ''; }
+  function phaseName(m) { return PHASE_NAME[phaseRank(m)] || ''; }
 
   /* ------------------------------------------------------------ 3D bridge */
 
@@ -353,7 +365,7 @@ window.Sections = window.Sections || {};
          the time says.
 
          The clock alone is not enough for anything else. A halve finale whose
-         seats still read "Winnaar Knock-out 4" cannot be in play, and a
+         seats still read "Winnaar kwartfinale 4" cannot be in play, and a
          "Vrije plaats" never plays at all — at 19:15 the clock happily marked
          both NU BEZIG. So a clock state is only trusted once both seats are
          two real pairs; until then the row is simply a row. */
@@ -363,7 +375,7 @@ window.Sections = window.Sections || {};
       /* The client asked for the type of every match to be visible on the match
          itself, not only in the phase heading it sits under — a poule row and a
          knock-out row look identical otherwise. roundLabel already carries it
-         ("Poule A", "Knock-out", "Halve finale", "Finale"). */
+         ("Poule 1", "Poule dames", "Kwartfinale", "Kleine finale", …). */
       var kind = m.roundLabel || phaseName(m);
 
       var aria = m.start + ', ' + (courtName[m.court] || m.court) + '. ' +
@@ -412,19 +424,23 @@ window.Sections = window.Sections || {};
        more if the live overlay resolves. Every listener is delegated to
        elTbody / elThead, so nothing has to be rebound. */
     function renderRows() {
-      var html = [], r = -1, phase = null;
+      var html = [], r = -1, rank = -1;
 
       /* Padel only: the only rows that are not a match are the four headings. */
       slots.forEach(function (t) {
         var inSlot = matches.filter(function (m) { return m.start === t; });
         if (!inSlot.length) return;
 
-        /* one heading per phase, at the slot the phase begins */
-        var pk = phaseKey(inSlot[0]);
-        if (pk && pk !== phase) {
-          phase = pk;
-          var pn = phaseName(inSlot[0]);
-          if (pn) html.push(headingHtml(pk === 'final' ? 'final' : 'phase', pn));
+        /* one heading per phase, at the slot the phase begins — the DEEPEST
+           round in the slot decides, so the dames-poulematch next to the
+           first kwartfinale never drags the sheet back to "Poules" */
+        var top = -1;
+        inSlot.forEach(function (m) { var k = phaseRank(m); if (k > top) top = k; });
+        if (top > rank) {
+          rank = top;
+          if (PHASE_NAME[rank]) {
+            html.push(headingHtml(rank === 3 ? 'final' : 'phase', PHASE_NAME[rank]));
+          }
         }
 
         r++;
@@ -563,7 +579,7 @@ window.Sections = window.Sections || {};
     });
 
     /* ---- one tab stop for the whole sheet --------------------------------
-       55 rows are 55 buttons, and the button only exists to light up the 3D —
+       53 rows are 53 buttons, and the button only exists to light up the 3D —
        tabbing through all of them to reach the DJ bill is a poor trade. So the
        grid is one stop and the arrow keys move inside it, as a draw sheet
        should. `rover` survives a repaint because it is keyed on the match id. */

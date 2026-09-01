@@ -478,8 +478,10 @@
   /* one court chosen: repeating its name thirteen times is noise */
   .tt-gridwrap.is-single .tt-m__court { display: none; }
   /* On the phone the row is a flex line — the type rides with the names, not
-     as a block above them, or every row grows a third line. */
-  .tt-m__kind { margin-bottom: 1px; font-size: 10.5px; }
+     as a block above them, or every row grows a third line. Fixed basis: the
+     long kinds ("Kleine kwartfinale", "Kleine halve finale") wrap inside
+     their own column instead of shoving the names off their shared edge. */
+  .tt-m__kind { flex: 0 0 5.6rem; margin-bottom: 1px; font-size: 10.5px; }
   .tt-m__tie { flex: 1 1 auto; min-width: 0; }
   .tt-m__n { font-size: .95rem; }
 

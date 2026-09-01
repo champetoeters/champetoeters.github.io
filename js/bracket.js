@@ -13,40 +13,61 @@
   'use strict';
 
   /* The draw: which poule place fills which knock-out seat. [group, place],
-     place 0 = winner, 1 = runner-up.
+     place 0 = winner … place 3 = last.
 
-     Four poules, winner AND runner-up through, so the eight seats are filled
-     CROSS-WISE — A's winner in the first quarter, A's runner-up in the third.
-     The two halves of the bracket meet only in the finale, so two teams out of
-     the same poule can never be knocked out by each other before it. The
-     pairing is generated to match by tools/gendata.py, and
-     tools/bracket.test.mjs fails if the two ever disagree. */
+     Vier herenpoules ("1"–"4"), and EVERY team goes through: the top two into
+     the GROTE finales (QF…), the bottom two into the KLEINE finales (LQF…) —
+     the client's "verliezerskwart / verliezershalve / kleine finale". Both
+     brackets are seeded CROSS-WISE (poule 1's winner in the first quarter,
+     its runner-up in the third), so the two qualifiers out of one poule sit
+     in opposite halves and can only meet again in their finale. The kleine
+     bracket mirrors the pairing exactly (3eP1–4eP4 …), straight from the
+     client's Excel. tools/gendata.py writes the matching schedule rows, and
+     tools/bracket.test.mjs fails if the two ever disagree.
+
+     The damespoule ("V") feeds no bracket: its standings are the final
+     ranking, so it appears nowhere in this map. */
   var GROUP_SLOT = {
-    QF1A: ['A', 0], QF1B: ['B', 1],
-    QF2A: ['C', 0], QF2B: ['D', 1],
-    QF3A: ['B', 0], QF3B: ['A', 1],
-    QF4A: ['D', 0], QF4B: ['C', 1]
+    QF1A:  ['1', 0], QF1B:  ['4', 1],
+    QF2A:  ['2', 0], QF2B:  ['3', 1],
+    QF3A:  ['4', 0], QF3B:  ['1', 1],
+    QF4A:  ['3', 0], QF4B:  ['2', 1],
+    LQF1A: ['1', 2], LQF1B: ['4', 3],
+    LQF2A: ['2', 2], LQF2B: ['3', 3],
+    LQF3A: ['4', 2], LQF3B: ['1', 3],
+    LQF4A: ['3', 2], LQF4B: ['2', 3]
   };
+
+  /* The two knock-out chains: quarters feed halves feed the finale, once for
+     the grote and once for the kleine bracket. Data, not code, so winnerSlots
+     below stays one loop. */
+  var CHAINS = [
+    { qf: 'qf',  sf: 'sf',  final: 'final',  sfSeat: 'SF',  finalSeat: ['FA', 'FB'] },
+    { qf: 'lqf', sf: 'lsf', final: 'lfinal', sfSeat: 'LSF', finalSeat: ['LFA', 'LFB'] }
+  ];
 
   /* Seats filled by the winner of an earlier match, READ OFF THE SCHEDULE
      rather than typed. These used to be literal ids (m49…m54) and every change
      of draw size silently re-pointed them at the wrong matches — the group
      matches come first, so all of them shift at once. The schedule already
-     says which round a match belongs to; that is the durable fact. */
+     says which round a match belongs to (matches are in chronological order,
+     so QF1 precedes QF2); that is the durable fact. */
   function winnerSlots(matches) {
-    var byRound = { qf: [], sf: [], final: [] };
+    var byRound = {};
     matches.forEach(function (m) {
-      if (byRound[m.round]) byRound[m.round].push(m.id);
+      (byRound[m.round] = byRound[m.round] || []).push(m.id);
     });
     var map = {};
-    byRound.sf.forEach(function (id, i) {
-      map['SF' + (i + 1) + 'A'] = byRound.qf[i * 2];
-      map['SF' + (i + 1) + 'B'] = byRound.qf[i * 2 + 1];
-    });
-    byRound.final.forEach(function (id, i) {
-      if (i) return;                       /* one finale, always */
-      map.FA = byRound.sf[0];
-      map.FB = byRound.sf[1];
+    CHAINS.forEach(function (c) {
+      var qf = byRound[c.qf] || [], sf = byRound[c.sf] || [];
+      sf.forEach(function (id, i) {
+        map[c.sfSeat + (i + 1) + 'A'] = qf[i * 2];
+        map[c.sfSeat + (i + 1) + 'B'] = qf[i * 2 + 1];
+      });
+      if ((byRound[c.final] || []).length) {
+        map[c.finalSeat[0]] = sf[0];
+        map[c.finalSeat[1]] = sf[1];
+      }
     });
     return map;
   }
@@ -55,7 +76,8 @@
      GROUP_SLOT; the rest follow the deepest bracket the schedule can describe,
      which is what slotNames has always promised its callers. */
   var SLOT_NAMES = Object.keys(GROUP_SLOT)
-    .concat(['SF1A', 'SF1B', 'SF2A', 'SF2B', 'FA', 'FB']);
+    .concat(['SF1A', 'SF1B', 'SF2A', 'SF2B', 'FA', 'FB',
+             'LSF1A', 'LSF1B', 'LSF2A', 'LSF2B', 'LFA', 'LFB']);
 
   /* ----------------------------------------------------- input hardening
      Everything below treats schedule/teams/results as hostile: results come

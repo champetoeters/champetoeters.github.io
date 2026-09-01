@@ -956,16 +956,19 @@
     return n ? 'BAAN ' + n[1] : String(def.name || id || '').toUpperCase();
   }
 
-  /* Round names arrive from `schedule.json` in English. Translate from the
-     language-neutral `round` code and borrow only the group LETTER from the
-     label; an unrecognised code prints nothing rather than English. */
-  var ROUND_NL = { group: 'Poule', qf: 'Knock-out', sf: 'Halve finale', final: 'Finale' };
+  /* The kind of the match on the plate. `roundLabel` is already the full
+     Dutch kind ("Poule 1", "Kleine kwartfinale", "Grote finale", "Poule
+     dames") — print it as-is; the code map is only the fallback for a row
+     without a label, and it must cover BOTH knock-out chains or the kleine
+     rondes print nothing. */
+  var ROUND_NL = {
+    group: 'Poule', qf: 'Kwartfinale', lqf: 'Kleine kwartfinale',
+    sf: 'Halve finale', lsf: 'Kleine halve finale',
+    final: 'Grote finale', lfinal: 'Kleine finale'
+  };
   function roundNL(md) {
-    var base = ROUND_NL[md.round];
-    if (!base) return '';
-    if (md.round !== 'group') return base;
-    var g = /([A-Za-z])\s*$/.exec(String(md.roundLabel || ''));
-    return g ? base + ' ' + g[1].toUpperCase() : base;
+    var label = String(md.roundLabel || '').trim();
+    return label || ROUND_NL[md.round] || '';
   }
 
   function drawLabel(canvas, def, match, active, names) {
