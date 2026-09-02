@@ -477,6 +477,19 @@ body.ad { min-height: 100vh; padding-bottom: var(--sp-8); }
   letter-spacing: .06em;
   color: var(--paper-mute);
 }
+/* The team's e-mail, one line under the detail line. A link (tap → mail
+   client), muted like the meta so the name stays the row; long addresses
+   break rather than push the paid box off a phone. */
+.ad-t__e {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--paper-mute);
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--haze-rgb) / .4);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+.ad-t__e:hover, .ad-t__e:focus-visible { color: var(--ball); }
 
 /* The whole row is the target (60px tall, full width); the box is only the
    mark. The real checkbox stays in the tab order and drives the box. */

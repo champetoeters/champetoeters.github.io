@@ -933,10 +933,18 @@
       if (reg && reg.level) meta.push(shortLevel(reg.level));
       if (!has) meta.push('nog geen inschrijving');
       var name = has ? (teamLabel || pairFull(t.players)) : (t.label || OPEN);
+      /* The e-mail the confirmation went to, on its own line: the organiser
+         reaches the team from here (a reminder, a schedule change). A mailto
+         link inside the label is interactive content, so tapping it opens the
+         mail client and does NOT toggle the paid box. Pre-entered slots have
+         no address on file. */
+      var mail = reg && reg.email
+        ? '<a class="ad-t__e" href="mailto:' + esc(reg.email) + '">' + esc(reg.email) + '</a>'
+        : '';
       return '<div class="ad-item"><div class="ad-r"><label class="ad-t">' +
         '<span class="ad-t__b"><span class="ad-t__n' + (has ? '' : ' is-open') + '">' +
         esc(name) + '</span>' +
-        '<span class="ad-t__m">' + esc(meta.join(' · ')) + '</span></span>' +
+        '<span class="ad-t__m">' + esc(meta.join(' · ')) + '</span>' + mail + '</span>' +
         '<input type="checkbox" class="ad-t__i u-sr-only" data-act="paid" data-key="' + esc(p.key) + '"' +
         (p.paid ? ' checked' : '') + (has ? '' : ' disabled') +
         ' aria-label="Betaald: ' + esc(name) + '">' +
