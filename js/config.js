@@ -39,8 +39,17 @@ window.CHAMP_CONFIG = {
    *           bracket names the knock-out seats as they resolve.
    *
    * Flip to true once the poules are final and may be published. Nothing else
-   * has to change. */
-  showDraw: false,
+   * has to change. Flipped 2026-09-04: the draw is the club's definitieve
+   * Excel, carried by site/data/teams.json. */
+  showDraw: true,
+
+  /* When the online inschrijvingen close: from this instant the register and
+     tickets pages show one panel — closed, tickets still at the door — and the
+     hero's buttons go dead. Kuurne local time (CEST). Empty = never.
+     Client-side only, so a phone with a wrong clock sees the wrong page for a
+     while; the backend keeps judging every submit as before. `?now=HH:MM` on
+     any page previews the closed state (same view hook as the timetable). */
+  onlineCloses: "2026-09-05T11:30:00+02:00",
 
   contactEmail: "event@champetoeters.be",
   contactPhone: "",

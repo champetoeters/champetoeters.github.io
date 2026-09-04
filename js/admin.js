@@ -216,11 +216,44 @@
 
   /* ------------------------------------------------------------------ teams */
 
+  /* A registration's SEAT. Since 2026-09-04 the draw is the organisers' Excel,
+     carried by teams.json (ROSTER in tools/gendata.py), and the teamId the
+     backend handed each registration is the order they came in — not the seat
+     they sit in. Nothing in the Sheet was moved (it did not have to be: paid
+     flags live on the registration row, by ref), so the seat is found by team
+     NAME — the one thing both sides carry verbatim, ROSTER having been copied
+     from these very registrations. Only a registration whose name matches no
+     seat, or whose seat is already taken by a better match, falls back to its
+     teamId. Apostrophes and case are normalised: iOS types ’ where a laptop
+     types '. */
+  function seatKey(s) {
+    return String(s || '').toLowerCase().replace(/[\u2018\u2019]/g, "'")
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  function indexRegistrations() {
+    var byName = {};
+    S.teamsBase.forEach(function (t) {
+      if (t && t.name && !byName[seatKey(t.name)]) byName[seatKey(t.name)] = t.id;
+    });
+    S.regByTeam = {};
+    var rest = [];
+    S.registrations.forEach(function (r) {
+      var seat = byName[seatKey(r.teamName)];
+      if (seat && !S.regByTeam[seat]) S.regByTeam[seat] = r; else rest.push(r);
+    });
+    rest.forEach(function (r) {
+      if (r.teamId && !S.regByTeam[r.teamId]) S.regByTeam[r.teamId] = r;
+    });
+  }
+
   function mergeTeams() {
+    indexRegistrations();
     var state = {
-      teams: S.registrations.filter(function (r) { return r.teamId; }).map(function (r) {
+      teams: Object.keys(S.regByTeam).map(function (seat) {
+        var r = S.regByTeam[seat];
         return {
-          teamId: r.teamId,
+          teamId: seat,
           name: String(r.teamName || ''),
           players: [r.player1, r.player2].filter(Boolean)
         };
@@ -246,8 +279,6 @@
     S.teams = merged;
     S.teamMap = {};
     merged.forEach(function (t) { S.teamMap[t.id] = t; });
-    S.regByTeam = {};
-    S.registrations.forEach(function (r) { if (r.teamId) S.regByTeam[r.teamId] = r; });
   }
 
   /* teamId for the 14 pre-entered slots, ref for a registration (API.md). */

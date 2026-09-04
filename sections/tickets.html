@@ -78,6 +78,20 @@
         </button>
       </div>
 
+      <!-- ---------- 1b. gesloten ----------
+           From CHAMP_CONFIG.onlineCloses on (event day 11:30) online ordering
+           is over and the door sells the tickets. One panel and no button:
+           there is nowhere online left to send anyone (client). Revealed by
+           tickets.js from the clock alone; the form view never shows then. -->
+      <div class="tk-view tk-flow" data-view="closed" hidden>
+        <div class="tk-done tk-closed glass glass--panel glass--edge">
+          <p class="u-eyebrow tk-closed__hd" id="tk-closed-when"></p>
+          <h2 class="tk-done__title" tabindex="-1" id="tk-closed-title">Online verkoop gesloten</h2>
+          <p class="tk-done__lead">Tickets bestellen kan niet meer via de site.
+            Je koopt ze nog gewoon aan de deur.</p>
+        </div>
+      </div>
+
       <!-- ---------- 2. versturen ---------- -->
       <div class="tk-view tk-buy glass glass--panel glass--frost tk-proc"
            data-view="processing" hidden>

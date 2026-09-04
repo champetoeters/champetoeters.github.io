@@ -20,8 +20,8 @@
     "currency": "EUR",
     "unit": "per team",
     "places": 22,
-    "confirmed": 0,
-    "open": 22,
+    "confirmed": 22,
+    "open": 0,
     "includes": [
       "Twee spelers",
       "Minstens vier wedstrijden",

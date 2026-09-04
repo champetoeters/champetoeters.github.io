@@ -476,6 +476,12 @@
    reader lands in the confirmation. A ring here would read as a stray box. */
 .tk-done__title:focus, .tk-done__title:focus-visible { outline: none; }
 
+/* GESLOTEN (from CHAMP_CONFIG.onlineCloses on) borrows the confirmation pane —
+   same surface, same type — with a quiet eyebrow instead of the accent tick:
+   nothing was confirmed, the shop simply closed. */
+.tk-closed__hd { color: var(--paper-dim); }
+.tk-closed__hd:empty { display: none; }
+
 .tk-done__lead {
   margin-top: var(--sp-3);
   max-width: 46ch;

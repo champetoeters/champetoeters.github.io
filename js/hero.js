@@ -6,7 +6,10 @@
      1. Fit the Didone wordmark to its lockup so it spans it exactly, at any
         width, whichever serif the machine actually has (Playfair, Didot,
         Bodoni and Times are wildly different widths — a CSS clamp cannot know).
-     2. Close the team CTA when the draw is full, from the live count.
+     2. Close the team CTA when the draw is full, from the live count — and
+        both CTAs once the online inschrijvingen close (CHAMP_CONFIG.
+        onlineCloses, event day 11:30): from then on the tickets are at the
+        door, so the buttons go dead rather than lead to two closed pages.
 
    Both CTAs are ordinary page navigations (/register/ and /tickets/), so there
    is no click handler in this section at all.
@@ -46,30 +49,43 @@ window.Sections.hero = {
     const teamCta = byKey("cta-team");
     const ticketCta = byKey("cta-ticket");
 
+    const live = window.ChampLive;
+    const cfg = window.CHAMP_CONFIG || {};
+    const closedForDay = !!(live && typeof live.onlineClosed === "function" && live.onlineClosed());
+
+    /* A dead chip, not a link: no href, so it leaves the tab order and cannot
+       be clicked or opened in a new tab. Uppercased by .hero__cta--dead. */
+    function deaden(el, text) {
+      el.removeAttribute("href");
+      el.setAttribute("aria-disabled", "true");
+      el.classList.remove("glass-btn--primary", "glass-btn--ghost");
+      el.classList.add("glass-btn--disabled", "hero__cta--dead");
+      el.textContent = text;
+    }
+
     function closeTeamEntry() {
       if (!teamCta) return;
       /* A dead chip, not a link: no href, so it leaves the tab order and
          cannot be clicked or opened in a new tab. Its promise is gone, so the
          ticket button takes over the primary weight — the page's biggest tap
          must always lead somewhere that can still say yes. */
-      teamCta.removeAttribute("href");
-      teamCta.setAttribute("aria-disabled", "true");
-      teamCta.classList.remove("glass-btn--primary");
-      teamCta.classList.add("glass-btn--disabled", "hero__cta--dead");
       /* Keeps its subject. A bare "Volzet" only reads to someone who saw the
          button it replaced — a visitor arriving after the draw filled up has
          never seen "Schrijf je team in" and would be told that something,
-         unspecified, is full. Uppercased by .hero__cta--dead. */
-      teamCta.textContent = "Padel volzet";
-      if (ticketCta) {
+         unspecified, is full. */
+      deaden(teamCta, "Padel volzet");
+      if (ticketCta && !closedForDay) {
         ticketCta.classList.remove("glass-btn--ghost");
         ticketCta.classList.add("glass-btn--primary");
       }
     }
 
-    const live = window.ChampLive;
-    const cfg = window.CHAMP_CONFIG || {};
-    if (live && typeof live.state === "function" && cfg.apiEndpoint) {
+    if (closedForDay) {
+      /* Nothing left to sell online: both chips say so, neither leads anywhere.
+         The count is not asked — the clock has already answered. */
+      closeTeamEntry();
+      if (ticketCta) deaden(ticketCta, "Tickets aan de deur");
+    } else if (live && typeof live.state === "function" && cfg.apiEndpoint) {
       try {
         Promise.resolve(live.state()).then((state) => {
           const c = (state && state.counts) || null;

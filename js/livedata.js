@@ -5,7 +5,8 @@
    place "now" is decided. Every call resolves — a dead backend must leave the
    static site standing, never throw into a renderer.
 
-   ChampLive.state() / .refresh() / .nowMinutes() / .post() / .mergedTeams()
+   ChampLive.state() / .refresh() / .nowMinutes() / .onlineClosed() / .post()
+   / .mergedTeams()
 
    Owns: js/livedata.js
    Consumes: window.CHAMP_CONFIG (read-only)
@@ -103,6 +104,31 @@
     if (iso === EVENT_DAY) return m;
     if (iso === DAY_AFTER && m <= 2 * 60) return m + 24 * 60;   /* 02:00 = lights out, still live */
     return null;
+  }
+
+  /* --------------------------------------------------------- onlineClosed
+     CHAMP_CONFIG.onlineCloses — an ISO instant in Kuurne time — is when the
+     online inschrijvingen stop: from then on the register and tickets pages
+     show one closed panel (tickets at the door) and the hero's buttons go
+     dead. Decided here because this is where "now" lives: the ?now=HH:MM view
+     hook counts as event-day wall-clock time, so ?now=11:31 previews the
+     closed pages exactly like it previews a live match. Unset or unparsable
+     means never closed — the backend still judges every submit either way. */
+  function onlineClosed() {
+    var iso = String(cfg().onlineCloses || '').trim();
+    if (!iso) return false;
+    var at = Date.parse(iso);
+    if (isNaN(at)) return false;
+
+    var q = null;
+    try { q = new URLSearchParams(root.location.search).get('now'); } catch (e) { q = null; }
+    var hit = forced(q);
+    if (hit !== null) {
+      /* The wall-clock HH:MM as written in the config, not the viewer's zone. */
+      var wall = /T(\d{2}:\d{2})/.exec(iso);
+      return !!wall && hit >= toMin(wall[1]);
+    }
+    return Date.now() >= at;
   }
 
   /* ---------------------------------------------------------------- post
@@ -209,6 +235,7 @@
     state: state,
     refresh: refresh,
     nowMinutes: nowMinutes,
+    onlineClosed: onlineClosed,
     post: post,
     token: token,
     mergedTeams: mergedTeams

@@ -75,9 +75,11 @@ var MAX_TICKETS = 25;
    Script cannot read it, so the two numbers it needs live here. Keep in step:
    TOTAL_SLOTS = teams.length, OPEN_SLOTS = the ids with confirmed:false. */
 var TOTAL_SLOTS = 22;
-var OPEN_SLOTS = ['t01', 't02', 't03', 't04', 't05', 't06', 't07', 't08',
-                  't09', 't10', 't11', 't12', 't13', 't14', 't15', 't16',
-                  't17', 't18', 't19', 't20', 't21', 't22'];
+/* Empty since 2026-09-04: every seat is named in ROSTER (tools/gendata.py) —
+   the draw is the organisers' Excel, pushed as code, and no registration can
+   be handed a seat any more. freeSlots_ is therefore always [], which is what
+   reports register:false and counts 22/22. */
+var OPEN_SLOTS = [];
 
 /* Since the format restructure the slot id ENCODES the competition
    (tools/gendata.py): t01–t16 are the vier herenpoules, t17–t22 the

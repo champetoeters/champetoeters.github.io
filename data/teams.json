@@ -2,155 +2,221 @@
   {
     "id": "t01",
     "group": "1",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Marokko-België",
+    "players": [
+      "Mouad Khanjari",
+      "Viktor Debaveye"
+    ]
   },
   {
     "id": "t02",
     "group": "1",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Hulste Boys",
+    "players": [
+      "Steven Wostyn",
+      "Jean"
+    ]
   },
   {
     "id": "t03",
     "group": "1",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "DVN projects",
+    "players": [
+      "Gilles Bekaert",
+      "Wies Vanneste"
+    ]
   },
   {
     "id": "t04",
     "group": "1",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "buitenspel",
+    "players": [
+      "quinten",
+      "benoit"
+    ]
   },
   {
     "id": "t05",
     "group": "2",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Fc Bollegier",
+    "players": [
+      "Gaëtan Allegaert",
+      "Guillaume Baudoncq"
+    ]
   },
   {
     "id": "t06",
     "group": "2",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "GaverLeie",
+    "players": [
+      "Robin Desmet",
+      "Louis Declercq"
+    ]
   },
   {
     "id": "t07",
     "group": "2",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "SanderLuka",
+    "players": [
+      "Luka Dobbelaere",
+      "Sander Baert"
+    ]
   },
   {
     "id": "t08",
     "group": "2",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Nog niet van toepassing",
+    "players": [
+      "Lukas Vanneste",
+      "Elias Monstrey"
+    ]
   },
   {
     "id": "t09",
     "group": "3",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Albanski’s",
+    "players": [
+      "Dylan Leclercq",
+      "Jonathan Wajntraub"
+    ]
   },
   {
     "id": "t10",
     "group": "3",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Wieties On Tour",
+    "players": [
+      "Jo Debels",
+      "Andy Verkest"
+    ]
   },
   {
     "id": "t11",
     "group": "3",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Net Niet",
+    "players": [
+      "Michiel De Smet",
+      "Pieter-jan Hochepied"
+    ]
   },
   {
     "id": "t12",
     "group": "3",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "ALLES KAPOT",
+    "players": [
+      "Maxime Dujardin",
+      "Arne De Buyck"
+    ]
   },
   {
     "id": "t13",
     "group": "4",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Amateurs",
+    "players": [
+      "Bart Vanhoutte",
+      "Dieter Braekeveld"
+    ]
   },
   {
     "id": "t14",
     "group": "4",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Sportaculair",
+    "players": [
+      "Andy Demeulemeester",
+      "Jeroen Penne"
+    ]
   },
   {
     "id": "t15",
     "group": "4",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Smash Bros",
+    "players": [
+      "Leon",
+      "Luka"
+    ]
   },
   {
     "id": "t16",
     "group": "4",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "shockwave’s",
+    "players": [
+      "Mauritz",
+      "Remi"
+    ]
   },
   {
     "id": "t17",
     "group": "V",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Discodippers",
+    "players": [
+      "Michelle Vandekerckhove",
+      "Charlotte Baudoncq"
+    ]
   },
   {
     "id": "t18",
     "group": "V",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Hoofdmadammen",
+    "players": [
+      "Camille Dumeez",
+      "Stien Gonnissen"
+    ]
   },
   {
     "id": "t19",
     "group": "V",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Racktetjes",
+    "players": [
+      "Helene Verplanken",
+      "Lisa Lannoo"
+    ]
   },
   {
     "id": "t20",
     "group": "V",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Shit Of Balls",
+    "players": [
+      "Emke Wostyn",
+      "Maïté Dumeez"
+    ]
   },
   {
     "id": "t21",
     "group": "V",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "De Boomers",
+    "players": [
+      "Ilse",
+      "Hannelore"
+    ]
   },
   {
     "id": "t22",
     "group": "V",
-    "confirmed": false,
-    "players": [],
-    "label": "Vrije plaats"
+    "confirmed": true,
+    "name": "Wij komen voor de derde helft",
+    "players": [
+      "Cato Dirinck",
+      "An-Sofie Vlieghe"
+    ]
   }
 ]

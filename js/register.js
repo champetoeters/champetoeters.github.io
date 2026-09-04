@@ -11,6 +11,11 @@
    panel, and the one thing still possible (come and watch). It is reached only
    from a live API — the count at load, or a `full` answer to a submit.
 
+   The same panel closes the page for good from CHAMP_CONFIG.onlineCloses on
+   (event day 11:30): "Inschrijvingen gesloten", tickets are still sold at the
+   door, and no button under it — there is nowhere online left to send anyone.
+   The clock alone decides that (ChampLive.onlineClosed), no count, no probe.
+
    Liveness (BRIEF §0 item 13): CHAMP_CONFIG.health() decides. register:true
    plus an apiEndpoint and the live module means a real POST and a real
    confirmation; anything else — feature off, API unreachable, config missing —
@@ -191,6 +196,11 @@ window.Sections.register = {
     let isLive = false;
     let settled = false;      /* has the health probe answered yet? */
     let closedTxt = 'Inschrijvingen nog niet open';
+
+    /* From 11:30 on event day the page is closed whatever the count says.
+       Read once: a page open across the deadline closes on its next load. */
+    const DOOR = !!(window.ChampLive && typeof window.ChampLive.onlineClosed === 'function' &&
+                    window.ChampLive.onlineClosed());
 
     function paintButton() {
       /* Before the probe answers, a LIVE build says nothing committal: the
@@ -608,24 +618,33 @@ window.Sections.register = {
       remaining = 0;
       isLive = false;
       settled = true;
-      closedTxt = 'Volzet';
+      const title = DOOR ? 'Inschrijvingen gesloten' : 'Volzet';
+      closedTxt = title;
       paintButton();
 
       const places = (typeof slots === 'number' && slots > 0) ? slots : TOTAL;
-      const lead = 'Alle ' + places + ' plaatsen zijn bezet.' +
-        (nothingSent ? ' Je inschrijving is niet verstuurd.' : '');
+      /* Closed for the day: the tickets are at the door, not online, so the
+         panel says that and carries no button (client) — the ticket page is
+         closed too by then. Before that it is the ordinary volzet panel. */
+      const lead = DOOR
+        ? 'Inschrijven kan niet meer. Tickets voor de open air koop je nog aan de deur.'
+        : 'Alle ' + places + ' plaatsen zijn bezet.' +
+          (nothingSent ? ' Je inschrijving is niet verstuurd.' : '');
 
       root.dataset.state = 'full';
       processEl.hidden = true;
       setView('full');
 
       ref('full-eyebrow').textContent = EYEBROW_TXT;
+      ref('full-title').textContent = title;
       ref('full-lead').textContent = lead;
       ref('full-tickets').textContent =
         ('Kom supporteren: open air ticket ' + TKT_TXT).trim();
+      const cta = root.querySelector('.reg-full__cta');
+      if (cta) cta.hidden = DOOR;
 
       ref('full-title').focus();
-      speakStatus('Volzet. ' + lead);
+      speakStatus(title + '. ' + lead);
     }
 
     form.addEventListener('submit', async e => {
@@ -643,9 +662,9 @@ window.Sections.register = {
       /* Entries closed: the form validated and the visitor is told exactly
          what happened — nothing. No path from here to the payment view. */
       if (!isLive) {
-        notice(closedTxt === 'Volzet'
-          ? 'Volzet. Er is niets verstuurd.'
-          : 'Inschrijvingen zijn nog niet open. Er is niets verstuurd.');
+        notice(closedTxt === 'Inschrijvingen nog niet open'
+          ? 'Inschrijvingen zijn nog niet open. Er is niets verstuurd.'
+          : closedTxt + '. Er is niets verstuurd.');
         return;
       }
 
@@ -672,5 +691,8 @@ window.Sections.register = {
       }
     });
 
+    /* Last, so every handler above exists: past the deadline the form never
+       shows — the closed panel is the page. */
+    if (DOOR) showFullPanel(null, false);
   }
 };

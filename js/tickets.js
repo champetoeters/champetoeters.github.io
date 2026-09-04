@@ -39,6 +39,7 @@ window.Sections.tickets = (() => {
        picker say what the ticket is, and the paragraph only repeated them. */
     buy:       'Tickets reserveren',
     off:       'Ticketverkoop nog niet open',
+    closed:    'Online verkoop gesloten',
     sending:   'Versturen…',
     errShort:  'Naam is te kort.',
     errLetter: 'Gebruik gewone letters.',
@@ -386,6 +387,7 @@ window.Sections.tickets = (() => {
 
     const views = {
       form:       root.querySelector('[data-view="form"]'),
+      closed:     root.querySelector('[data-view="closed"]'),
       processing: root.querySelector('[data-view="processing"]'),
       pay:        root.querySelector('[data-view="pay"]'),
       done:       root.querySelector('[data-view="done"]')
@@ -396,7 +398,7 @@ window.Sections.tickets = (() => {
        the header would cost the height that keeps a view on one screen. */
     function setView(next) {
       for (const k in views) views[k].hidden = (k !== next);
-      root.classList.toggle('is-flow', next === 'pay' || next === 'done');
+      root.classList.toggle('is-flow', next === 'pay' || next === 'done' || next === 'closed');
 
       /* A view change wipes what the previous view said. A field error or a
          failed-send notice belongs to the form; it must not still be sitting in
@@ -564,6 +566,20 @@ window.Sections.tickets = (() => {
        be in, and "add your first ticket" is a step nobody needs. */
     addRow('');
     renderRows();
+
+    /* From CHAMP_CONFIG.onlineCloses on (event day 11:30) the shop is closed
+       for good: one panel says the tickets are at the door now, and there is
+       no button under it — nowhere online is left to send anyone (client). The
+       clock decides, not the health probe, so nothing is fetched. */
+    if (window.ChampLive && typeof window.ChampLive.onlineClosed === 'function' &&
+        window.ChampLive.onlineClosed()) {
+      setSalesOpen(false, false);
+      payLabel.textContent = COPY.closed;
+      $('#tk-closed-when').textContent = $('#tk-when').textContent;
+      setView('closed');
+      $('#tk-closed-title').focus();
+      return;
+    }
 
     setSalesOpen(false, !!cfg().apiEndpoint);
 
