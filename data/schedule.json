@@ -12,8 +12,8 @@
     "16:30",
     "17:00",
     "17:30",
-    "18:00",
-    "18:30"
+    "19:00",
+    "19:30"
   ],
   "matches": [
     {
@@ -631,8 +631,8 @@
     {
       "id": "m52",
       "court": "court-2",
-      "start": "18:00",
-      "end": "18:25",
+      "start": "19:00",
+      "end": "19:25",
       "round": "lfinal",
       "roundLabel": "Kleine finale",
       "teams": [
@@ -643,8 +643,8 @@
     {
       "id": "m53",
       "court": "court-2",
-      "start": "18:30",
-      "end": "18:55",
+      "start": "19:30",
+      "end": "19:55",
       "round": "final",
       "roundLabel": "Grote finale",
       "teams": [
