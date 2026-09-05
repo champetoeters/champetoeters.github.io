@@ -630,7 +630,7 @@
     },
     {
       "id": "m52",
-      "court": "court-2",
+      "court": "court-1",
       "start": "19:00",
       "end": "19:25",
       "round": "lfinal",
@@ -642,7 +642,7 @@
     },
     {
       "id": "m53",
-      "court": "court-2",
+      "court": "court-1",
       "start": "19:30",
       "end": "19:55",
       "round": "final",
